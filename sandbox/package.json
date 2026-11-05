@@ -1,0 +1,23 @@
+{
+  "name": "@lumia/sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local sandbox of Lumia Studio: Postgres in Docker, a local server in place of AppSync, Cognito and S3, and the demo seed.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
+    "start": "tsx src/main.ts",
+    "seed": "tsx seed/seed.ts"
+  },
+  "dependencies": {
+    "@graphql-tools/schema": "11.0.8",
+    "@lumia/api": "*",
+    "@lumia/packages": "*",
+    "@modelcontextprotocol/server": "2.4.0",
+    "graphql": "17.0.2",
+    "graphql-yoga": "6.0.1",
+    "jose": "6.2.15"
+  }
+}
