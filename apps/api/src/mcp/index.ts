@@ -3,6 +3,7 @@
  * GraphQL API with the person's own token, so Studio applies that person's permissions.
  */
 export { STUDIO_TOKEN_ARGUMENT, STUDIO_TOKEN_HEADER, readInvocation } from './gateway-invocation.ts';
+export { handler as gatewayInterceptor } from './gateway-interceptor.ts';
 export type { GatewayInvocation, GatewayLambdaContext } from './gateway-invocation.ts';
 export type { GatewaySchema, GatewayToolSchema } from './gateway-schema.ts';
 export { HttpStudioGraphql } from './studio-graphql.ts';
