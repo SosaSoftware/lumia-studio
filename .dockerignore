@@ -1,0 +1,21 @@
+# Context of the images built from the repository root (apps/agent/Dockerfile).
+# Dependencies are installed inside the image, and secrets never enter a build context.
+**/node_modules
+.git
+.env
+.env.*
+.claude
+.sandbox
+.agent
+.idea
+.DS_Store
+cdk.out
+.cdk.staging
+**/dist
+**/build
+**/coverage
+**/test-results
+**/playwright-report
+**/*.log
+**/*.tsbuildinfo
+apps/web/public/config.json

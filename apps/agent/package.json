@@ -1,0 +1,41 @@
+{
+  "name": "@lumia/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lumi: the co-creation harness of Lumia Studio, built with the Strands harness and served over AG-UI for Amazon Bedrock AgentCore Runtime.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
+    "test:functional": "vitest run -c vitest.functional.config.ts",
+    "dev": "tsx watch src/entrypoints/local.ts",
+    "start:local": "tsx src/entrypoints/local.ts",
+    "build": "tsx scripts/build.ts",
+    "start": "node dist/remote.mjs"
+  },
+  "dependencies": {
+    "@ag-ui/a2ui-toolkit": "0.0.5",
+    "@ag-ui/aws-strands": "1.0.1",
+    "@ag-ui/client": "1.0.3",
+    "@ag-ui/core": "1.0.3",
+    "@ag-ui/encoder": "1.0.3",
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@lumia/packages": "*",
+    "@modelcontextprotocol/client": "2.4.0",
+    "@strands-agents/harness": "0.3.4",
+    "@strands-agents/sdk": "1.24.0",
+    "bedrock-agentcore": "0.4.6",
+    "express": "5.3.0",
+    "jose": "6.2.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@lumia/sandbox": "*",
+    "@types/express": "5.0.6",
+    "esbuild": "0.28.2"
+  }
+}

@@ -1,20 +1,25 @@
 #!/usr/bin/env bash
 # Manages the local services (background processes with pids and logs in .sandbox/).
 # Usage: sandbox/scripts/dev.sh up|down|status|logs <service>
-# Services: api (local server in place of AppSync, Cognito and S3) and web (Vite dev server of the editor).
+# Services: api (local server in place of AppSync, Cognito and S3), web (Vite dev server of the editor),
+# mcp (local stand-in for the AgentCore Gateway of Lumi, in front of the Studio MCP tools) and lumi (the agent,
+# which needs Bedrock access: AWS credentials or BEDROCK_API_KEY). Lumi starts last, so the editor works without it.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
 
 STATE_DIR=".sandbox"
-SERVICES=(api web)
+SERVICES=(api web mcp lumi)
 
 # Command that runs each service in the foreground.
 service_command() {
   case "$1" in
     api) echo "npx tsx watch sandbox/src/main.ts" ;;
     web) echo "npm run dev -w @lumia/web" ;;
+    mcp) echo "npx tsx watch sandbox/src/mcp-gateway/main.ts" ;;
+    # Defaults for an .env created before Lumi existed; values in .env win.
+    lumi) echo "env LUMI_MCP_URL=${LUMI_MCP_URL:-http://localhost:${LUMIA_MCP_PORT:-4100}/mcp} LUMI_SESSION_DIR=${LUMI_SESSION_DIR:-.sandbox/lumi/sessions} LUMI_MEMORY_DIR=${LUMI_MEMORY_DIR:-.sandbox/lumi/memory} npm run dev -w @lumia/agent" ;;
     *) return 1 ;;
   esac
 }
@@ -24,6 +29,8 @@ service_health() {
   case "$1" in
     api) echo "http://localhost:${LUMIA_API_PORT:-4000}/health" ;;
     web) echo "http://localhost:${LUMIA_WEB_PORT:-5173}/" ;;
+    mcp) echo "http://localhost:${LUMIA_MCP_PORT:-4100}/health" ;;
+    lumi) echo "http://localhost:${LUMI_PORT:-8080}/ping" ;;
     *) echo "" ;;
   esac
 }
@@ -57,14 +64,13 @@ require_service() {
   exit 2
 }
 
-# Writes the runtime config of the web app. The dev server proxies the API, so the URLs are relative.
-# Lumi is integrated later: without `lumiUrl` the Lumi panel says that Lumi is not connected.
+# Writes the runtime config of the web app. The dev server proxies the API and Lumi, so the URLs are relative.
 write_web_config() {
   cat >apps/web/public/config.json <<JSON
 {
   "apiUrl": "/graphql",
   "authMode": "dev",
-  "lumiUrl": null
+  "lumiUrl": "/lumi/invocations"
 }
 JSON
 }

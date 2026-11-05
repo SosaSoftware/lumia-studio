@@ -1,0 +1,5 @@
+{
+  "confirmationTool": "confirm_change",
+  "readOnlyTargets": ["studio-read", "knowledge"],
+  "maxChangesPerConfirmation": 20
+}

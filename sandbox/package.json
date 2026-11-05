@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Local sandbox of Lumia Studio: Postgres in Docker, a local server in place of AppSync, Cognito and S3, and the demo seed.",
+  "exports": {
+    "./testing": "./src/mcp-gateway/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",

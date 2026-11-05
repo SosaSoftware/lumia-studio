@@ -62,6 +62,7 @@ The tree, people, roles and grants are managed in the database (`studio.category
 | `LumiaStudioIdentityStack` | Cognito user pool (accounts created by an administrator) and the web client. |
 | `LumiaStudioStack` | AppSync API with one Lambda per handler, and the export of published classes. |
 | `LumiaStudioMcpStack` | The Lambdas of the Studio MCP that Lumi uses through its AgentCore Gateway. |
+| `LumiaStudioAgentStack` | Lumi's AgentCore gateways: the MCP gateway over the Studio tools (with the token interceptor) and, once the agent runtime exists, the public entry gateway. The agent runtime and memory live in the other agent's stacks. |
 | `LumiaStudioWebStack` | The web on S3 behind CloudFront, with its `config.json`. |
 
 The settings of a deployment are in `.env` (last block of `.env.example`). Synth runs the AWS Solutions checks of cdk-nag; a finding without an acknowledgment stops it. Deleting a stack keeps the data: the database leaves a snapshot, and the user pool and the data buckets stay.

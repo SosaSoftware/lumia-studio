@@ -19,6 +19,7 @@ describe('Lumia Studio app', () => {
     identity: Template.fromStack(stacks.identity),
     studio: Template.fromStack(stacks.studio),
     mcp: Template.fromStack(stacks.mcp),
+    lumi: Template.fromStack(stacks.lumi),
     web: Template.fromStack(stacks.web),
   };
 
@@ -108,6 +109,48 @@ describe('Lumia Studio app', () => {
     template.web.resourceCountIs('AWS::CloudFront::OriginAccessControl', 2);
     template.web.hasResourceProperties('Custom::CDKBucketDeployment', { DistributionPaths: ['/demo.json'] });
     template.web.hasOutput('DemoFileKey', { Value: 'demo-content/demo.lumia' });
+  });
+
+  it('exposes an IAM MCP gateway for Lumi over the four tool Lambdas, propagating the person token header', () => {
+    template.lumi.hasResourceProperties('AWS::BedrockAgentCore::Gateway', { ProtocolType: 'MCP', AuthorizerType: 'AWS_IAM' });
+    template.lumi.resourceCountIs('AWS::BedrockAgentCore::GatewayTarget', Object.keys(MCP_TARGETS).length);
+    template.lumi.allResourcesProperties('AWS::BedrockAgentCore::GatewayTarget', {
+      CredentialProviderConfigurations: [{ CredentialProviderType: 'GATEWAY_IAM_ROLE' }],
+      MetadataConfiguration: { AllowedRequestHeaders: ['X-Amzn-Bedrock-AgentCore-Runtime-Custom-StudioToken'] },
+    });
+    // No entry gateway without a runtime ARN; the MCP gateway can deploy before Lumi's runtime exists.
+    expect(stacks.lumi.entryUrl).toBeUndefined();
+  });
+
+  it('adds the public entry gateway, forwarding the token to the runtime, only with a runtime ARN', () => {
+    const withRuntime = build({ LUMIA_LUMI_RUNTIME_ARN: 'arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/lumi_agent-a1b2c3d4e5' });
+    const lumi = Template.fromStack(withRuntime.lumi);
+    // The MCP gateway plus the entry gateway.
+    lumi.resourceCountIs('AWS::BedrockAgentCore::Gateway', 2);
+    lumi.hasResourceProperties('AWS::BedrockAgentCore::GatewayTarget', {
+      TargetConfiguration: { Http: { AgentcoreRuntime: Match.objectLike({ Qualifier: 'DEFAULT' }) } },
+      CredentialProviderConfigurations: [{ CredentialProviderType: 'JWT_PASSTHROUGH' }],
+    });
+    expect(withRuntime.lumi.entryUrl).toMatch(/\/lumi\/invocations$/);
+  });
+
+  it('runs Lumi on an AGUI AgentCore runtime with the MCP URL and token header, no KB or memory', () => {
+    const rt = Template.fromStack(stacks.lumiRuntime);
+    rt.hasResourceProperties('AWS::BedrockAgentCore::Runtime', {
+      ProtocolConfiguration: 'AGUI',
+      EnvironmentVariables: Match.objectLike({
+        LUMI_MCP_TOKEN_HEADER: 'X-Amzn-Bedrock-AgentCore-Runtime-Custom-StudioToken',
+        LUMI_MCP_URL: Match.anyValue(),
+        LUMI_SESSION_BUCKET: Match.anyValue(),
+      }),
+      AuthorizerConfiguration: { CustomJWTAuthorizer: Match.objectLike({ AllowedClients: Match.anyValue() }) },
+    });
+    // No memory resource for the MVP.
+    rt.resourceCountIs('AWS::BedrockAgentCore::Memory', 0);
+    // The runtime role can invoke the MCP gateway and the model.
+    const policies = JSON.stringify(rt.findResources('AWS::IAM::Policy'));
+    expect(policies).toContain('bedrock-agentcore:InvokeGateway');
+    expect(policies).toContain('bedrock:InvokeModel');
   });
 
   it('serves the web from a private bucket through CloudFront, HTTPS only, with logs', () => {

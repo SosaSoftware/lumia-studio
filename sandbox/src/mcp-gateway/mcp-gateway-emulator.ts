@@ -3,11 +3,11 @@ import { createServer } from 'node:http';
 import type { IncomingMessage, Server as HttpServer, ServerResponse } from 'node:http';
 import { Readable } from 'node:stream';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
-import { Server, createMcpHandler } from '@modelcontextprotocol/server';
+import { McpServer, createMcpHandler, fromJsonSchema } from '@modelcontextprotocol/server';
 import type { CallToolResult, McpHttpHandler } from '@modelcontextprotocol/server';
 import type { Logger } from '@lumia/api/log';
 import { MCP_TARGETS, STUDIO_TOKEN_ARGUMENT, STUDIO_TOKEN_HEADER, createToolHandler, toolSchemas } from '@lumia/api/mcp';
-import type { GatewayToolHandler, McpTarget } from '@lumia/api/mcp';
+import type { GatewaySchema, GatewayToolHandler, McpTarget } from '@lumia/api/mcp';
 import type { TokenVerifier } from '../auth/index.ts';
 
 export const MCP_PATH = '/mcp';
@@ -32,6 +32,15 @@ interface Route {
 /** Records only, as Lambda receives them after JSON decoding. */
 function record(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? Object.fromEntries(Object.entries(value)) : {};
+}
+
+/**
+ * A plain JSON copy of an inline tool schema. The gateway subset always has an object at the top of a tool schema
+ * (`toGatewaySchema` wraps anything else), which is what MCP requires.
+ */
+function objectSchema(schema: GatewaySchema): { type: 'object'; [key: string]: unknown } {
+  const copy: unknown = JSON.parse(JSON.stringify(schema));
+  return { ...record(copy), type: 'object' };
 }
 
 async function readBody(req: IncomingMessage): Promise<Buffer> {
@@ -60,15 +69,13 @@ async function readBody(req: IncomingMessage): Promise<Buffer> {
  * - the JSON that the handler answers becomes the text content of the MCP result.
  */
 export class McpGatewayEmulator {
-  private readonly routes: ReadonlyMap<string, Route>;
+  private readonly routes: readonly Route[];
   private readonly mcp: McpHttpHandler;
   private server: HttpServer | undefined;
 
   public constructor(private readonly options: McpGatewayEmulatorOptions) {
     const targets = Object.values(MCP_TARGETS);
-    this.routes = new Map(
-      targets.map((target) => [target.name, { target, handler: createToolHandler(target, { graphqlUrl: options.graphqlUrl, logger: options.logger, targets }) }]),
-    );
+    this.routes = targets.map((target) => ({ target, handler: createToolHandler(target, { graphqlUrl: options.graphqlUrl, logger: options.logger, targets }) }));
     this.mcp = createMcpHandler(({ requestInfo }) => this.mcpServer(requestInfo?.headers.get(STUDIO_TOKEN_HEADER) ?? null), {
       onerror: (error) => {
         options.logger.warn('MCP request failed', { error: error.message });
@@ -123,10 +130,7 @@ export class McpGatewayEmulator {
       return;
     }
     const token = /^Bearer\s+(\S+)$/i.exec(req.headers.authorization ?? '')?.[1];
-    try {
-      if (token === undefined) throw new Error('missing bearer token');
-      await this.options.verifier.verify(token);
-    } catch {
+    if (token === undefined || !(await this.verified(token))) {
       // Same answer as the gateway authorizer: no detail about why the token was refused.
       res.writeHead(401, { 'content-type': 'application/json', 'www-authenticate': 'Bearer' }).end(JSON.stringify({ message: 'Unauthorized' }));
       return;
@@ -137,7 +141,7 @@ export class McpGatewayEmulator {
       if (typeof value === 'string') headers.set(name, value);
       else if (Array.isArray(value)) headers.set(name, value.join(', '));
     }
-    const response = await this.mcp.fetch(new Request(url, { method: req.method ?? 'GET', headers, ...(body === undefined ? {} : { body }) }));
+    const response = await this.mcp.fetch(new Request(url, { method: req.method ?? 'GET', headers, ...(body === undefined ? {} : { body: new Uint8Array(body) }) }));
     res.writeHead(response.status, Object.fromEntries(response.headers));
     if (response.body === null) {
       res.end();
@@ -147,33 +151,43 @@ export class McpGatewayEmulator {
     Readable.fromWeb(response.body as WebReadableStream<Uint8Array>).pipe(res);
   }
 
+  private async verified(token: string): Promise<boolean> {
+    try {
+      await this.options.verifier.verify(token);
+      return true;
+    } catch (error) {
+      this.options.logger.info('Gateway request with an invalid token', { reason: error instanceof Error ? error.message : 'invalid token' });
+      return false;
+    }
+  }
+
   /** The MCP server of one request; the propagated header is the one this request carried. */
-  private mcpServer(propagatedToken: string | null): Server {
-    const server = new Server({ name: 'lumia-studio-mcp-gateway', version: '1.0.0' }, { capabilities: { tools: {} } });
-    server.setRequestHandler('tools/list', () => ({
-      tools: [...this.routes.values()].flatMap(({ target }) =>
-        toolSchemas(target).map((schema) => ({ name: `${target.name}${TOOL_NAME_DELIMITER}${schema.name}`, description: schema.description, inputSchema: schema.inputSchema })),
-      ),
-    }));
-    server.setRequestHandler('tools/call', async (request): Promise<CallToolResult> => {
-      const name = request.params.name;
-      const route = this.routes.get(name.slice(0, Math.max(0, name.indexOf(TOOL_NAME_DELIMITER))));
-      if (route === undefined) {
-        return { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'unknown_tool', message: `Unknown tool ${name}.` } }) }], isError: true };
+  private mcpServer(propagatedToken: string | null): McpServer {
+    const server = new McpServer({ name: 'lumia-studio-mcp-gateway', version: '1.0.0' });
+    for (const route of this.routes) {
+      for (const schema of toolSchemas(route.target)) {
+        const name = `${route.target.name}${TOOL_NAME_DELIMITER}${schema.name}`;
+        server.registerTool(name, { description: schema.description, inputSchema: fromJsonSchema<Record<string, unknown>>(objectSchema(schema.inputSchema)) }, (args) =>
+          this.invoke(route, name, args, propagatedToken),
+        );
       }
-      const { [STUDIO_TOKEN_ARGUMENT]: _dropped, ...args } = record(request.params.arguments);
-      const custom = {
-        bedrockAgentCoreMessageVersion: '1.0',
-        bedrockAgentCoreAwsRequestId: randomUUID(),
-        bedrockAgentCoreMcpMessageId: randomUUID(),
-        bedrockAgentCoreGatewayId: GATEWAY_ID,
-        bedrockAgentCoreTargetId: route.target.name,
-        bedrockAgentCoreToolName: name,
-        bedrockAgentCorePropagatedHeaders: propagatedToken === null ? {} : { [STUDIO_TOKEN_HEADER]: propagatedToken },
-      };
-      const result = await route.handler(args, { clientContext: { custom } });
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
-    });
+    }
     return server;
+  }
+
+  /** Runs the handler of the target as the gateway invokes its Lambda. */
+  private async invoke(route: Route, name: string, args: Record<string, unknown>, propagatedToken: string | null): Promise<CallToolResult> {
+    const event = Object.fromEntries(Object.entries(args).filter(([key]) => key !== STUDIO_TOKEN_ARGUMENT));
+    const custom = {
+      bedrockAgentCoreMessageVersion: '1.0',
+      bedrockAgentCoreAwsRequestId: randomUUID(),
+      bedrockAgentCoreMcpMessageId: randomUUID(),
+      bedrockAgentCoreGatewayId: GATEWAY_ID,
+      bedrockAgentCoreTargetId: route.target.name,
+      bedrockAgentCoreToolName: name,
+      bedrockAgentCorePropagatedHeaders: propagatedToken === null ? {} : { [STUDIO_TOKEN_HEADER]: propagatedToken },
+    };
+    const result = await route.handler(event, { clientContext: { custom } });
+    return { content: [{ type: 'text', text: JSON.stringify(result) }] };
   }
 }

@@ -3,8 +3,10 @@ import { defineConfig } from 'vite';
 
 const apiPort = process.env.LUMIA_API_PORT ?? '4000';
 const api = { target: `http://localhost:${apiPort}`, changeOrigin: true };
+// Lumi serves AG-UI at /invocations; the web reaches it as /lumi/invocations.
+const lumi = { target: `http://localhost:${process.env.LUMI_PORT ?? '8080'}`, changeOrigin: true, rewrite: (path: string) => path.replace(/^\/lumi/, '') };
 
-// The dev server proxies the local API and its signed storage on the same origin, so the browser needs no CORS.
+// The dev server proxies the local API, its signed storage and Lumi on the same origin, so the browser needs no CORS.
 export default defineConfig({
   plugins: [vue()],
   server: {
@@ -14,6 +16,7 @@ export default defineConfig({
       '/graphql': api,
       '/dev/login': api,
       '/storage': api,
+      '/lumi': lumi,
     },
   },
 });
