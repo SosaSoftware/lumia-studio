@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# AWS CDK (cdk.context.json se versiona a propósito)
+cdk.out/
+.cdk.staging/
+
+# Variables de entorno y secretos (solo se versionan los *.example)
+.env
+.env.*
+!.env.example
+
+# Estado de runtime del harness de Strands (sesiones y memoria)
+.agent/
+
+# Logs
+*.log
+npm-debug.log*
+
+# macOS
+.DS_Store
+
+# JetBrains IDE
+.idea/
+
+# Claude
+.claude/
+
+# Sensitive information
+scripts/credentials.sh
+
+# Local sandbox state (database files, storage, logs and pids)
+.sandbox/
+
+# Runtime config of the web app, written by the sandbox
+apps/web/public/config.json
+
+# Playwright output
+test-results/
+playwright-report/

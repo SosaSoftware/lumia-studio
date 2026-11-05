@@ -1,0 +1,58 @@
+{
+  "name": "lumia-studio",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages",
+    "sandbox"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "test": "npm run test --workspaces --if-present && jest",
+    "test:integration": "npm run test:integration --workspaces --if-present",
+    "test:e2e": "npm run test:e2e -w @lumia/web",
+    "synth": "cdk synth --quiet --no-notices",
+    "deploy": "cdk deploy --all",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run synth",
+    "sandbox:up": "bash sandbox/scripts/sandbox.sh up",
+    "sandbox:down": "bash sandbox/scripts/sandbox.sh down",
+    "sandbox:reset": "bash sandbox/scripts/sandbox.sh reset",
+    "sandbox:status": "bash sandbox/scripts/sandbox.sh status",
+    "db:migrate": "npm run migrate -w @lumia/api",
+    "db:seed": "npm run seed -w @lumia/sandbox",
+    "sandbox:init": "npm run sandbox:up && npm run db:migrate && npm run db:seed",
+    "dev:up": "bash sandbox/scripts/dev.sh up",
+    "dev:down": "bash sandbox/scripts/dev.sh down",
+    "dev:status": "bash sandbox/scripts/dev.sh status",
+    "dev:logs": "bash sandbox/scripts/dev.sh logs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@swc/core": "^1.15.0",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30",
+    "@types/node": "22.20.5",
+    "aws-cdk": "2.1147.0",
+    "cdk-nag": "3.0.2",
+    "eslint": "10.14.0",
+    "eslint-plugin-vue": "10.12.0",
+    "globals": "17.14.0",
+    "jest": "^30",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.275.0",
+    "constructs": "^10.5.0"
+  }
+}
