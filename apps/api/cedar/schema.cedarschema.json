@@ -1,0 +1,101 @@
+{
+  "Studio": {
+    "entityTypes": {
+      "Role": {
+        "shape": {
+          "type": "Record",
+          "attributes": {}
+        }
+      },
+      "User": {
+        "memberOfTypes": [
+          "Role"
+        ],
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "categories": {
+              "type": "Set",
+              "element": {
+                "type": "String"
+              }
+            },
+            "subcategories": {
+              "type": "Set",
+              "element": {
+                "type": "String"
+              }
+            }
+          }
+        }
+      },
+      "Resource": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "category": {
+              "type": "String",
+              "required": false
+            },
+            "subcategory": {
+              "type": "String",
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "documents.view": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ]
+        }
+      },
+      "documents.edit": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ]
+        }
+      },
+      "documents.publish": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ]
+        }
+      },
+      "media.upload": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ]
+        }
+      },
+      "narration.generate": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ]
+        }
+      }
+    }
+  }
+}

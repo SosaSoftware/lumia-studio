@@ -1,0 +1,47 @@
+{
+  "name": "@lumia/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lumia Studio GraphQL API: schema, field registry, AppSync Lambda handlers, services and database migrations.",
+  "exports": {
+    "./auth": "./src/auth/index.ts",
+    "./authorization": "./src/authorization/index.ts",
+    "./config": "./src/shared/config/index.ts",
+    "./db": "./src/infrastructure/db/index.ts",
+    "./deployment": "./src/graphql/deployment.ts",
+    "./errors": "./src/shared/errors/index.ts",
+    "./graphql": "./src/graphql/index.ts",
+    "./handlers": "./src/handlers/index.ts",
+    "./log": "./src/shared/log/index.ts",
+    "./mcp": "./src/mcp/index.ts",
+    "./runtime": "./src/runtime/index.ts",
+    "./schema.graphql": "./src/graphql/schema.graphql",
+    "./services": "./src/services/index.ts",
+    "./speech": "./src/infrastructure/speech/index.ts",
+    "./storage": "./src/infrastructure/storage/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:integration": "vitest run -c vitest.integration.config.ts",
+    "migrate": "tsx scripts/migrate.ts",
+    "cedar:schema": "tsx scripts/generate-cedar-schema.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-lambda": "3.1161.0",
+    "@aws-sdk/client-polly": "3.1161.0",
+    "@aws-sdk/client-rds-data": "3.1161.0",
+    "@aws-sdk/client-s3": "3.1161.0",
+    "@aws-sdk/client-secrets-manager": "3.1161.0",
+    "@aws-sdk/s3-request-presigner": "3.1161.0",
+    "@cedar-policy/cedar-wasm": "4.14.0",
+    "@lumia/packages": "*",
+    "fflate": "0.8.3",
+    "pg": "8.23.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1"
+  }
+}

@@ -1,0 +1,502 @@
+# Lumia Studio API. AppSync provides the AWS* scalars and the @aws_* directives; the local server declares them.
+# Every field uses Cognito user pools; the action of each field is in graphql/fields.ts.
+
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  "Categories the person can see, each with the subcategories they can open."
+  categories(page: PageInput): CategoryPage!
+  "Folders and classes of one subcategory in tree order; parentId links each node to its folder."
+  treeNodes(filter: TreeNodeFilter!, page: PageInput): TreeNodePage!
+  "Document of a class with its versions and the version being edited; null while the class has no content."
+  document(nodeId: ID!): ClassDocument
+  "A full version, for the preview."
+  version(id: ID!): DocumentVersion
+  "Media library of a category."
+  mediaLibrary(filter: MediaFilter!, page: PageInput): MediaPage!
+  componentCatalog: ComponentCatalog!
+  "Voices of Amazon Polly for narration, for the engine used in synthesis."
+  narrationVoices(filter: VoiceFilter, page: PageInput): VoicePage!
+  "The signed-in person: role and actions, for the interface and for Lumi."
+  me: Me!
+}
+
+type Mutation {
+  "Creates the document of a class with version 1 in draft."
+  createDocument(nodeId: ID!): ClassDocument!
+  createVersion(documentId: ID!): DocumentVersion!
+  saveSlide(input: SlideInput!): Slide!
+  reorderSlides(versionId: ID!, slideIds: [ID!]!): [Slide!]!
+  duplicateSlide(slideId: ID!): Slide!
+  deleteSlide(slideId: ID!): DeletedResult!
+  saveElement(input: ElementInput!): SlideElement!
+  deleteElement(elementId: ID!): DeletedResult!
+  "Applies an accepted draft in one transaction, after the given position (end when null)."
+  applySlidesDraft(versionId: ID!, afterPosition: Int, slides: [DraftSlideInput!]!): [Slide!]!
+  savePause(input: PauseInput!): Pause!
+  deletePause(pauseId: ID!): DeletedResult!
+  saveAudio(input: AudioClipInput!): AudioClip!
+  deleteAudio(audioClipId: ID!): DeletedResult!
+  saveComment(slideId: ID!, body: String!): SlideComment!
+  deleteComment(commentId: ID!): DeletedResult!
+  createMediaUpload(input: MediaUploadInput!): MediaUpload!
+  registerMedia(input: RegisterMediaInput!): MediaAsset!
+  generateNarration(input: NarrationInput!): NarrationClip!
+  "Creates (id null) or updates a narration clip without synthesizing the voice."
+  saveNarration(input: NarrationInput!): NarrationClip!
+  deleteNarration(narrationClipId: ID!): DeletedResult!
+  publishVersion(documentId: ID!): ClassDocument!
+}
+
+enum DocumentStatus {
+  no_content
+  draft
+  published
+}
+
+enum VersionStatus {
+  draft
+  published
+  archived
+}
+
+enum SlideType {
+  cover
+  explanatory
+  video
+  interactive_video
+  whiteboard
+  quiz
+  closing
+}
+
+enum Transition {
+  none
+  fade
+  slide
+  zoom
+}
+
+"How a slide moves on: when its time ends, with a click, or once every question on it is completed."
+enum AdvanceMode {
+  auto
+  click
+  "When every question of the slide is answered correctly or runs out of attempts."
+  on_complete
+}
+
+enum Entrance {
+  none
+  appear
+  fade
+  slide
+  draw
+}
+
+enum NarrationStatus {
+  pending
+  generating
+  ready
+  failed
+}
+
+enum AudioKind {
+  music
+  effect
+}
+
+enum PauseEnd {
+  continue
+  wait_click
+}
+
+enum TreeNodeKind {
+  folder
+  class
+}
+
+"The signed-in person and what their role lets them do."
+type Me {
+  "Id of the person in studio.app_user."
+  userId: ID!
+  email: String!
+  name: String!
+  "Key of the role, e.g. content_creator."
+  role: String!
+  roleName: String!
+  "Actions of the role, e.g. documents.edit."
+  actions: [String!]!
+}
+
+type Subcategory {
+  id: ID!
+  categoryId: ID!
+  "Logical name: lowercase letters, digits and hyphens."
+  name: String!
+  displayName: String!
+  description: String!
+  "Heading that groups it in the menus; null when it has none. Groups only organize the list."
+  groupName: String
+}
+
+type Category {
+  id: ID!
+  "Logical name: lowercase letters, digits and hyphens."
+  name: String!
+  displayName: String!
+  description: String!
+  "Heading that groups it in the menus; null when it has none. Groups only organize the list."
+  groupName: String
+  "Subcategories of the category that the person can open."
+  subcategories: [Subcategory!]!
+}
+
+type CategoryPage {
+  items: [Category!]!
+  nextToken: String
+}
+
+"A folder or a class of the tree. Classes are leaves that hold a document."
+type TreeNode {
+  id: ID!
+  subcategoryId: ID!
+  "Folder that holds the node; null at the root of the subcategory."
+  parentId: ID
+  kind: TreeNodeKind!
+  "Logical name, unique in its folder: lowercase letters, digits and hyphens; classes end in .lumia."
+  name: String!
+  "Name the interface shows."
+  displayName: String!
+  description: String!
+  "Order among its siblings."
+  position: Int!
+  "Classes only: the document and the state of the content."
+  documentId: ID
+  documentStatus: DocumentStatus
+  currentVersion: Int
+  publishedVersion: Int
+}
+
+type TreeNodePage {
+  items: [TreeNode!]!
+  nextToken: String
+}
+
+type VersionSummary {
+  id: ID!
+  number: Int!
+  status: VersionStatus!
+  createdAt: AWSDateTime!
+  publishedAt: AWSDateTime
+}
+
+type ClassDocument {
+  id: ID!
+  "Class node of the tree that holds the document."
+  nodeId: ID!
+  status: DocumentStatus!
+  currentVersion: Int!
+  publishedVersion: Int
+  updatedAt: AWSDateTime!
+  versions: [VersionSummary!]!
+  "The draft version when there is one, otherwise the published version."
+  editingVersion: DocumentVersion!
+}
+
+type DocumentVersion {
+  id: ID!
+  documentId: ID!
+  number: Int!
+  status: VersionStatus!
+  createdAt: AWSDateTime!
+  createdBy: String!
+  publishedAt: AWSDateTime
+  publishedBy: String
+  slides: [Slide!]!
+}
+
+type MediaRef {
+  id: ID!
+  name: String!
+  mimeType: String!
+  url: String!
+}
+
+type SlideElement {
+  id: ID!
+  slideId: ID!
+  component: String!
+  name: String!
+  x: Float!
+  y: Float!
+  w: Float!
+  h: Float!
+  z: Int!
+  appearsAtS: Float!
+  entrance: Entrance!
+  props: AWSJSON!
+  mediaId: ID
+  media: MediaRef
+}
+
+type NarrationClip {
+  id: ID!
+  slideId: ID!
+  startsAtS: Float!
+  script: String!
+  "Polly voice id; null until the person picks one."
+  voice: String
+  speed: Float!
+  generatedDurationS: Float!
+  audioUrl: String
+  speechMarksUrl: String
+  status: NarrationStatus!
+  errorMessage: String
+}
+
+type Pause {
+  id: ID!
+  slideId: ID!
+  startsAtS: Float!
+  durationS: Float!
+  message: String!
+  onEnd: PauseEnd!
+  timerElementId: ID
+}
+
+type AudioClip {
+  id: ID!
+  slideId: ID!
+  mediaId: ID!
+  media: MediaRef
+  startsAtS: Float!
+  durationS: Float!
+  name: String!
+  kind: AudioKind!
+  volume: Float!
+}
+
+type SlideComment {
+  id: ID!
+  slideId: ID!
+  authorSub: String!
+  authorName: String!
+  body: String!
+  createdAt: AWSDateTime!
+}
+
+type Slide {
+  id: ID!
+  versionId: ID!
+  position: Int!
+  type: SlideType!
+  title: String!
+  background: String!
+  durationS: Float!
+  transition: Transition!
+  advance: AdvanceMode!
+  elements: [SlideElement!]!
+  narrationClips: [NarrationClip!]!
+  pauses: [Pause!]!
+  audioClips: [AudioClip!]!
+  comments: [SlideComment!]!
+}
+
+type MediaAsset {
+  id: ID!
+  name: String!
+  mimeType: String!
+  sizeBytes: Float!
+  url: String!
+  createdAt: AWSDateTime!
+}
+
+type MediaPage {
+  items: [MediaAsset!]!
+  nextToken: String
+}
+
+enum VoiceGender {
+  female
+  male
+}
+
+type Voice {
+  "Polly voice id, e.g. Andres."
+  id: ID!
+  "Display name, e.g. Andrés."
+  name: String!
+  gender: VoiceGender!
+  "BCP 47 code of the main language, e.g. es-MX."
+  languageCode: String!
+}
+
+type VoicePage {
+  items: [Voice!]!
+  nextToken: String
+}
+
+type MediaUpload {
+  key: String!
+  uploadUrl: String!
+  expiresAt: AWSDateTime!
+}
+
+type CatalogSize {
+  w: Float!
+  h: Float!
+}
+
+type CatalogComponent {
+  key: String!
+  name: String!
+  group: String!
+  groupName: String!
+  usage: String!
+  propsSchema: AWSJSON!
+  defaults: AWSJSON!
+  defaultSize: CatalogSize!
+  usesMedia: Boolean!
+  isQuestion: Boolean!
+}
+
+type CatalogSlideType {
+  key: SlideType!
+  name: String!
+  usage: String!
+  defaultBackground: String!
+  defaultDurationS: Float!
+  starterComponents: [String!]!
+}
+
+type ComponentCatalog {
+  components: [CatalogComponent!]!
+  slideTypes: [CatalogSlideType!]!
+}
+
+type DeletedResult {
+  id: ID!
+  deleted: Boolean!
+}
+
+input PageInput {
+  limit: Int
+  nextToken: String
+}
+
+input TreeNodeFilter {
+  subcategoryId: ID!
+}
+
+input MediaFilter {
+  "Category whose library is listed."
+  categoryId: ID!
+  mimePrefix: String
+  text: String
+}
+
+input VoiceFilter {
+  "Prefix of the language code, e.g. es for every Spanish variant."
+  languageCode: String
+}
+
+"Creates the slide when id is null (at the end, or at position); otherwise updates the given fields."
+input SlideInput {
+  id: ID
+  versionId: ID!
+  position: Int
+  type: SlideType
+  title: String
+  background: String
+  durationS: Float
+  transition: Transition
+  advance: AdvanceMode
+}
+
+"Creates the element when id is null; geometry defaults to the component size inside the slide."
+input ElementInput {
+  id: ID
+  slideId: ID!
+  component: String!
+  name: String
+  x: Float
+  y: Float
+  w: Float
+  h: Float
+  z: Int
+  appearsAtS: Float
+  entrance: Entrance
+  props: AWSJSON!
+  mediaId: ID
+}
+
+input DraftElementInput {
+  component: String!
+  name: String
+  x: Float!
+  y: Float!
+  w: Float!
+  h: Float!
+  z: Int!
+  appearsAtS: Float!
+  entrance: Entrance
+  props: AWSJSON!
+}
+
+input DraftSlideInput {
+  type: SlideType!
+  title: String!
+  background: String
+  durationS: Float
+  elements: [DraftElementInput!]!
+}
+
+input PauseInput {
+  id: ID
+  slideId: ID!
+  startsAtS: Float!
+  durationS: Float!
+  message: String!
+  onEnd: PauseEnd!
+  timerElementId: ID
+}
+
+input AudioClipInput {
+  id: ID
+  slideId: ID!
+  mediaId: ID!
+  startsAtS: Float!
+  durationS: Float!
+  name: String!
+  kind: AudioKind!
+  volume: Float
+}
+
+input NarrationInput {
+  id: ID
+  slideId: ID!
+  script: String!
+  startsAtS: Float!
+  "Polly voice id from narrationVoices; required to generate, optional to save."
+  voice: String
+  speed: Float!
+}
+
+input MediaUploadInput {
+  "Category whose library receives the file."
+  categoryId: ID!
+  name: String!
+  mimeType: String!
+  sizeBytes: Float!
+}
+
+input RegisterMediaInput {
+  categoryId: ID!
+  key: String!
+  name: String!
+  mimeType: String!
+  sizeBytes: Float!
+}

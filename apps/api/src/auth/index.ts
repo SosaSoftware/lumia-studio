@@ -1,0 +1,10 @@
+export type { StudioClaims } from './claims.ts';
+export { ClaimsBuilder } from './claims-builder.ts';
+export { ACTIONS, PERMISSION_CATALOG } from './permissions.ts';
+export type { Action, PermissionDefinition } from './permissions.ts';
+export { UnauthorizedError } from './unauthorized-error.ts';
+export type { SignInFailure } from './unauthorized-error.ts';
+export { CLAIMS_TTL_MS, ClaimsResolver } from './claims-resolver.ts';
+export type { ClaimsSource } from './claims-resolver.ts';
+export { tokenIdentity } from './token-identity.ts';
+export type { TokenIdentity } from './token-identity.ts';
