@@ -1,0 +1,143 @@
+/*
+ * Slides keep the same light palette in both app themes, as in the Studio designs.
+ * Each catalog theme key has a solid color (`--sl-<key>`), a soft tint (`-soft`), an ink for text on the tint (`-ink`),
+ * and the text colors used when the key is a slide background (`--sl-on-<key>`, `--sl-on-<key>-2`).
+ */
+:root {
+  --sl-surface: #FBFAF7;
+  --sl-surface-soft: #FBFAF7;
+  --sl-surface-ink: #161616;
+  --sl-on-surface: #161616;
+  --sl-on-surface-2: #4F4D49;
+  --sl-kicker-surface: #2F6BFF;
+
+  --sl-surface-alt: #FFFFFF;
+  --sl-surface-alt-soft: #F6F5F1;
+  --sl-surface-alt-ink: #161616;
+  --sl-on-surface-alt: #161616;
+  --sl-on-surface-alt-2: #4F4D49;
+  --sl-kicker-surface-alt: #2F6BFF;
+
+  --sl-primary: #2F6BFF;
+  --sl-primary-soft: #EAF0FF;
+  --sl-primary-ink: #2F6BFF;
+  --sl-on-primary: #FFFFFF;
+  --sl-on-primary-2: rgba(255, 255, 255, 0.86);
+  --sl-kicker-primary: #A5E8FF;
+
+  --sl-accent: #3FC5F0;
+  --sl-accent-soft: #E3F5FC;
+  --sl-accent-ink: #0A6F94;
+  --sl-on-accent: #161616;
+  --sl-on-accent-2: #1C3A45;
+  --sl-kicker-accent: #0A3F55;
+
+  --sl-success: #12B886;
+  --sl-success-soft: #DDF4EC;
+  --sl-success-ink: #0B7A5A;
+  --sl-on-success: #161616;
+  --sl-on-success-2: #0E2E24;
+  --sl-kicker-success: #0E2E24;
+
+  --sl-warning: #F5B800;
+  --sl-warning-soft: #FFF4D1;
+  --sl-warning-ink: #946600;
+  --sl-on-warning: #161616;
+  --sl-on-warning-2: #3D2E00;
+  --sl-kicker-warning: #3D2E00;
+
+  --sl-danger: #E03131;
+  --sl-danger-soft: #FFE3E3;
+  --sl-danger-ink: #C92A2A;
+  --sl-on-danger: #FFFFFF;
+  --sl-on-danger-2: rgba(255, 255, 255, 0.88);
+  --sl-kicker-danger: #FFE3E3;
+
+  --sl-text: #161616;
+  --sl-text-soft: #EDEBE6;
+  --sl-text-ink: #161616;
+  --sl-on-text: #FBFAF7;
+  --sl-on-text-2: rgba(251, 250, 247, 0.78);
+  --sl-kicker-text: #A5E8FF;
+
+  --sl-muted: #8F8D88;
+  --sl-muted-soft: #EDEBE6;
+  --sl-muted-ink: #6B6964;
+  --sl-on-muted: #FFFFFF;
+  --sl-on-muted-2: rgba(255, 255, 255, 0.86);
+  --sl-kicker-muted: #FFFFFF;
+
+  /* Inks and surfaces of the cards that components draw on any background. */
+  --sl-ink: #161616;
+  --sl-ink-2: #4F4D49;
+  --sl-ink-3: #6B6964;
+  --sl-ink-4: #8F8D88;
+  --sl-card: #FFFFFF;
+  --sl-card-alt: #F6F5F1;
+  --sl-line: #E6E4DF;
+  --sl-line-2: #D6D4CF;
+  --sl-line-3: #BDBBB6;
+  --sl-blue: #2F6BFF;
+  --sl-blue-ink: #1F4FD6;
+  --sl-blue-soft: #EAF0FF;
+  --sl-blue-tint: #F3F6FF;
+  --sl-on-blue: #FFFFFF;
+  --sl-cyan: #3FC5F0;
+  --sl-cyan-ink: #0A6F94;
+  --sl-cyan-soft: #E3F5FC;
+  --sl-cyan-tint: #EEF9FD;
+  --sl-cyan-line: #BDE9F8;
+  --sl-green: #12B886;
+  --sl-green-ink: #0B7A5A;
+  --sl-green-soft: #DDF4EC;
+  --sl-amber: #F5B800;
+  --sl-amber-ink: #946600;
+  --sl-amber-soft: #FFF4D1;
+  --sl-amber-mid: #FFE6A0;
+  --sl-red: #E03131;
+  --sl-red-ink: #C92A2A;
+  --sl-red-soft: #FFE3E3;
+  --sl-slate: #9AA4B8;
+  --sl-white: #FFFFFF;
+  --sl-white-35: rgba(255, 255, 255, 0.35);
+  --sl-white-80: rgba(255, 255, 255, 0.8);
+  --sl-video: #161616;
+  --sl-video-2: #1F2A44;
+  --sl-video-bar: rgba(0, 0, 0, 0.65);
+  --sl-play-bg: rgba(255, 255, 255, 0.92);
+  --sl-blue-halo: rgba(47, 107, 255, 0.28);
+  --sl-scrim: rgba(22, 22, 22, 0.78);
+  --sl-shadow: rgba(0, 0, 0, 0.1);
+  --sl-shadow-2: rgba(0, 0, 0, 0.2);
+  --sl-foot: #8F8D88;
+  --sl-cover-gradient: linear-gradient(120deg, #FBFAF7 50%, #E3F5FC 100%);
+
+  /* Defaults for content outside a slide surface (thumbnails of the palette, tests). */
+  --sl-fg: var(--sl-on-surface);
+  --sl-fg-2: var(--sl-on-surface-2);
+  --sl-kicker: var(--sl-kicker-surface);
+}
+
+.slide-surface {
+  position: absolute;
+  inset: 0;
+  /* The elements of a slide stack among themselves only. */
+  isolation: isolate;
+  container-type: inline-size;
+  overflow: hidden;
+  color: var(--sl-fg);
+  font-family: Lexend, system-ui, sans-serif;
+  text-align: left;
+}
+
+.slide-foot {
+  position: absolute;
+  left: 7cqw;
+  right: 7cqw;
+  bottom: 2.4cqw;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.15cqw;
+  color: var(--sl-foot);
+  pointer-events: none;
+}

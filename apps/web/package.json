@@ -1,0 +1,31 @@
+{
+  "name": "@lumia/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Lumia Studio web editor (Vue 3 + Vite): content tree, slide canvas, properties, timeline and preview.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -p tsconfig.json --noEmit && vite build",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@ag-ui/client": "1.0.3",
+    "@ag-ui/core": "1.0.3",
+    "@lumia/packages": "*",
+    "aws-amplify": "6.22.2",
+    "fflate": "0.8.3",
+    "vue": "3.5.44",
+    "vue-router": "5.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@vitejs/plugin-vue": "6.0.10",
+    "@vue/test-utils": "2.5.1",
+    "happy-dom": "21.0.4",
+    "vite": "8.3.5",
+    "vue-tsc": "3.3.14"
+  }
+}

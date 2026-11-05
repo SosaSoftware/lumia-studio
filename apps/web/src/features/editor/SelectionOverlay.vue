@@ -1,0 +1,84 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import type { SlideElement } from '../../api/types.ts';
+import { DragSession } from './drag-session.ts';
+import { RESIZE_HANDLES } from './geometry.ts';
+import type { Geometry, ResizeHandle } from './geometry.ts';
+
+/**
+ * Outline and the eight resize handles of the selected element. They live outside the clipped slide surface,
+ * so an element that touches the edge of the slide can still be resized.
+ */
+const props = defineProps<{ element: SlideElement; slideWidth: () => number }>();
+const emit = defineEmits<{ geometry: [id: string, geometry: Geometry] }>();
+
+const HANDLE_LABELS: Record<ResizeHandle, string> = {
+  nw: 'noroeste',
+  n: 'norte',
+  ne: 'noreste',
+  e: 'este',
+  se: 'sureste',
+  s: 'sur',
+  sw: 'suroeste',
+  w: 'oeste',
+};
+
+let session: DragSession | null = null;
+let origin = { x: 0, y: 0 };
+const box = computed(() => ({ left: `${String(props.element.x)}cqw`, top: `${String(props.element.y)}cqw`, width: `${String(props.element.w)}cqw`, height: `${String(props.element.h)}cqw` }));
+
+function onPointerDown(event: PointerEvent, handle: ResizeHandle): void {
+  if (event.button !== 0) return;
+  event.stopPropagation();
+  event.preventDefault();
+  session = new DragSession({ kind: 'resize', handle }, { x: props.element.x, y: props.element.y, w: props.element.w, h: props.element.h }, props.slideWidth());
+  origin = { x: event.clientX, y: event.clientY };
+  if (event.currentTarget instanceof Element) event.currentTarget.setPointerCapture(event.pointerId);
+}
+
+function onPointerMove(event: PointerEvent): void {
+  if (session === null) return;
+  const next = session.update(event.clientX - origin.x, event.clientY - origin.y);
+  if (session.isDrag) emit('geometry', props.element.id, next);
+}
+
+function onPointerUp(event: PointerEvent): void {
+  if (event.currentTarget instanceof Element && event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  session = null;
+}
+</script>
+
+<template>
+  <div class="overlay" aria-hidden="true">
+    <div class="box" :style="box">
+      <!-- mousedown.prevent keeps the keyboard focus on the element while resizing. -->
+      <span
+        v-for="handle in RESIZE_HANDLES"
+        :key="handle"
+        class="handle"
+        :data-handle="handle"
+        :data-testid="`handle-${handle}`"
+        :title="`Cambiar el tamaño (${HANDLE_LABELS[handle]})`"
+        @mousedown.prevent
+        @pointerdown="onPointerDown($event, handle)"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @pointercancel="onPointerUp"
+      ></span>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.box { position: absolute; box-sizing: border-box; }
+.handle { position: absolute; width: 8px; height: 8px; box-sizing: border-box; background: var(--s-on-active); border: 1.5px solid var(--s-active); border-radius: 2px; transform: translate(-50%, -50%); pointer-events: auto; touch-action: none; }
+.handle[data-handle='nw'] { left: -0.5cqw; top: -0.5cqw; cursor: nwse-resize; }
+.handle[data-handle='n'] { left: 50%; top: -0.5cqw; cursor: ns-resize; }
+.handle[data-handle='ne'] { left: calc(100% + 0.5cqw); top: -0.5cqw; cursor: nesw-resize; }
+.handle[data-handle='e'] { left: calc(100% + 0.5cqw); top: 50%; cursor: ew-resize; }
+.handle[data-handle='se'] { left: calc(100% + 0.5cqw); top: calc(100% + 0.5cqw); cursor: nwse-resize; }
+.handle[data-handle='s'] { left: 50%; top: calc(100% + 0.5cqw); cursor: ns-resize; }
+.handle[data-handle='sw'] { left: -0.5cqw; top: calc(100% + 0.5cqw); cursor: nesw-resize; }
+.handle[data-handle='w'] { left: -0.5cqw; top: 50%; cursor: ew-resize; }
+</style>

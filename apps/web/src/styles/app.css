@@ -1,0 +1,206 @@
+/*
+ * Constants of the Studio designs that do not change with the theme (primary action, Lumi's colors, status tints,
+ * timeline clips). Components use these variables instead of literal colors.
+ */
+:root {
+  --s-on-active: #FFFFFF;
+  --s-active-hover: #1F57E6;
+  --s-active-soft: rgba(47, 107, 255, 0.16);
+  --s-active-ring: rgba(47, 107, 255, 0.7);
+  --s-lumi: #2F6BFF;
+  --s-lumi-dots: #3FC5F0;
+  --s-lumi-dots-on: #A5E8FF;
+  --s-user-bubble: rgba(47, 107, 255, 0.18);
+  --s-badge-bg: linear-gradient(180deg, #BDBBB6 0%, #A8A6A1 100%);
+  --s-badge-fg: #1C1C1B;
+  --s-warn-bg: rgba(245, 184, 0, 0.14);
+  --s-ok-bg: rgba(18, 184, 134, 0.14);
+  --s-danger-bg: rgba(255, 135, 135, 0.12);
+  --s-suggest: #3FC5F0;
+  --s-suggest-bg: rgba(63, 197, 240, 0.12);
+  --s-thumb-overlay: rgba(22, 22, 22, 0.82);
+  --s-thumb-overlay-fg: #F0EEE9;
+  --s-stage-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+
+  /* Timeline tracks and clips, as in S2.3. */
+  --tl-trans: #12B886;
+  --tl-trans-bg: rgba(18, 184, 134, 0.24);
+  --tl-el: #2F6BFF;
+  --tl-el-bg: rgba(47, 107, 255, 0.24);
+  --tl-narr: #3FC5F0;
+  --tl-narr-bg: repeating-linear-gradient(90deg, rgba(63, 197, 240, 0.45) 0 2px, rgba(63, 197, 240, 0.16) 2px 5px);
+  --tl-audio: #7C9CFF;
+  --tl-audio-bg: repeating-linear-gradient(90deg, rgba(124, 156, 255, 0.45) 0 2px, rgba(124, 156, 255, 0.16) 2px 5px);
+  --tl-pause: #F5B800;
+  --tl-pause-bg: repeating-linear-gradient(135deg, rgba(245, 184, 0, 0.34) 0 6px, rgba(245, 184, 0, 0.12) 6px 12px);
+  --tl-text: #2F6BFF;
+  --tl-media: #3FC5F0;
+  --tl-shapes: #12B886;
+  --tl-interactive: #F5B800;
+  --tl-questions: #FF8787;
+  --tl-ai: #A5C0FF;
+}
+
+[data-lumi-highlight] {
+  outline: 2px solid var(--s-lumi-dots) !important;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-lumi-highlight] { animation: lumi-glow 1.5s ease-in-out 2; }
+}
+
+@keyframes lumi-glow {
+  0%, 100% { outline-color: var(--s-lumi-dots); }
+  50% { outline-color: var(--s-lumi); }
+}
+
+/* Lumi's "Pulso" animation (assets/Loader.md). */
+.lumi-c { transform-box: fill-box; transform-origin: center; }
+.lumi-pulso-dots circle { opacity: 0.25; }
+@media (prefers-reduced-motion: no-preference) {
+  .lumi-pulso-star { animation: lumi-breathe 1.6s ease-in-out infinite; }
+  .lumi-pulso-dots circle { animation: lumi-blink 1.2s ease-in-out infinite; }
+  .lumi-pulso-dots circle:nth-child(2) { animation-delay: 0.2s; }
+  .lumi-pulso-dots circle:nth-child(3) { animation-delay: 0.4s; }
+  .lumi-pulso-dots circle:nth-child(4) { animation-delay: 0.6s; }
+  .lumi-pulso-dots circle:nth-child(5) { animation-delay: 0.8s; }
+  .lumi-pulso-dots circle:nth-child(6) { animation-delay: 1s; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lumi-pulso-dots circle { opacity: 1; }
+}
+@keyframes lumi-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.8); } }
+@keyframes lumi-blink { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+
+/* Design-system pieces that several panels share. */
+.s-menu {
+  position: absolute;
+  z-index: 40;
+  box-sizing: border-box;
+  padding: 4px;
+  background: var(--s-raised);
+  border: 1px solid var(--s-border);
+  border-radius: 8px;
+  box-shadow: 0 14px 36px var(--s-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.s-badge {
+  min-width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 0 3px;
+  flex: none;
+  border-radius: 5px;
+  background: var(--s-badge-bg);
+  color: var(--s-badge-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.s-check {
+  display: flex;
+  color: var(--s-accent-fg);
+}
+
+.s-panel-head {
+  flex: none;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 14px;
+}
+
+.s-panel-head h2 {
+  margin: 0;
+}
+
+.s-identity {
+  flex: none;
+  margin: 0 12px 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--s-raised);
+  border: 1px solid var(--s-border);
+  border-radius: 8px;
+}
+
+.s-identity-num {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 7px;
+  background: var(--s-active);
+  color: var(--s-on-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.s-identity-meta {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.s-identity-where {
+  font-size: 11px;
+  color: var(--s-text-2);
+}
+
+.s-identity-title {
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.s-identity-pill {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--s-border);
+  font-size: 11px;
+  color: var(--s-text-2);
+}
+
+/* Properties panel (S2.3): sections, labels, value boxes and lists. */
+.prop-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0 12px 16px; display: flex; flex-direction: column; gap: 16px; }
+.prop-sec { display: flex; flex-direction: column; gap: 8px; }
+.prop-sec > h3 { margin: 0; padding: 4px 2px 0; }
+.prop-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.prop-label { font-size: 12px; color: var(--s-text-2); }
+.prop-label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.prop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.prop-hint { font-size: 11px; line-height: 1.4; color: var(--s-text-2); }
+.prop-hint.error { color: var(--s-danger); }
+.prop-error { font-size: 12px; color: var(--s-danger); }
+.prop-control { width: 100%; color: var(--s-text); font: inherit; font-size: 12px; }
+.prop-control:focus { outline: none; border-color: var(--s-active); }
+.prop-control[aria-invalid='true'] { border-color: var(--s-danger); }
+select.prop-control { cursor: pointer; }
+.prop-list { display: flex; flex-direction: column; gap: 2px; }
+.prop-list .mi { min-height: 30px; gap: 8px; font-size: 12px; }
+.prop-list-dot { width: 8px; height: 8px; flex: none; border-radius: 2px; }
+.prop-list-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prop-list-time { flex: none; color: var(--s-text-2); font-variant-numeric: tabular-nums; }
+.prop-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.prop-buttons .pub[aria-disabled='true'], .prop-buttons .prv[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; }
+.prop-danger { align-self: flex-start; padding: 0; background: transparent; border: 0; color: var(--s-danger); font: inherit; font-size: 12px; cursor: pointer; }
+.prop-danger:focus-visible { outline: 2px solid var(--s-active); outline-offset: 2px; }
+.prop-readonly { color: var(--s-text-2); }
