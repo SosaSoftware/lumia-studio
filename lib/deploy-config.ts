@@ -14,6 +14,8 @@ export interface DeployConfig {
   readonly database: DatabaseCapacity;
   /** AG-UI endpoint of Lumi for the web; null while Lumi is not deployed. */
   readonly lumiUrl: string | null;
+  /** ARN of the AgentCore Runtime that runs Lumi; null until the other agent deploys it. */
+  readonly lumiRuntimeArn: string | null;
 }
 
 export class DeployConfigError extends Error {
@@ -74,9 +76,14 @@ export function readDeployConfig(env: Env): DeployConfig {
   const minAcu = acu(env, 'LUMIA_DB_MIN_ACU', 0, 0);
   const maxAcu = acu(env, 'LUMIA_DB_MAX_ACU', 1, 1);
   if (maxAcu < minAcu) throw new DeployConfigError('LUMIA_DB_MAX_ACU', 'must be greater than or equal to LUMIA_DB_MIN_ACU.');
+  const runtimeArn = value(env, 'LUMIA_LUMI_RUNTIME_ARN');
+  if (runtimeArn !== undefined && !/^arn:aws[a-z-]*:bedrock-agentcore:/.test(runtimeArn)) {
+    throw new DeployConfigError('LUMIA_LUMI_RUNTIME_ARN', 'must be an AgentCore Runtime ARN.');
+  }
   return {
     env: { ...(account === undefined ? {} : { account }), ...(region === undefined ? {} : { region }) },
     database: { minAcu, maxAcu, autoPauseMinutes: minutes(env, 'LUMIA_DB_AUTO_PAUSE_MINUTES', 5) },
     lumiUrl: lumiUrl(env),
+    lumiRuntimeArn: runtimeArn ?? null,
   };
 }
