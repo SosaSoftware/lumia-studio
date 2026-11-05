@@ -54,6 +54,8 @@ export class LumiaStudioAgentRuntimeStack extends Stack {
       lifecycleConfiguration: { idleRuntimeSessionTimeout: IDLE_SESSION_TIMEOUT },
       // The entry gateway forwards the person's Authorization; the runtime validates it again and reads the identity.
       requestHeaderConfiguration: { allowlistedHeaders: ['Authorization'] },
+      // Validate the person's Cognito access token by client id (the token carries no audience). The runtime must use
+      // JWT so it can forward the Authorization header to the agent, which decodes the token to read the identity.
       authorizerConfiguration: agentcore.RuntimeAuthorizerConfiguration.usingJWT(discoveryUrl, [props.webClient.userPoolClientId]),
       // tracingEnabled needs an account-level X-Ray setting; application logs in CloudWatch do not.
       tracingEnabled: false,
@@ -65,6 +67,8 @@ export class LumiaStudioAgentRuntimeStack extends Stack {
         LUMI_MCP_URL: props.gateways.mcpGatewayUrl,
         LUMI_MCP_TOKEN_HEADER: STUDIO_TOKEN_HEADER,
         LUMI_SESSION_BUCKET: sessions.bucketName,
+        // No AgentCore long-term memory for the MVP; preferences live in the container's writable storage.
+        LUMI_MEMORY_DIR: '/tmp/lumi-memory',
       },
     });
     this.runtimeArn = this.runtime.agentRuntimeArn;

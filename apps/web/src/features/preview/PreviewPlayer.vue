@@ -46,6 +46,8 @@ const root = ref<HTMLElement | null>(null);
 const reducedMotion = ref(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 const played = new Set<string>();
 const sounds = new Map<string, HTMLAudioElement>();
+/** One audio element unlocked inside the first user gesture, so playback started later by the clock is allowed. */
+let audioUnlock: HTMLAudioElement | null = null;
 let timer: ReturnType<typeof setInterval> | undefined;
 let lastTick = 0;
 let opener: Element | null = null;
@@ -119,6 +121,21 @@ function playSound(id: string, url: string, offset: number, rate: number, volume
   sounds.set(id, sound);
   sound.play().catch(() => {
     // Without permission to play audio the slide continues silently.
+  });
+}
+
+/**
+ * Grants the page audio permission while the user gesture is still active. Browsers only allow audio that starts
+ * inside a click; the narration of a slide usually starts a second later, from the clock, which the browser would
+ * otherwise block. Playing a muted element now unlocks those later sounds.
+ */
+function unlockAudio(): void {
+  if (audioUnlock !== null) return;
+  const element = new Audio();
+  element.muted = true;
+  audioUnlock = element;
+  element.play().catch(() => {
+    // Some browsers need no unlock, or block even this; the slide then falls back to silent playback.
   });
 }
 
@@ -244,6 +261,7 @@ watch(index, start);
 /** Starts the clock and the sound; the demo calls it from its own button, after a click, so audio can play. */
 function play(): void {
   if (running.value) return;
+  unlockAudio();
   running.value = true;
   lastTick = Date.now();
   syncSounds(slide.value ?? ({ narrationClips: [], audioClips: [] } as unknown as Slide));

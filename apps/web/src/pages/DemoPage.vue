@@ -19,9 +19,16 @@ function isQuestion(component: string): boolean {
 }
 
 const player = useTemplateRef<{ play: () => void }>('player');
+const started = ref(false);
 
-/** The page does not play on its own (browsers block audio until a click); the button you add calls this. */
+/**
+ * Starts the player on the person's first interaction with the demo. Browsers block audio until a user gesture, and
+ * the class clock (and so its narration) only runs once started, so this runs inside that first click or key press.
+ * Any interaction counts, including the demo's own "Empezar" button inside the slide.
+ */
 function start(): void {
+  if (started.value) return;
+  started.value = true;
   player.value?.play();
 }
 
@@ -51,7 +58,7 @@ onBeforeUnmount(() => {
     <header class="head">
       <img :src="logo" alt="Lumia Studio" class="logo" data-testid="demo-logo" />
     </header>
-    <section class="content">
+    <section class="content" @pointerdown.capture="start" @keydown.capture="start">
       <PreviewPlayer v-if="lesson" ref="player" :slides="lesson.slides" :media="lesson.media" :class-name="lesson.displayName" :is-question="isQuestion" :chrome="false" :auto-start="false" />
       <p v-else-if="failure" class="state" role="status" data-testid="demo-unavailable">{{ failure }}</p>
       <div v-else class="state" role="progressbar" aria-label="Cargando la demo" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="Math.round(progress * 100)" data-testid="demo-loading">
