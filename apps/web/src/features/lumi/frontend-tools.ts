@@ -61,33 +61,46 @@ export const TOOL_DECLARATIONS: readonly ToolDeclaration[] = [
   },
   {
     name: 'confirm_change',
-    description: 'Pide a la persona que confirme una acción antes de ejecutarla. Úsala antes de cualquier borrado y describe exactamente qué se va a afectar.',
+    description: 'Pide a la persona que confirme los cambios antes de ejecutarlos. Lista cada llamada con su herramienta y sus argumentos exactos.',
     parameters: {
       type: 'object',
       properties: {
         message: { type: 'string', minLength: 1, maxLength: 300, description: 'Pregunta de confirmación en una frase.' },
-        action: {
-          type: 'string',
-          minLength: 1,
-          description: 'Nombre exacto de la herramienta que ejecutarás si la persona confirma, por ejemplo studio-slides___delete_slide.',
-        },
-        targets: {
+        changes: {
           type: 'array',
           minItems: 1,
           maxItems: 20,
-          description: 'Lo que la acción va a afectar.',
+          description: 'Un elemento por cada llamada que ejecutarás si la persona confirma.',
           items: {
             type: 'object',
             properties: {
-              kind: { type: 'string', enum: ['slide', 'element', 'narration', 'audio_clip', 'pause'] },
-              id: { type: 'string', minLength: 1, description: 'Id que recibirá la herramienta.' },
-              label: { type: 'string', minLength: 1, maxLength: 120, description: 'Cómo lo ve la persona, por ejemplo el título de la diapositiva.' },
+              action: {
+                type: 'string',
+                minLength: 1,
+                description: 'Nombre exacto de la herramienta que ejecutarás, por ejemplo studio-slides___delete_slide.',
+              },
+              summary: { type: 'string', minLength: 1, maxLength: 300, description: 'Qué cambia, en el idioma de la persona.' },
+              arguments: { type: 'object', description: 'Argumentos exactos que enviarás a la herramienta.' },
+              targets: {
+                type: 'array',
+                maxItems: 20,
+                description: 'Diapositivas, componentes o elementos de la línea de tiempo existentes que el cambio afecta.',
+                items: {
+                  type: 'object',
+                  properties: {
+                    kind: { type: 'string', enum: ['slide', 'element', 'narration', 'audio_clip', 'pause'] },
+                    id: { type: 'string', minLength: 1, description: 'Id que recibirá la herramienta.' },
+                    label: { type: 'string', minLength: 1, maxLength: 120, description: 'Cómo lo ve la persona, por ejemplo el título de la diapositiva.' },
+                  },
+                  required: ['kind', 'id', 'label'],
+                },
+              },
             },
-            required: ['kind', 'id', 'label'],
+            required: ['action', 'summary', 'arguments'],
           },
         },
       },
-      required: ['message', 'action', 'targets'],
+      required: ['message', 'changes'],
     },
   },
 ];

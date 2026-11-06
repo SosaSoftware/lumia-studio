@@ -17,6 +17,10 @@ export interface StudioMcpTarget {
 
 export interface StudioMcpGatewayProps {
   readonly targets: readonly StudioMcpTarget[];
+  /** Cognito user pool discovery URL of Lumia Studio. */
+  readonly discoveryUrl: string;
+  /** Web client id of Studio; tokens of other clients are rejected. */
+  readonly allowedClientIds: readonly string[];
 }
 
 /** The input schema of a tool, as the gateway L1 takes it. */
@@ -35,16 +39,15 @@ function toolDefinition(tool: GatewayToolSchema): agentcore.CfnGatewayTarget.Too
 }
 
 /**
- * The internal AgentCore Gateway that exposes the Studio MCP tools to Lumi. Its inbound auth is AWS_IAM: the Lumi
- * runtime calls it signing with its own role. The runtime passes the person's token in the `STUDIO_TOKEN_HEADER`,
- * which the gateway propagates to the tool Lambdas, and each tool calls the Studio API with it, so Studio applies
- * the person's permissions. The tools come from `LumiaStudioMcpStack`. The public, per-person auth is at the entry
- * gateway, not here.
+ * The AgentCore Gateway that exposes the Studio MCP tools to Lumi. Its inbound auth is CUSTOM_JWT: Lumi forwards the
+ * person's Cognito access token in `Authorization`, and the gateway validates it against the Studio user pool. Lumi
+ * also sends the token in the `STUDIO_TOKEN_HEADER`, which the gateway propagates to the tool Lambdas, and each tool
+ * calls the Studio API with it, so Studio applies the person's permissions. The tools come from `LumiaStudioMcpStack`.
  */
 export class StudioMcpGateway extends Construct {
   public readonly gateway: agentcore.CfnGateway;
   public readonly role: iam.Role;
-  /** ARN of the gateway; the Lumi runtime needs `bedrock-agentcore:InvokeGateway` on it. */
+  /** ARN of the gateway. */
   public readonly gatewayArn: string;
   /** MCP endpoint Lumi connects to. */
   public readonly url: string;
@@ -64,12 +67,13 @@ export class StudioMcpGateway extends Construct {
     });
 
     this.gateway = new agentcore.CfnGateway(this, 'Gateway', {
-      name: 'lumia-studio-mcp',
-      description: 'Studio MCP tools for Lumi; the runtime calls it signing with its role',
+      name: 'lumia-studio-tools',
+      description: 'Studio MCP tools for Lumi; the runtime forwards the token of the person',
       roleArn: this.role.roleArn,
       protocolType: 'MCP',
-      // The caller is the Lumi runtime, which signs with its role; there is no identity provider to consult.
-      authorizerType: 'AWS_IAM',
+      // AgentCore rejects a change of authorizer type on an existing gateway: changing it needs a new logical id and name.
+      authorizerType: 'CUSTOM_JWT',
+      authorizerConfiguration: { customJwtAuthorizer: { discoveryUrl: props.discoveryUrl, allowedClients: [...props.allowedClientIds] } },
       exceptionLevel: 'DEBUG',
     });
     this.gatewayArn = this.gateway.attrGatewayArn;
@@ -93,10 +97,5 @@ export class StudioMcpGateway extends Construct {
     }
 
     this.url = `https://${this.gateway.attrGatewayIdentifier}.gateway.bedrock-agentcore.${stack.region}.amazonaws.com/mcp`;
-  }
-
-  /** Lets a principal (the Lumi runtime) invoke this gateway. */
-  public grantInvoke(grantee: iam.IGrantable): void {
-    grantee.grantPrincipal.addToPrincipalPolicy(new iam.PolicyStatement({ actions: ['bedrock-agentcore:InvokeGateway'], resources: [this.gatewayArn] }));
   }
 }

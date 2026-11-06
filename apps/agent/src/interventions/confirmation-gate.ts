@@ -137,6 +137,8 @@ export class ConfirmationGate extends InterventionHandler {
           const request = this.requestSchema.safeParse(block.input);
           if (request.success) {
             requests.set(block.toolUseId, request.data.changes);
+          } else {
+            this.logger.warn('Confirmation ignored: invalid request', { toolUseId: block.toolUseId, fields: request.error.issues.map((issue) => issue.path.map(String).join('.')) });
           }
         } else if (block.type === 'toolResultBlock') {
           const answer = ConfirmAnswer.safeParse(toolResultJson(block));

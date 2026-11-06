@@ -30,6 +30,9 @@ const result = await build({
   chunkNames: 'chunks/[name]-[hash]',
   bundle: true,
   platform: 'node',
+  // ES builds first: a chunk made from a CommonJS package exports only `default`, so the named exports that the
+  // Strands SDK reads from `import('@aws-sdk/client-s3')` would be undefined.
+  mainFields: ['module', 'main'],
   format: 'esm',
   target: 'node22',
   external: ABSENT_OPTIONAL_PEERS,

@@ -89,7 +89,9 @@ function conflict(): never {
   throw new Error('HTTP 409: RetryableConflictException');
 }
 
-const DELETE_SLIDE = { message: '¿Borro la portada?', action: 'studio-slides___delete_slide', targets: [{ kind: 'slide', id: 'sl1', label: 'Portada' }] };
+const COVER = { kind: 'slide', id: 'sl1', label: 'Portada' };
+const DELETE_CHANGE = { action: 'studio-slides___delete_slide', summary: 'Borra la portada', arguments: { nodeId: 'n1', slideId: 'sl1' }, targets: [COVER] };
+const DELETE_SLIDE = { message: '¿Borro la portada?', changes: [DELETE_CHANGE] };
 
 function toolResults(): unknown[] {
   return (fake.agents[0]?.messages ?? []).filter((message) => message.role === 'tool').map((message): unknown => JSON.parse(String(message.content)));
@@ -163,7 +165,7 @@ describe('Lumi session', () => {
       await vi.waitFor(() => {
         expect(lumi.state.awaitingConfirmation).toBe(true);
       });
-      expect(lumi.state.items.at(-1)).toMatchObject({ type: 'confirm', confirmState: 'pending', action: DELETE_SLIDE.action, targets: DELETE_SLIDE.targets });
+      expect(lumi.state.items.at(-1)).toMatchObject({ type: 'confirm', confirmState: 'pending', action: DELETE_CHANGE.action, summaries: [DELETE_CHANGE.summary], targets: [COVER] });
       lumi.answerConfirm(true);
       await turn;
       expect(toolResults()).toEqual([{ confirmed: true }]);
@@ -191,14 +193,14 @@ describe('Lumi session', () => {
 
     it('does not show a card for invalid arguments or a target that is not in the class, and says why', async () => {
       const lumi = session();
-      fake.runs.push(toolCall('confirm_change', { ...DELETE_SLIDE, targets: [{ kind: 'slide', id: 'otra', label: 'Otra' }] }));
+      fake.runs.push(toolCall('confirm_change', { ...DELETE_SLIDE, changes: [{ ...DELETE_CHANGE, targets: [{ kind: 'slide', id: 'otra', label: 'Otra' }] }] }));
       await lumi.sendMessage('Borra otra diapositiva');
-      fake.runs.push(toolCall('confirm_change', { message: '¿Borro?', targets: DELETE_SLIDE.targets }));
+      fake.runs.push(toolCall('confirm_change', { message: '¿Borro?', changes: [{ summary: DELETE_CHANGE.summary, arguments: DELETE_CHANGE.arguments }] }));
       await lumi.sendMessage('Borra la portada');
       expect(lumi.state.items.some((item) => item.type === 'confirm')).toBe(false);
       expect(toolResults()).toEqual([
         { confirmed: false, error: 'targets: slide otra no está en la clase abierta.' },
-        { confirmed: false, error: 'action: indica la herramienta que se ejecutará al confirmar.' },
+        { confirmed: false, error: 'changes: cada cambio necesita action con la herramienta que se ejecutará.' },
       ]);
     });
 
@@ -215,9 +217,10 @@ describe('Lumi session', () => {
       const lumi = session();
       lumi.init('u1');
       const threadId = '11111111-2222-3333-4444-555555555555';
-      localStorage.setItem(`lumia.studio.lumi.u1.thread.${threadId}`, JSON.stringify([{ id: 'c1', type: 'confirm', content: '¿Borro la portada?', confirmState: 'pending', ...DELETE_SLIDE }]));
+      const card = { id: 'c1', type: 'confirm', content: '¿Borro la portada?', confirmState: 'pending', action: DELETE_CHANGE.action, summaries: [DELETE_CHANGE.summary], targets: [COVER] };
+      localStorage.setItem(`lumia.studio.lumi.u1.thread.${threadId}`, JSON.stringify([card]));
       lumi.switchConversation(threadId);
-      expect(lumi.state.items).toMatchObject([{ type: 'confirm', confirmState: 'expired', targets: DELETE_SLIDE.targets }]);
+      expect(lumi.state.items).toMatchObject([{ type: 'confirm', confirmState: 'expired', summaries: [DELETE_CHANGE.summary], targets: [COVER] }]);
       expect(lumi.state.awaitingConfirmation).toBe(false);
     });
   });

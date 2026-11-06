@@ -220,6 +220,7 @@ export class AguiServer {
       return await this.options.registry.acquire(caller, threadId);
     } catch (error) {
       if (error instanceof UnauthenticatedError) {
+        this.options.logger.warn('Studio rejected the session', { reason: error.message });
         throw new HttpError(401, 'unauthenticated', 'Studio rejected the session.');
       }
       if (error instanceof StudioUnavailableError || error instanceof ThreadCapacityError) {

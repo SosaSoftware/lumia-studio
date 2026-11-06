@@ -111,8 +111,12 @@ describe('Lumia Studio app', () => {
     template.web.hasOutput('DemoFileKey', { Value: 'demo-content/demo.lumia' });
   });
 
-  it('exposes an IAM MCP gateway for Lumi over the four tool Lambdas, propagating the person token header', () => {
-    template.lumi.hasResourceProperties('AWS::BedrockAgentCore::Gateway', { ProtocolType: 'MCP', AuthorizerType: 'AWS_IAM' });
+  it('exposes a JWT MCP gateway for Lumi over the four tool Lambdas, propagating the person token header', () => {
+    template.lumi.hasResourceProperties('AWS::BedrockAgentCore::Gateway', {
+      ProtocolType: 'MCP',
+      AuthorizerType: 'CUSTOM_JWT',
+      AuthorizerConfiguration: { CustomJWTAuthorizer: Match.objectLike({ AllowedClients: Match.anyValue() }) },
+    });
     template.lumi.resourceCountIs('AWS::BedrockAgentCore::GatewayTarget', Object.keys(MCP_TARGETS).length);
     template.lumi.allResourcesProperties('AWS::BedrockAgentCore::GatewayTarget', {
       CredentialProviderConfigurations: [{ CredentialProviderType: 'GATEWAY_IAM_ROLE' }],
@@ -147,9 +151,9 @@ describe('Lumia Studio app', () => {
     });
     // No memory resource for the MVP.
     rt.resourceCountIs('AWS::BedrockAgentCore::Memory', 0);
-    // The runtime role can invoke the MCP gateway and the model.
+    // The runtime role can invoke the model; it reaches the MCP gateway with the token of the person, not with its role.
     const policies = JSON.stringify(rt.findResources('AWS::IAM::Policy'));
-    expect(policies).toContain('bedrock-agentcore:InvokeGateway');
+    expect(policies).not.toContain('bedrock-agentcore:InvokeGateway');
     expect(policies).toContain('bedrock:InvokeModel');
   });
 

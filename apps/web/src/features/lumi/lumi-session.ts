@@ -29,8 +29,10 @@ export interface ChatItem {
   /** Second line of an error: the technical reason, when there is one. */
   detail?: string;
   confirmState?: ConfirmState;
-  /** Tool Lumi runs when the person confirms, e.g. `studio-slides___delete_slide`. */
+  /** Tool Lumi runs when the person confirms, e.g. `studio-slides___delete_slide`; a deletion when any change is one. */
   action?: string;
+  /** What each change of a confirmation does, in the person's language. */
+  summaries?: string[];
   targets?: ConfirmTarget[];
 }
 
@@ -86,6 +88,8 @@ const MAX_TRANSCRIPT_ITEMS = 80;
 const THINKING = 'Lumi está pensando…';
 const NOT_CONNECTED = 'No se pudo conectar con Lumi. Revisa que el servicio esté disponible e intenta de nuevo.';
 const MAX_TARGETS = 20;
+/** Same limit as `maxChangesPerConfirmation` in the confirmation policy of the agent. */
+const MAX_CHANGES = 20;
 const UNAVAILABLE = 'Lumi no pudo responder en este momento. Intenta de nuevo.';
 
 function uuid(): string {
@@ -174,6 +178,36 @@ function readTargets(value: unknown): ConfirmTarget[] | null {
     targets.push({ kind, id, label });
   }
   return targets;
+}
+
+/** What one change of a confirmation shows to the person. */
+interface ConfirmChange {
+  action: string;
+  summary: string;
+  targets: ConfirmTarget[];
+}
+
+/**
+ * Reads the changes of a confirmation, or the reason why they are not valid. The consent gate of the agent ignores a
+ * confirmation that does not hold `action`, `summary` and `arguments` in every change, so asking for it would be useless.
+ */
+function readChanges(value: unknown): ConfirmChange[] | { error: string } {
+  const entries = list(value);
+  if (entries.length === 0 || entries.length > MAX_CHANGES) return { error: `changes: indica de 1 a ${String(MAX_CHANGES)} cambios.` };
+  const changes: ConfirmChange[] = [];
+  for (const entry of entries) {
+    const item = rec(entry);
+    const action = str(item.action).trim();
+    const summary = str(item.summary).trim();
+    if (action === '') return { error: 'changes: cada cambio necesita action con la herramienta que se ejecutará.' };
+    if (summary === '') return { error: 'changes: cada cambio necesita summary con lo que cambia.' };
+    if (asRecord(item.arguments) === null) return { error: 'changes: cada cambio necesita arguments con los argumentos exactos.' };
+    if (list(item.targets).length > MAX_TARGETS) return { error: `targets: indica hasta ${String(MAX_TARGETS)} elementos por cambio.` };
+    const targets = readTargets(item.targets);
+    if (targets === null) return { error: 'targets: cada elemento necesita kind, id y label válidos.' };
+    changes.push({ action, summary, targets });
+  }
+  return changes;
 }
 
 function wait(ms: number): Promise<void> {
@@ -301,6 +335,8 @@ export class LumiSession {
         if (type === 'confirm') {
           restored.confirmState = value.confirmState === 'yes' || value.confirmState === 'no' ? value.confirmState : 'expired';
           if (typeof value.action === 'string') restored.action = value.action;
+          const summaries = list(value.summaries).filter((summary) => typeof summary === 'string');
+          if (summaries.length > 0) restored.summaries = summaries;
           const targets = readTargets(value.targets);
           if (targets !== null && targets.length > 0) restored.targets = targets;
         }
@@ -564,7 +600,7 @@ export class LumiSession {
   private confirmChange(args: ToolArgs): Promise<{ confirmed: boolean; error?: string }> {
     const request = this.confirmRequest(args);
     if ('error' in request) return Promise.resolve({ confirmed: false, error: request.error });
-    this.state.items.push({ id: uuid(), type: 'confirm', content: request.message, confirmState: 'pending', action: request.action, targets: request.targets });
+    this.state.items.push({ id: uuid(), type: 'confirm', content: request.message, confirmState: 'pending', action: request.action, summaries: request.summaries, targets: request.targets });
     this.state.activity = 'Esperando tu confirmación…';
     this.state.awaitingConfirmation = true;
     this.saveTranscript();
@@ -575,18 +611,17 @@ export class LumiSession {
     });
   }
 
-  private confirmRequest(args: ToolArgs): { message: string; action: string; targets: ConfirmTarget[] } | { error: string } {
+  private confirmRequest(args: ToolArgs): { message: string; action: string; summaries: string[]; targets: ConfirmTarget[] } | { error: string } {
     const message = str(args.message).trim();
-    const action = str(args.action).trim();
     if (message === '') return { error: 'message: escribe la pregunta de confirmación.' };
-    if (action === '') return { error: 'action: indica la herramienta que se ejecutará al confirmar.' };
-    const count = list(args.targets).length;
-    if (count === 0 || count > MAX_TARGETS) return { error: `targets: indica de 1 a ${String(MAX_TARGETS)} elementos afectados.` };
-    const targets = readTargets(args.targets);
-    if (targets === null) return { error: 'targets: cada elemento necesita kind, id y label válidos.' };
+    const changes = readChanges(args.changes);
+    if ('error' in changes) return changes;
+    // Several changes can name the same item; the card lists it once.
+    const targets = [...new Map(changes.flatMap((change) => change.targets).map((target) => [`${target.kind}:${target.id}`, target])).values()];
     const slides = this.workspace.session.state.slides;
     const missing = targets.find((target) => !slides.some((slide) => slideHolds(slide, target)));
     if (missing !== undefined) return { error: `targets: ${missing.kind} ${missing.id} no está en la clase abierta.` };
-    return { message, action, targets };
+    const deletion = changes.find((change) => change.action.includes('___delete_'));
+    return { message, action: (deletion ?? changes[0])?.action ?? '', summaries: changes.map((change) => change.summary), targets };
   }
 }

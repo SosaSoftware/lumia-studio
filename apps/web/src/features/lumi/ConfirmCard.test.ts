@@ -9,14 +9,16 @@ const pending: ChatItem = {
   content: '¿Borro la portada?',
   confirmState: 'pending',
   action: 'studio-slides___delete_slide',
+  summaries: ['Borra la portada'],
   targets: [{ kind: 'slide', id: 'sl1', label: 'Portada' }],
 };
 
 describe('ConfirmCard', () => {
-  it('takes the focus, answers with its buttons and Esc, and shows the targets', async () => {
+  it('takes the focus, answers with its buttons and Esc, and shows the summaries and targets', async () => {
     const card = mount(ConfirmCard, { props: { item: pending }, attachTo: document.body });
     await card.vm.$nextTick();
     expect(document.activeElement).toBe(card.element);
+    expect(card.find('[data-testid="confirm-summaries"]').text()).toBe('Borra la portada');
     expect(card.find('[data-testid="confirm-yes"]').classes()).toContain('danger');
     await card.find('[data-testid="confirm-yes"]').trigger('click');
     await card.find('[data-testid="confirm-no"]').trigger('click');

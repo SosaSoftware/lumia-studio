@@ -12,7 +12,7 @@ import { repoPath } from '../paths';
 import type { LumiaStudioAgentStack } from './lumia-studio-agent-stack';
 
 export interface LumiaStudioAgentRuntimeStackProps extends StackProps {
-  /** The gateways stack: the MCP URL Lumi calls and the InvokeGateway grant. */
+  /** The gateways stack: the MCP URL Lumi calls. */
   readonly gateways: LumiaStudioAgentStack;
   /** Studio user pool, to validate the person's token at the runtime (the entry gateway already did once). */
   readonly userPool: cognito.IUserPool;
@@ -26,9 +26,9 @@ const IDLE_SESSION_TIMEOUT = Duration.hours(2);
 
 /**
  * The AgentCore Runtime that runs Lumi, built from `apps/agent`. Lumi reaches the Studio tools through the MCP
- * gateway, signing with this runtime's role and forwarding the person's token in `STUDIO_TOKEN_HEADER`. Conversations
- * are kept in an S3 bucket. No knowledge base or long-term memory for the MVP: Lumi co-creates from its prompt and
- * skills, which live in the agent image.
+ * gateway, forwarding the person's token in `Authorization` and in `STUDIO_TOKEN_HEADER`. Conversations are kept in an
+ * S3 bucket. No knowledge base or long-term memory for the MVP: Lumi co-creates from its prompt and skills, which live
+ * in the agent image.
  */
 export class LumiaStudioAgentRuntimeStack extends Stack {
   public readonly runtime: agentcore.Runtime;
@@ -73,8 +73,7 @@ export class LumiaStudioAgentRuntimeStack extends Stack {
     });
     this.runtimeArn = this.runtime.agentRuntimeArn;
 
-    // Lumi calls the Studio MCP gateway signing with this role, and keeps conversations in the bucket; Bedrock runs the model.
-    props.gateways.grantMcpInvoke(this.runtime);
+    // Lumi keeps conversations in the bucket; Bedrock runs the model.
     sessions.grantReadWrite(this.runtime.grantPrincipal);
     this.runtime.grantPrincipal.addToPrincipalPolicy(
       new iam.PolicyStatement({

@@ -45,6 +45,9 @@ onMounted(() => {
   >
     <span class="card-title">¿Continúo?</span>
     <span class="card-text">{{ item.content }}</span>
+    <ul v-if="item.summaries && item.summaries.length > 0" class="summaries" aria-label="Cambios que se van a aplicar" data-testid="confirm-summaries">
+      <li v-for="(summary, index) in item.summaries" :key="index">{{ summary }}</li>
+    </ul>
     <ul v-if="item.targets && item.targets.length > 0" class="targets" aria-label="Lo que se va a afectar">
       <li v-for="target in item.targets" :key="`${target.kind}:${target.id}`">
         <button type="button" class="target" :title="`Ver ${KIND_NAMES[target.kind]} en el editor`" :data-testid="`confirm-target-${target.id}`" @click="emit('show', target)">
@@ -66,6 +69,7 @@ onMounted(() => {
 .card:focus-visible { outline: 2px solid var(--s-active); outline-offset: 2px; }
 .card-title { font-weight: 500; }
 .card-text { color: var(--s-text-2); line-height: 1.5; }
+.summaries { margin: 0; padding-left: 16px; display: flex; flex-direction: column; gap: 2px; font-size: 12px; line-height: 1.5; }
 .targets { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
 .target { width: 100%; display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid var(--s-border); border-radius: 6px; background: transparent; color: var(--s-text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
 .target:hover { background: var(--s-hover); }

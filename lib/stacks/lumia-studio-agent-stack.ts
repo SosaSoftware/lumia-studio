@@ -5,7 +5,6 @@ import type { Construct } from 'constructs';
 import { LumiEntryGateway } from '../constructs/lumi/lumi-entry-gateway';
 import { StudioMcpGateway } from '../constructs/lumi/studio-mcp-gateway';
 import type { StudioMcpTarget } from '../constructs/lumi/studio-mcp-gateway';
-import type * as iam from 'aws-cdk-lib/aws-iam';
 
 export interface LumiaStudioAgentStackProps extends StackProps {
   /** Studio user pool, to validate the person's token at both gateways. */
@@ -28,30 +27,23 @@ export interface LumiaStudioAgentStackProps extends StackProps {
  */
 export class LumiaStudioAgentStack extends Stack {
   public readonly mcpGatewayUrl: string;
-  /** The MCP gateway, so the Lumi runtime can be granted InvokeGateway on it. */
-  private readonly mcp: StudioMcpGateway;
   /** Invocation endpoint for the web's LUMIA_LUMI_URL; set only when the runtime ARN is given. */
   public readonly entryUrl: string | undefined;
 
   public constructor(scope: Construct, id: string, props: LumiaStudioAgentStackProps) {
     super(scope, id, props);
     const allowedClientIds = [props.webClient.userPoolClientId];
+    const discoveryUrl = `https://cognito-idp.${this.region}.amazonaws.com/${props.userPool.userPoolId}/.well-known/openid-configuration`;
 
-    this.mcp = new StudioMcpGateway(this, 'StudioMcp', { targets: props.mcpTargets });
-    this.mcpGatewayUrl = this.mcp.url;
-    new CfnOutput(this, 'McpGatewayUrl', { value: this.mcp.url, description: 'MCP endpoint Lumi connects to (the runtime signs the call with its role).' });
-    new CfnOutput(this, 'McpGatewayArn', { value: this.mcp.gatewayArn, description: 'Grant the Lumi runtime bedrock-agentcore:InvokeGateway on this.' });
+    const mcp = new StudioMcpGateway(this, 'StudioTools', { targets: props.mcpTargets, discoveryUrl, allowedClientIds });
+    this.mcpGatewayUrl = mcp.url;
+    new CfnOutput(this, 'McpGatewayUrl', { value: mcp.url, description: 'MCP endpoint Lumi connects to with the token of the person.' });
+    new CfnOutput(this, 'McpGatewayArn', { value: mcp.gatewayArn, description: 'ARN of the Studio MCP gateway.' });
 
     if (props.runtimeArn !== undefined) {
-      const discoveryUrl = `https://cognito-idp.${this.region}.amazonaws.com/${props.userPool.userPoolId}/.well-known/openid-configuration`;
       const entry = new LumiEntryGateway(this, 'Entry', { runtimeArn: props.runtimeArn, discoveryUrl, allowedClientIds });
       this.entryUrl = entry.invokeUrl;
       new CfnOutput(this, 'LumiUrl', { value: entry.invokeUrl, description: 'Set LUMIA_LUMI_URL to this and redeploy the web.' });
     }
-  }
-
-  /** Lets the Lumi runtime invoke the Studio MCP gateway. The other agent's runtime stack calls this. */
-  public grantMcpInvoke(runtimeRole: iam.IGrantable): void {
-    this.mcp.grantInvoke(runtimeRole);
   }
 }

@@ -26,10 +26,15 @@ const DEFAULT_SINK: LogSink = (line, level) => {
   }
 };
 
-/** Errors become `{ name, message, stack }`, which `JSON.stringify` would otherwise print as `{}`. */
+/** Errors become `{ name, message, stack, cause }`, which `JSON.stringify` would otherwise print as `{}`. */
 function serializable(_key: string, value: unknown): unknown {
   if (value instanceof Error) {
-    return { name: value.name, message: value.message, ...(value.stack === undefined ? {} : { stack: value.stack }) };
+    return {
+      name: value.name,
+      message: value.message,
+      ...(value.stack === undefined ? {} : { stack: value.stack }),
+      ...(value.cause === undefined ? {} : { cause: value.cause }),
+    };
   }
   if (typeof value === 'bigint') {
     return value.toString();
