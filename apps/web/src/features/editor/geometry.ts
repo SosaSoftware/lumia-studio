@@ -1,5 +1,6 @@
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '@lumia/packages/catalog';
 import type { Geometry } from '@lumia/packages/catalog';
+import type { Margins } from '../../composables/canvas-margins.ts';
 
 export type { Geometry };
 
@@ -32,6 +33,17 @@ export function clampGeometry(g: Geometry): Geometry {
     y: round2(clamp(g.y, 0, SLIDE_HEIGHT - h)),
     w: round2(w),
     h: round2(h),
+  };
+}
+
+/** Moves an element inside the margins of the slide; an axis where it does not fit between them is left as it is. */
+export function fitInsideMargins(g: Geometry, margins: Margins): Geometry {
+  const fitsWide = g.w <= SLIDE_WIDTH - margins.left - margins.right;
+  const fitsTall = g.h <= SLIDE_HEIGHT - margins.top - margins.bottom;
+  return {
+    ...g,
+    x: fitsWide ? round2(clamp(g.x, margins.left, SLIDE_WIDTH - margins.right - g.w)) : g.x,
+    y: fitsTall ? round2(clamp(g.y, margins.top, SLIDE_HEIGHT - margins.bottom - g.h)) : g.y,
   };
 }
 

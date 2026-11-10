@@ -17,11 +17,13 @@ import type {
   SlidePatch,
   TreeNode,
 } from '../../api/types.ts';
+import { canvasMargins } from '../../composables/canvas-margins.ts';
 import { nextStart, narrationDuration } from '../timeline/timeline-model.ts';
 import type { CatalogStore } from './catalog-store.ts';
 import type { Geometry } from './geometry.ts';
-import { clampGeometry, findFreeSpot } from './geometry.ts';
+import { clampGeometry, findFreeSpot, fitInsideMargins } from './geometry.ts';
 import { SaveScheduler } from './save-scheduler.ts';
+
 
 export type DocumentApi = Pick<
   StudioApi,
@@ -519,7 +521,8 @@ export class DocumentSession {
       const offset = (slide.elements.length % 6) * 2;
       const free = at === undefined ? findFreeSpot(slide.elements, size) : null;
       const origin = at ?? free ?? { x: (100 - size.w) / 2 + offset, y: (56.25 - size.h) / 2 + offset };
-      const geometry = clampGeometry({ ...origin, ...size });
+      // A new element keeps inside the margins of the canvas, so it does not land against the edge of the slide.
+      const geometry = fitInsideMargins(clampGeometry({ ...origin, ...size }), canvasMargins);
       const created = await this.api.saveElement(remap.slide(slide.id), null, component, {
         name: info.name,
         ...geometry,

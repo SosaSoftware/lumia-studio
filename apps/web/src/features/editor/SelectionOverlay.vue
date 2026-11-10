@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { SlideElement } from '../../api/types.ts';
+import { NO_GUIDES } from './alignment.ts';
+import type { Alignment, Guides } from './alignment.ts';
 import { DragSession } from './drag-session.ts';
 import { RESIZE_HANDLES } from './geometry.ts';
 import type { Geometry, ResizeHandle } from './geometry.ts';
@@ -9,8 +11,17 @@ import type { Geometry, ResizeHandle } from './geometry.ts';
  * Outline and the eight resize handles of the selected element. They live outside the clipped slide surface,
  * so an element that touches the edge of the slide can still be resized.
  */
-const props = defineProps<{ element: SlideElement; slideWidth: () => number }>();
-const emit = defineEmits<{ geometry: [id: string, geometry: Geometry] }>();
+const props = defineProps<{
+  element: SlideElement;
+  slideWidth: () => number;
+  /** What the element can match while it is resized: the other elements of the slide. */
+  alignment: () => Alignment;
+}>();
+const emit = defineEmits<{
+  geometry: [id: string, geometry: Geometry];
+  /** Sizes and distances that match while the element is resized; empty when the gesture ends. */
+  guides: [guides: Guides];
+}>();
 
 const HANDLE_LABELS: Record<ResizeHandle, string> = {
   nw: 'noroeste',
@@ -31,20 +42,25 @@ function onPointerDown(event: PointerEvent, handle: ResizeHandle): void {
   if (event.button !== 0) return;
   event.stopPropagation();
   event.preventDefault();
-  session = new DragSession({ kind: 'resize', handle }, { x: props.element.x, y: props.element.y, w: props.element.w, h: props.element.h }, props.slideWidth());
+  session = new DragSession({ kind: 'resize', handle }, { x: props.element.x, y: props.element.y, w: props.element.w, h: props.element.h }, props.slideWidth(), props.alignment());
   origin = { x: event.clientX, y: event.clientY };
   if (event.currentTarget instanceof Element) event.currentTarget.setPointerCapture(event.pointerId);
 }
 
 function onPointerMove(event: PointerEvent): void {
   if (session === null) return;
-  const next = session.update(event.clientX - origin.x, event.clientY - origin.y);
-  if (session.isDrag) emit('geometry', props.element.id, next);
+  // Holding Alt resizes freely, without pulling the element onto the size or the distance of other elements.
+  const next = session.update(event.clientX - origin.x, event.clientY - origin.y, !event.altKey);
+  if (session.isDrag) {
+    emit('geometry', props.element.id, next);
+    emit('guides', session.guides);
+  }
 }
 
 function onPointerUp(event: PointerEvent): void {
   if (event.currentTarget instanceof Element && event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   session = null;
+  emit('guides', NO_GUIDES);
 }
 </script>
 
@@ -73,12 +89,13 @@ function onPointerUp(event: PointerEvent): void {
 .overlay { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
 .box { position: absolute; box-sizing: border-box; }
 .handle { position: absolute; width: 8px; height: 8px; box-sizing: border-box; background: var(--s-on-active); border: 1.5px solid var(--s-active); border-radius: 2px; transform: translate(-50%, -50%); pointer-events: auto; touch-action: none; }
-.handle[data-handle='nw'] { left: -0.5cqw; top: -0.5cqw; cursor: nwse-resize; }
-.handle[data-handle='n'] { left: 50%; top: -0.5cqw; cursor: ns-resize; }
-.handle[data-handle='ne'] { left: calc(100% + 0.5cqw); top: -0.5cqw; cursor: nesw-resize; }
-.handle[data-handle='e'] { left: calc(100% + 0.5cqw); top: 50%; cursor: ew-resize; }
-.handle[data-handle='se'] { left: calc(100% + 0.5cqw); top: calc(100% + 0.5cqw); cursor: nwse-resize; }
-.handle[data-handle='s'] { left: 50%; top: calc(100% + 0.5cqw); cursor: ns-resize; }
-.handle[data-handle='sw'] { left: -0.5cqw; top: calc(100% + 0.5cqw); cursor: nesw-resize; }
-.handle[data-handle='w'] { left: -0.5cqw; top: 50%; cursor: ew-resize; }
+/* Each handle is centered on the real edge or corner of the element. */
+.handle[data-handle='nw'] { left: 0; top: 0; cursor: nwse-resize; }
+.handle[data-handle='n'] { left: 50%; top: 0; cursor: ns-resize; }
+.handle[data-handle='ne'] { left: 100%; top: 0; cursor: nesw-resize; }
+.handle[data-handle='e'] { left: 100%; top: 50%; cursor: ew-resize; }
+.handle[data-handle='se'] { left: 100%; top: 100%; cursor: nwse-resize; }
+.handle[data-handle='s'] { left: 50%; top: 100%; cursor: ns-resize; }
+.handle[data-handle='sw'] { left: 0; top: 100%; cursor: nesw-resize; }
+.handle[data-handle='w'] { left: 0; top: 50%; cursor: ew-resize; }
 </style>
