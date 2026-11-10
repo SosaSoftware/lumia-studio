@@ -16,7 +16,7 @@ When a change alters behavior, structure, commands, configuration or architectur
 ## Editing a diagram
 
 - Read the comment at the top of the SVG file: it explains its structure.
-- A node is `<g id="node-*" transform="translate(x, y)">`. To move it, change the translation and update the edges that connect to it.
+- A node is `<g id="node-*" transform="translate(x, y)">`. To move it, change the translation and update the edges that connect to it. In an entity-relationship diagram a node is a table and grows 17 units per column, so move the tables below it as well.
 - An edge is `<g id="edge-*">`, with a path in absolute coordinates and an optional label.
 - Icons are `<symbol>` elements copied unchanged from the official AWS Architecture Icons. Reuse the symbols already in the file.
 - Keep plain SVG: no scripts, external files or `<foreignObject>`.

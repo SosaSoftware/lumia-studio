@@ -33,7 +33,7 @@ Not versioned (`.gitignore`): `node_modules`, `cdk.out`, `dist`, `.env`, `.sandb
 | Change | Location | Workflow |
 |---|---|---|
 | GraphQL field, business rule, Cedar action | `apps/api` | [add-graphql-field](../workflows/add-graphql-field.md) |
-| Table or column | `apps/api/db/migrations`, `apps/api/src/repositories` | [add-migration](../workflows/add-migration.md) |
+| Table or column | `apps/api/db/migrations`, `apps/api/src/repositories`; current schema in [data-model](data-model.md) | [add-migration](../workflows/add-migration.md) |
 | Slide component | `packages/src/catalog`, `apps/web/src/features/slide-components` | [add-catalog-component](../workflows/add-catalog-component.md) |
 | Tool for Lumi | `apps/api/src/mcp/tools` | [add-mcp-tool](../workflows/add-mcp-tool.md) |
 | Lumi instructions, skills, consent policy | `apps/agent/src/prompts`, `apps/agent/skills`, `apps/agent/policies` | [add-lumi-skill](../workflows/add-lumi-skill.md) |

@@ -4,6 +4,7 @@ Domain terms with their names in code and the file that defines each. User-facin
 
 | Term | Name in code | Defined in | Meaning |
 |---|---|---|---|
+| Studio schema | `studio` | [data-model.md](data-model.md) | PostgreSQL schema that holds every table: current tables, relations, enums and data rules. |
 | Category | `studio.category`, GraphQL `Category` | `apps/api/db/migrations/0001_tree.sql` | First level of the content tree. Owns a media library. |
 | Subcategory | `studio.subcategory`, `Subcategory` | `0001_tree.sql` | Second level; belongs to one category. |
 | Menu group | `group_name`, `groupName` | `0006_category_groups.sql` | Visual heading in menus. No access rules. |

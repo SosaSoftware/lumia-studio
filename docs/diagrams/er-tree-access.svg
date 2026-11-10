@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="680" viewBox="0 0 1360 680" font-family="Helvetica, Arial, sans-serif">
+  <title>Modelo de datos: árbol y acceso</title>
+  <!--
+    Hand-editable diagram. Layout: edges first, then tables, so tables stay on top.
+    - Table: <g id="node-*" transform="translate(x, y)">. x, y is the top-left corner. A table grows 17 units per column, so move the tables below it and the edges that touch it when you add one.
+    - Edge: <g id="edge-*">. Its path uses absolute coordinates; update it when a table it connects moves. The text at each end is its cardinality: 1, * (many) or 0..1.
+    - A table with a dashed border belongs to the other diagram and is shown only to connect the two.
+    Keep plain SVG: no scripts, no external files and no <foreignObject>, so GitHub and Bitbucket render it.
+  -->
+  <rect width="1360" height="680" fill="#FFFFFF"/>
+
+  <!-- Edges -->
+  <g id="edge-category-subcategory">
+    <path d="M 165 163 L 165 233" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="173" y="202" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">category_id</text>
+    <text x="172" y="178" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="172" y="227" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+  </g>
+  <g id="edge-subcategory-tree_node">
+    <path d="M 165 373 L 165 443" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="173" y="412" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">subcategory_id</text>
+    <text x="172" y="388" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="172" y="437" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+  </g>
+  <g id="edge-tree_node-tree_node">
+    <path d="M 290 500 L 326 500 L 326 545 L 290 545" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="332" y="526" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">parent_id</text>
+    <text x="296" y="496" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">0..1</text>
+    <text x="296" y="541" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+  </g>
+  <g id="edge-tree_node-class_document">
+    <path d="M 290 580 L 420 580" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="355" y="598" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">node_id</text>
+    <text x="296" y="576" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="414" y="576" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">0..1</text>
+  </g>
+  <g id="edge-category-media_asset">
+    <path d="M 290 68 L 420 68" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="355" y="86" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">category_id</text>
+    <text x="296" y="64" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="414" y="64" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-category-access_grant">
+    <path d="M 290 130 L 360 130 L 360 270 L 420 270" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="366" y="200" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">category_id</text>
+    <text x="296" y="126" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="414" y="266" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-subcategory-access_grant">
+    <path d="M 290 320 L 420 320" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="355" y="338" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">subcategory_id</text>
+    <text x="296" y="316" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="414" y="316" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-app_user-access_grant">
+    <path d="M 780 300 L 670 300" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="725" y="294" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">user_id</text>
+    <text x="774" y="296" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">1</text>
+    <text x="676" y="296" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+  </g>
+  <g id="edge-role-app_user">
+    <path d="M 905 146 L 905 250" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="913" y="202" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">role_id</text>
+    <text x="912" y="161" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="912" y="244" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+  </g>
+  <g id="edge-role-role_permission">
+    <path d="M 1030 80 L 1110 80" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="1070" y="98" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">role_id</text>
+    <text x="1036" y="76" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="1104" y="76" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+
+  <!-- Tables -->
+  <g id="node-category" transform="translate(40, 40)">
+    <rect width="250" height="123" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">category</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">display_name</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">group_name</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">position</text>
+  </g>
+  <g id="node-subcategory" transform="translate(40, 233)">
+    <rect width="250" height="140" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">subcategory</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">category_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">display_name</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">group_name</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">position</text>
+  </g>
+  <g id="node-tree_node" transform="translate(40, 443)">
+    <rect width="250" height="157" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">tree_node</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">subcategory_id</text>
+    <text x="12" y="81" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">parent_id</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">kind  (folder | class)</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">display_name</text>
+    <text x="44" y="149" font-size="11.5" font-weight="normal" fill="#232F3E">position</text>
+  </g>
+  <g id="node-media_asset" transform="translate(420, 40)">
+    <rect width="250" height="56" fill="#FFFFFF" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="12" y="23" font-size="13" font-weight="bold" fill="#545B64">media_asset</text>
+    <text x="12" y="42" font-size="10.5" fill="#7D8998">ver er-content.svg</text>
+  </g>
+  <g id="node-access_grant" transform="translate(420, 250)">
+    <rect width="250" height="123" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">access_grant</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">user_id</text>
+    <text x="12" y="81" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">category_id</text>
+    <text x="12" y="98" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">subcategory_id</text>
+    <text x="12" y="115" font-size="10.5" font-style="italic" fill="#7D8998">solo uno: categoría o subcategoría</text>
+  </g>
+  <g id="node-class_document" transform="translate(420, 555)">
+    <rect width="250" height="56" fill="#FFFFFF" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="12" y="23" font-size="13" font-weight="bold" fill="#545B64">class_document</text>
+    <text x="12" y="42" font-size="10.5" fill="#7D8998">ver er-content.svg</text>
+  </g>
+  <g id="node-role" transform="translate(780, 40)">
+    <rect width="250" height="106" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">role</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">key</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">description</text>
+  </g>
+  <g id="node-role_permission" transform="translate(1110, 40)">
+    <rect width="230" height="72" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="230" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">role_permission</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK FK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">role_id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="bold" fill="#232F3E">permission_key</text>
+  </g>
+  <g id="node-app_user" transform="translate(780, 250)">
+    <rect width="250" height="123" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">app_user</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">email</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="12" y="98" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">role_id</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">status  (active | disabled)</text>
+  </g>
+
+  <text x="40" y="664" font-size="11" fill="#545B64">PK clave primaria · FK clave foránea · 1 uno · * muchos · 0..1 uno opcional. Se muestran las columnas principales.</text>
+</svg>

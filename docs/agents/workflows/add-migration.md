@@ -4,10 +4,11 @@ Changes the `studio` schema in Aurora PostgreSQL.
 
 ## Steps
 
-1. Add a new file in `apps/api/db/migrations/` with the next number, for example `0008_<name>.sql`. Never edit a migration that already exists: they are applied in order and only once.
+1. Add a new file in `apps/api/db/migrations/` with the next number, for example `NNNN_<name>.sql`. Never edit a migration that already exists: they are applied in order and only once.
 2. Separate statements with `--;`, as the existing migrations do.
 3. Update the repositories in `apps/api/src/repositories/` that read or write the changed tables.
 4. Update the sandbox seed in `sandbox/seed/seed-data.ts` if it inserts into the changed tables.
+5. When tables, columns or relations change, update [knowledge/data-model.md](../knowledge/data-model.md), `docs/architecture/data.md` and the diagrams `docs/diagrams/er-tree-access.svg` and `docs/diagrams/er-content.svg`.
 
 ## Apply
 

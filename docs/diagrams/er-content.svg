@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="860" viewBox="0 0 1360 860" font-family="Helvetica, Arial, sans-serif">
+  <title>Modelo de datos: contenido de las clases</title>
+  <!--
+    Hand-editable diagram. Layout: edges first, then tables, so tables stay on top.
+    - Table: <g id="node-*" transform="translate(x, y)">. x, y is the top-left corner. A table grows 17 units per column, so move the tables below it and the edges that touch it when you add one.
+    - Edge: <g id="edge-*">. Its path uses absolute coordinates; update it when a table it connects moves. The text at each end is its cardinality: 1, * (many) or 0..1.
+    - A table with a dashed border belongs to the other diagram and is shown only to connect the two.
+    Keep plain SVG: no scripts, no external files and no <foreignObject>, so GitHub and Bitbucket render it.
+  -->
+  <rect width="1360" height="860" fill="#FFFFFF"/>
+
+  <!-- Edges -->
+  <g id="edge-tree_node-class_document">
+    <path d="M 240 68 L 320 68" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="280" y="62" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">node_id</text>
+    <text x="246" y="85" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="314" y="85" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">0..1</text>
+  </g>
+  <g id="edge-class_document-document_version">
+    <path d="M 570 68 L 670 68" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="620" y="62" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">document_id</text>
+    <text x="576" y="85" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="664" y="85" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-document_version-slide">
+    <path d="M 930 68 L 1030 68" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="980" y="62" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">version_id</text>
+    <text x="936" y="85" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="1024" y="85" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-slide-pause">
+    <path d="M 1170 214 L 1170 280 L 150 280 L 150 330" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="157" y="320" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">slide_id</text>
+    <text x="1177" y="230" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="142" y="322" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-slide-slide_element">
+    <path d="M 1170 214 L 1170 280 L 400 280 L 400 330" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="407" y="320" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">slide_id</text>
+    <text x="1177" y="230" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="392" y="322" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-slide-audio_clip">
+    <path d="M 1170 214 L 1170 280 L 650 280 L 650 330" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="657" y="320" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">slide_id</text>
+    <text x="1177" y="230" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="642" y="322" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-slide-narration_clip">
+    <path d="M 1170 214 L 1170 280 L 900 280 L 900 330" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="907" y="320" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">slide_id</text>
+    <text x="1177" y="230" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="892" y="322" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-slide-slide_comment">
+    <path d="M 1170 214 L 1170 280 L 1150 280 L 1150 330" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="1157" y="320" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">slide_id</text>
+    <text x="1177" y="230" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+    <text x="1142" y="322" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">*</text>
+  </g>
+  <g id="edge-slide_element-pause">
+    <path d="M 150 487 L 150 620 L 360 620 L 360 521" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="255" y="614" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">timer_element_id</text>
+    <text x="157" y="502" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+    <text x="367" y="535" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">0..1</text>
+  </g>
+  <g id="edge-media_asset-slide_element">
+    <path d="M 470 521 L 470 660" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="478" y="634" font-size="11" text-anchor="start" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">media_id</text>
+    <text x="478" y="536" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+    <text x="478" y="654" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+  </g>
+  <g id="edge-media_asset-audio_clip">
+    <path d="M 650 504 L 650 630 L 590 630 L 590 660" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="620" y="624" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">media_id</text>
+    <text x="657" y="519" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+    <text x="597" y="654" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">1</text>
+  </g>
+  <g id="edge-category-media_asset">
+    <path d="M 635 700 L 730 700" fill="none" stroke="#232F3E" stroke-width="1.6" stroke-linejoin="round"/>
+    <text x="682" y="694" font-size="11" text-anchor="middle" fill="#232F3E" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" paint-order="stroke">category_id</text>
+    <text x="641" y="716" font-size="11" font-weight="bold" text-anchor="start" fill="#545B64">*</text>
+    <text x="724" y="716" font-size="11" font-weight="bold" text-anchor="end" fill="#545B64">1</text>
+  </g>
+
+  <!-- Tables -->
+  <g id="node-tree_node" transform="translate(40, 40)">
+    <rect width="200" height="56" fill="#FFFFFF" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="12" y="23" font-size="13" font-weight="bold" fill="#545B64">tree_node</text>
+    <text x="12" y="42" font-size="10.5" fill="#7D8998">ver er-tree-access.svg</text>
+  </g>
+  <g id="node-class_document" transform="translate(320, 40)">
+    <rect width="250" height="140" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="250" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">class_document</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">node_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">status</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">current_version</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">published_version</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">updated_by</text>
+  </g>
+  <g id="node-document_version" transform="translate(670, 40)">
+    <rect width="260" height="157" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="260" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">document_version</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">document_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">number</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">status  (draft | published | archived)</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">export_status</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">published_at</text>
+    <text x="12" y="149" font-size="10.5" font-style="italic" fill="#7D8998">un solo borrador por documento</text>
+  </g>
+  <g id="node-slide" transform="translate(1030, 40)">
+    <rect width="280" height="174" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="280" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">slide</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">version_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">position</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">title</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">background</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">duration_s</text>
+    <text x="44" y="149" font-size="11.5" font-weight="normal" fill="#232F3E">transition</text>
+    <text x="44" y="166" font-size="11.5" font-weight="normal" fill="#232F3E">advance</text>
+  </g>
+  <g id="node-pause" transform="translate(40, 330)">
+    <rect width="220" height="157" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="220" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">pause</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">slide_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">starts_at_s</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">duration_s</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">message</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">on_end</text>
+    <text x="12" y="149" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="149" font-size="11.5" font-weight="normal" fill="#232F3E">timer_element_id</text>
+  </g>
+  <g id="node-slide_element" transform="translate(290, 330)">
+    <rect width="220" height="191" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="220" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">slide_element</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">slide_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">component</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">x, y, w, h, z</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">appears_at_s</text>
+    <text x="44" y="149" font-size="11.5" font-weight="normal" fill="#232F3E">entrance</text>
+    <text x="44" y="166" font-size="11.5" font-weight="normal" fill="#232F3E">props  (jsonb)</text>
+    <text x="12" y="183" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="183" font-size="11.5" font-weight="normal" fill="#232F3E">media_id</text>
+  </g>
+  <g id="node-audio_clip" transform="translate(540, 330)">
+    <rect width="220" height="174" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="220" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">audio_clip</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">slide_id</text>
+    <text x="12" y="81" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">media_id</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">starts_at_s</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">duration_s</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="149" font-size="11.5" font-weight="normal" fill="#232F3E">kind</text>
+    <text x="44" y="166" font-size="11.5" font-weight="normal" fill="#232F3E">volume</text>
+  </g>
+  <g id="node-narration_clip" transform="translate(790, 330)">
+    <rect width="220" height="174" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="220" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">narration_clip</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">slide_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">starts_at_s</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">script</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">voice</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">speed</text>
+    <text x="44" y="149" font-size="11.5" font-weight="normal" fill="#232F3E">status</text>
+    <text x="44" y="166" font-size="11.5" font-weight="normal" fill="#232F3E">audio_key</text>
+  </g>
+  <g id="node-slide_comment" transform="translate(1040, 330)">
+    <rect width="220" height="140" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="220" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">slide_comment</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">slide_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">author_sub</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">author_name</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">body</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">created_at</text>
+  </g>
+  <g id="node-media_asset" transform="translate(415, 660)">
+    <rect width="220" height="140" fill="#FFFFFF" stroke="#232F3E" stroke-width="1.2"/>
+    <rect width="220" height="28" fill="#232F3E"/>
+    <text x="12" y="19" font-size="13" font-weight="bold" fill="#FFFFFF">media_asset</text>
+    <text x="12" y="47" font-size="9.5" font-weight="bold" fill="#545B64">PK</text>
+    <text x="44" y="47" font-size="11.5" font-weight="bold" fill="#232F3E">id</text>
+    <text x="12" y="64" font-size="9.5" font-weight="bold" fill="#545B64">FK</text>
+    <text x="44" y="64" font-size="11.5" font-weight="normal" fill="#232F3E">category_id</text>
+    <text x="44" y="81" font-size="11.5" font-weight="normal" fill="#232F3E">s3_key</text>
+    <text x="44" y="98" font-size="11.5" font-weight="normal" fill="#232F3E">mime_type</text>
+    <text x="44" y="115" font-size="11.5" font-weight="normal" fill="#232F3E">name</text>
+    <text x="44" y="132" font-size="11.5" font-weight="normal" fill="#232F3E">size_bytes</text>
+  </g>
+  <g id="node-category" transform="translate(730, 660)">
+    <rect width="200" height="56" fill="#FFFFFF" stroke="#7D8998" stroke-width="1.2" stroke-dasharray="4 4"/>
+    <text x="12" y="23" font-size="13" font-weight="bold" fill="#545B64">category</text>
+    <text x="12" y="42" font-size="10.5" fill="#7D8998">ver er-tree-access.svg</text>
+  </g>
+
+  <text x="40" y="844" font-size="11" fill="#545B64">PK clave primaria · FK clave foránea · 1 uno · * muchos · 0..1 uno opcional. Se muestran las columnas principales.</text>
+</svg>

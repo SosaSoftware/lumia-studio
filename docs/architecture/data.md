@@ -22,7 +22,7 @@ En local, el sandbox usa Postgres 16 en Docker con los mismos dos usuarios.
 | Carpeta o clase | `studio.tree_node` | `kind` es `folder` o `class`. Una clase es una hoja. |
 | Documento | `studio.class_document` | Contenido de una clase. Una clase sin documento se muestra como `no_content`. |
 | Versión | `studio.document_version` | Numerada, con estado `draft`, `published` o `archived`. Solo hay un borrador por documento. |
-| Diapositiva | `studio.slide` | Tipo, título, fondo, duración, transición y modo de avance. |
+| Diapositiva | `studio.slide` | Título, fondo, duración, transición y modo de avance. |
 | Contenido de la diapositiva | `studio.slide_element`, `studio.narration_clip`, `studio.audio_clip`, `studio.pause`, `studio.slide_comment` | Componentes del catálogo, línea de tiempo y comentarios. |
 | Medio | `studio.media_asset` | Archivo de la biblioteca de una categoría. |
 | Persona | `studio.app_user` | Correo, estado y rol de cada cuenta. |
@@ -30,6 +30,14 @@ En local, el sandbox usa Postgres 16 en Docker con los mismos dos usuarios.
 | Acceso | `studio.access_grant` | Categoría completa o subcategoría de una persona. |
 
 Las personas, los roles y los accesos se cargan a mano: ver [operations/content.md](../operations/content.md).
+
+### Relaciones
+
+Los diagramas muestran las columnas principales y las relaciones de cada tabla. El primero cubre el árbol de contenido y el acceso; el segundo, el contenido de las clases.
+
+![Modelo de datos: árbol y acceso](../diagrams/er-tree-access.svg)
+
+![Modelo de datos: contenido de las clases](../diagrams/er-content.svg)
 
 ## Ciclo de una clase
 
@@ -60,6 +68,8 @@ npm run db:migrate
 | `0005_advance_on_complete.sql` | Modo de avance `on_complete` |
 | `0006_category_groups.sql` | Grupos de menú (`group_name`) |
 | `0007_version_export.sql` | Estado de la exportación de cada versión |
+| `0008_remove_interactive_video.sql` | Retira el tipo de diapositiva de video interactivo |
+| `0009_remove_slide_type.sql` | Elimina la columna `type` de `studio.slide` y su enum |
 
 ## Buckets
 
