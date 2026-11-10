@@ -80,7 +80,6 @@ export const STUDIO_ICONS: Readonly<Record<string, readonly IconShape[]>> = {
   'slide-cover': [r(3, 5, 18, 14, 2), p('M7 10h8M7 14h5')],
   'slide-explanatory': [r(3, 5, 18, 14, 2), p('M6 9h6M6 12h6M6 15h4'), r(14, 9, 4, 6, 1)],
   'slide-video': [r(3, 5, 18, 14, 2), p('m10 9 5 3-5 3z')],
-  'slide-interactive_video': [r(3, 3, 18, 13, 2), p('m10 7 4.5 2.5L10 12zM3 20h18'), c(9, 20, 1.5), c(16, 20, 1.5)],
   'slide-whiteboard': [p('M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z')],
   'slide-quiz': [p('M10 6h11M10 12h11M10 18h11M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17')],
   'slide-closing': [p('M5 21V4h12l-2 4 2 4H5')],

@@ -414,7 +414,7 @@ describe('slide editing', () => {
     // AWSJSON fields are JSON values; AppSync serializes them once for the client.
     const catalog = (await run(creator, 'Query', 'componentCatalog')) as { components: { key: string; propsSchema: unknown; defaults: unknown }[]; slideTypes: { key: string }[] };
     expect(catalog.components).toHaveLength(28);
-    expect(catalog.slideTypes).toHaveLength(7);
+    expect(catalog.slideTypes).toHaveLength(6);
     for (const component of catalog.components) {
       expect(component.propsSchema).toMatchObject({ type: 'object' });
       expect(componentCatalog.validateProps(component.key, component.defaults).ok).toBe(true);

@@ -67,7 +67,6 @@ enum SlideType {
   cover
   explanatory
   video
-  interactive_video
   whiteboard
   quiz
   closing

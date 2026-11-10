@@ -1,6 +1,6 @@
 import type { ThemeColorKey } from './theme-tokens.ts';
 
-export const SLIDE_TYPE_KEYS = ['cover', 'explanatory', 'video', 'interactive_video', 'whiteboard', 'quiz', 'closing'] as const;
+export const SLIDE_TYPE_KEYS = ['cover', 'explanatory', 'video', 'whiteboard', 'quiz', 'closing'] as const;
 
 export type SlideTypeKey = (typeof SLIDE_TYPE_KEYS)[number];
 
@@ -31,7 +31,6 @@ export const SLIDE_TYPES: readonly SlideTypeDefinition[] = [
   { key: 'cover', name: 'Portada', usage: 'Primera diapositiva: título de la clase y una frase que presenta el tema.', layout: 'centered', defaultBackground: 'surface', defaultDurationS: 8, defaultAdvance: 'click', starterComponents: ['title', 'paragraph'] },
   { key: 'explanatory', name: 'Explicativa', usage: 'Explica un concepto con texto, listas, imágenes o destacados.', layout: 'content', defaultBackground: 'surface', defaultDurationS: 30, defaultAdvance: 'click', starterComponents: ['title', 'paragraph'] },
   { key: 'video', name: 'Video', usage: 'Muestra un video con un título y, opcionalmente, una nota breve.', layout: 'media', defaultBackground: 'surface', defaultDurationS: 60, defaultAdvance: 'click', starterComponents: ['title', 'video'] },
-  { key: 'interactive_video', name: 'Video interactivo', usage: 'Video con pausas y preguntas sobre su contenido.', layout: 'media', defaultBackground: 'surface', defaultDurationS: 90, defaultAdvance: 'click', starterComponents: ['title', 'video'] },
   { key: 'whiteboard', name: 'Pizarra animada', usage: 'Desarrolla un procedimiento paso a paso, como en una pizarra.', layout: 'content', defaultBackground: 'surface-alt', defaultDurationS: 45, defaultAdvance: 'click', starterComponents: ['title', 'bullet_list'] },
   { key: 'quiz', name: 'Quiz', usage: 'Preguntas para comprobar lo aprendido: opción múltiple o verdadero o falso.', layout: 'questions', defaultBackground: 'surface', defaultDurationS: 60, defaultAdvance: 'on_complete', starterComponents: ['title', 'multiple_choice'] },
   { key: 'closing', name: 'Cierre', usage: 'Última diapositiva: resumen de lo aprendido y un mensaje de cierre.', layout: 'centered', defaultBackground: 'surface', defaultDurationS: 10, defaultAdvance: 'click', starterComponents: ['title', 'bullet_list'] },

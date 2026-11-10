@@ -45,7 +45,7 @@ describe('studio schema', () => {
       user_status: 'active,disabled',
       document_status: 'draft,published',
       version_status: 'draft,published,archived',
-      slide_type: 'cover,explanatory,video,interactive_video,whiteboard,quiz,closing',
+      slide_type: 'cover,explanatory,video,whiteboard,quiz,closing',
       transition: 'none,fade,slide,zoom',
       advance_mode: 'auto,click,on_complete',
       entrance: 'none,appear,fade,slide,draw',
