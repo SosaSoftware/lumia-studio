@@ -1,24 +1,37 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { t } from '../../i18n/index.ts';
+import FeedbackField from './FeedbackField.vue';
+import type { FeedbackState } from './feedback-state.ts';
 import type { QuestionState } from './question-state.ts';
 
+/**
+ * Footer of an interactive question: the check button, the attempts left and the message of the answer. It is drawn
+ * in every mode so the question takes the same space in the editor, in the thumbnails and in the preview; only the
+ * preview (`interactive`) reacts. On the canvas (`design`) a dashed field stands where the message will appear.
+ */
 const props = withDefaults(
-  defineProps<{ state: QuestionState; canCheck: boolean; feedbackCorrect: string; feedbackIncorrect: string; showCheck?: boolean }>(),
-  { showCheck: true },
+  defineProps<{ state: QuestionState; canCheck: boolean; feedbackCorrect: string; feedbackIncorrect: string; showCheck?: boolean; interactive?: boolean; design?: boolean; designHidden?: boolean }>(),
+  { showCheck: true, interactive: true, design: false, designHidden: false },
 );
 const emit = defineEmits<{ check: [] }>();
 
 const result = computed(() => props.state.result.value);
 const feedback = computed(() => (result.value === 'correct' ? props.feedbackCorrect : result.value === 'incorrect' ? props.feedbackIncorrect : ''));
+const states = computed<readonly FeedbackState[]>(() => [
+  { key: 'success', label: t('editor.feedback.success'), message: props.feedbackCorrect, tone: 'success' },
+  { key: 'failure', label: t('editor.feedback.failure'), message: props.feedbackIncorrect, tone: 'failure' },
+]);
 </script>
 
 <template>
   <div class="q-footer">
     <div class="q-row">
-      <button v-if="showCheck" type="button" class="check" :disabled="!canCheck || state.locked.value" data-testid="question-check" @click.stop="emit('check')">Comprobar</button>
+      <button v-if="showCheck" type="button" class="check" :disabled="!interactive || !canCheck || state.locked.value" :tabindex="interactive ? 0 : -1" data-testid="question-check" @click.stop="emit('check')">Comprobar</button>
       <span class="attempts" data-testid="question-attempts">Intentos restantes: {{ state.attemptsLeft.value }}</span>
     </div>
-    <div v-if="feedback" class="feedback" role="status" :data-result="result" data-testid="question-feedback">{{ feedback }}</div>
+    <FeedbackField v-if="design" :states="states" :concealed="designHidden" />
+    <div v-else-if="feedback" class="feedback" role="status" :data-result="result" data-testid="question-feedback">{{ feedback }}</div>
   </div>
 </template>
 

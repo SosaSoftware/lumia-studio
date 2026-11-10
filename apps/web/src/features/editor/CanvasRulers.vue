@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '@lumia/packages/catalog';
-import { DEFAULT_MARGIN, canvasMargins } from '../../composables/canvas-margins.ts';
+import { canvasMargins, defaultMargin } from '../../composables/canvas-margins.ts';
 import { t } from '../../i18n/index.ts';
 import type { MarginSide } from '../../composables/canvas-margins.ts';
 import type { Geometry } from './geometry.ts';
@@ -77,7 +77,7 @@ function onPointerUp(event: PointerEvent): void {
 }
 
 function reset(side: MarginSide): void {
-  canvasMargins[side] = DEFAULT_MARGIN;
+  canvasMargins[side] = defaultMargin(side);
 }
 </script>
 

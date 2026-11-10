@@ -66,7 +66,7 @@ function look(id: string): 'correct' | 'wrong' | 'picked' | 'idle' {
         <span v-if="!student && option.id === correctId" class="key">Correcta</span>
       </button>
     </div>
-    <QuestionFooter v-if="student" :state="state" :can-check="picked !== null && checked !== picked" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="picked !== null && checked !== picked" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 

@@ -14,4 +14,8 @@ export interface CatalogComponentProps {
   elementId: string;
   /** True while the element is selected in the editor; components may reveal content that is hidden at rest. */
   selected: boolean;
+  /** True on the editor canvas only: components draw design aids, such as the space of a feedback message, that thumbnails and the preview do not show. */
+  design?: boolean;
+  /** True when the person hid the design aids: they keep their space, so the layout does not change, but are not drawn. */
+  designHidden?: boolean;
 }

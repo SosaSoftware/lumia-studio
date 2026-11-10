@@ -601,8 +601,10 @@ export class DocumentSession {
    * The canvas reports the height that an element needs for its content. It is saved only for an element the person
    * edited, so opening a class never changes it.
    */
-  public reportHeight(elementId: string, height: number): void {
-    this.measured.set(elementId, height);
+  public reportHeight(elementId: string, height: number, bound: boolean): void {
+    // A height that is only the one of the frame is not a minimum: keeping it would undo the next shrink of the person.
+    if (bound) this.measured.set(elementId, height);
+    else this.measured.delete(elementId);
     if (this.touched.has(elementId)) this.fitHeight(elementId);
   }
 

@@ -5,6 +5,7 @@ export const editor: typeof esEditor = {
   gridToggle: 'Show or hide the grid',
   guides: 'Guides',
   tagsToggle: 'Show or hide the name of each component',
+  feedbackToggle: 'Show or hide the feedback field of questions and hotspots',
   components: 'Components',
   resize: 'Resize ({handle})',
   handles: {
@@ -22,6 +23,13 @@ export const editor: typeof esEditor = {
     right: 'Right margin: drag to move it, double-click to reset it',
     bottom: 'Bottom margin: drag to move it, double-click to reset it',
     left: 'Left margin: drag to move it, double-click to reset it',
+  },
+  feedback: {
+    title: 'Feedback',
+    success: 'Success',
+    failure: 'Failure',
+    content: 'Message',
+    more: 'Show another message',
   },
   announce: {
     position: '{name}: position {x}, {y}.',

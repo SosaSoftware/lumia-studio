@@ -123,7 +123,7 @@ function check(): void {
         </button>
       </div>
     </div>
-    <QuestionFooter v-if="student" :state="state" :can-check="links.every((link) => link !== null)" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="links.every((link) => link !== null)" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 

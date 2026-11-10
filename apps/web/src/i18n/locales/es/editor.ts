@@ -3,6 +3,7 @@ export const editor = {
   gridToggle: 'Mostrar u ocultar la cuadrícula',
   guides: 'Guías',
   tagsToggle: 'Mostrar u ocultar el nombre de cada componente',
+  feedbackToggle: 'Mostrar u ocultar el campo de retroalimentación de preguntas y puntos',
   components: 'Componentes',
   resize: 'Cambiar el tamaño ({handle})',
   handles: {
@@ -20,6 +21,13 @@ export const editor = {
     right: 'Margen derecho: arrastra para moverlo, doble clic para restablecerlo',
     bottom: 'Margen inferior: arrastra para moverlo, doble clic para restablecerlo',
     left: 'Margen izquierdo: arrastra para moverlo, doble clic para restablecerlo',
+  },
+  feedback: {
+    title: 'Retroalimentación',
+    success: 'Acierto',
+    failure: 'Error',
+    content: 'Mensaje',
+    more: 'Ver otro mensaje',
   },
   announce: {
     position: '{name}: posición {x}, {y}.',

@@ -41,8 +41,8 @@ const emit = defineEmits<{
   geometry: [id: string, geometry: Geometry];
   'remove-element': [id: string];
   'drop-component': [component: string, x: number, y: number];
-  /** Height in `cqw` that an element needs for its content, as the browser measured it. */
-  'fit-height': [id: string, height: number];
+  /** Height in `cqw` that an element needs for its content, as the browser measured it; `bound` is false when it is only the height of the frame. */
+  'fit-height': [id: string, height: number, bound: boolean];
 }>();
 
 const workspace = useWorkspace();
@@ -68,9 +68,9 @@ function fitsContent(component: string): boolean {
   return workspace.catalog.fitsContent(component);
 }
 
-function onSize(id: string, height: number): void {
+function onSize(id: string, height: number, bound: boolean): void {
   heights[id] = height;
-  emit('fit-height', id, height);
+  emit('fit-height', id, height, bound);
 }
 
 /** Where the selected element sits, shown as a band on the rulers. */
@@ -166,6 +166,17 @@ function onDrop(event: DragEvent): void {
       >
         <StudioIcon name="eye" :size="13" :stroke="2" />{{ t('editor.components') }}
       </button>
+      <button
+        type="button"
+        class="prv feedback"
+        :aria-pressed="panels.feedback"
+        :title="t('editor.feedbackToggle')"
+        :style="{ borderColor: panels.feedback ? 'var(--s-active)' : undefined }"
+        data-testid="canvas-feedback"
+        @click="panels.feedback = !panels.feedback"
+      >
+        <StudioIcon name="comments" :size="13" :stroke="2" />{{ t('editor.feedback.title') }}
+      </button>
     </div>
     <button v-if="navigation" type="button" class="step prev" :aria-disabled="position <= 1" :aria-label="t('slides.previous')" :title="t('slides.previous')" data-testid="canvas-prev" @click="step(-1)">
       <StudioIcon name="chevron-left" :size="16" :stroke="2" />
@@ -196,6 +207,7 @@ function onDrop(event: DragEvent): void {
             :slide-width="slideWidth"
             :alignment="() => alignmentOf(element.id)"
             :show-tag="tags"
+            :show-feedback="panels.feedback"
             :tag="tagOf(element.component)"
             :fits-content="fitsContent(element.component)"
             @size="onSize"

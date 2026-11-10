@@ -169,6 +169,7 @@ export const properties = {
     targets: 'Destinos',
     correctItemId: 'Elemento correcto',
     pairs: 'Pares',
+    side: 'Lado del mensaje',
     left: 'Izquierda',
     right: 'Derecha',
     id: 'Id',
@@ -188,6 +189,7 @@ export const properties = {
       connector: { style: { straight: 'Recta', elbow: 'En codo' } },
       shape: { kind: { rectangle: 'Rectángulo', ellipse: 'Elipse', line: 'Línea', arrow: 'Flecha' } },
       diagram: { kind: { flow: 'Flujo', cycle: 'Ciclo', hierarchy: 'Jerarquía' } },
+      hotspot: { side: { top: 'Arriba', bottom: 'Abajo', left: 'Izquierda', right: 'Derecha' } },
     },
   },
   booleans: {

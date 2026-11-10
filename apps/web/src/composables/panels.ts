@@ -15,13 +15,15 @@ export interface PanelState {
   bottom: BottomPanel | null;
   /** Shows the outline and the name of each component on the canvas. */
   tags: boolean;
+  /** Shows the dashed feedback field of the questions and hotspots on the canvas; hidden, it keeps its space. */
+  feedback: boolean;
   /** Last component group used, opened by `open_panel('components')`. */
   lastGroup: PaletteGroup;
 }
 
 export const PANELS_KEY = 'lumia.studio.panels';
 
-const DEFAULTS: PanelState = { left: 'explorer', right: 'lumi', bottom: 'slides', tags: true, lastGroup: 'slides' };
+const DEFAULTS: PanelState = { left: 'explorer', right: 'lumi', bottom: 'slides', tags: true, feedback: true, lastGroup: 'slides' };
 
 export function isPaletteGroup(value: unknown): value is PaletteGroup {
   return PALETTE_GROUPS.some((group) => group === value);
@@ -48,6 +50,7 @@ export function readPanels(storage: Storage = localStorage): PanelState {
       right: value.right === 'lumi' || value.right === 'properties' || value.right === 'comments' ? value.right : value.right === null ? null : DEFAULTS.right,
       bottom: value.bottom === 'slides' || value.bottom === 'timeline' ? value.bottom : value.bottom === null ? null : DEFAULTS.bottom,
       tags: typeof value.tags === 'boolean' ? value.tags : DEFAULTS.tags,
+      feedback: typeof value.feedback === 'boolean' ? value.feedback : DEFAULTS.feedback,
       lastGroup,
     };
   } catch {

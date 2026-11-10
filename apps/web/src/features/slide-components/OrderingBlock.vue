@@ -72,7 +72,7 @@ function check(): void {
         </span>
       </li>
     </ol>
-    <QuestionFooter v-if="student" :state="state" :can-check="true" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="true" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 

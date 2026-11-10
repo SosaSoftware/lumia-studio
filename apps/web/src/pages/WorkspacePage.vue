@@ -109,7 +109,7 @@ function dropComponent(component: string, x: number, y: number): void {
               @geometry="(id, geometry) => session.updateGeometry(id, geometry)"
               @remove-element="session.deleteElement($event)"
               @drop-component="dropComponent"
-              @fit-height="(id, height) => session.reportHeight(id, height)"
+              @fit-height="(id, height, bound) => session.reportHeight(id, height, bound)"
             />
             <TimelinePanel v-if="panels.bottom === 'timeline' && hasDeck" />
             <SlidesPanel v-else-if="panels.bottom === 'slides' || !hasDeck" />

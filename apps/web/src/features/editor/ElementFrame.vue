@@ -20,6 +20,8 @@ const props = defineProps<{
   alignment: () => Alignment;
   /** Shows the dashed outline and the "Grupo · Componente" tag of the design. */
   showTag: boolean;
+  /** Draws the feedback field of the component; when false it keeps its space but is not drawn. */
+  showFeedback: boolean;
   tag: string;
   /** The height of the component is the height of its content: the frame has no height of its own. */
   fitsContent: boolean;
@@ -32,8 +34,12 @@ const emit = defineEmits<{
   announce: [message: string];
   /** Lines the element is aligned with while it moves; empty when the gesture ends. */
   guides: [guides: Guides];
-  /** Height in `cqw` that the element needs for its content; reported when it changes. */
-  size: [id: string, height: number];
+  /**
+   * Height in `cqw` that the element needs for its content; reported when it changes. `bound` tells whether the
+   * content determines that height (it overflows the frame or the frame follows it) or the height is only the one
+   * of the frame, which the person is free to change.
+   */
+  size: [id: string, height: number, bound: boolean];
 }>();
 
 const root = ref<HTMLElement | null>(null);
@@ -42,6 +48,7 @@ let origin = { x: 0, y: 0 };
 
 /** Height the element needs, in `cqw`; null until it is measured. */
 const needed = ref<number | null>(null);
+let neededByContent = false;
 let resizeObserver: ResizeObserver | null = null;
 let mutationObserver: MutationObserver | null = null;
 let measureRequest = 0;
@@ -60,11 +67,16 @@ function measure(): void {
   if (frame === null || slide <= 0) return;
   const frameHeight = frame.getBoundingClientRect().height;
   const content = frame.querySelector('.content')?.firstElementChild;
-  const height = props.fitsContent || !(content instanceof HTMLElement) ? frameHeight : Math.max(frameHeight, content.scrollHeight);
+  const contentHeight = content instanceof HTMLElement ? content.scrollHeight : 0;
+  const height = props.fitsContent || !(content instanceof HTMLElement) ? frameHeight : Math.max(frameHeight, contentHeight);
+  // The content height is read in whole pixels, so a difference below one pixel is not an overflow. Without an
+  // overflow the measured height is just the one of the frame, which the person may be shrinking right now.
+  const bound = props.fitsContent || contentHeight > frameHeight + 1;
   const next = round2((height / slide) * 100);
-  if (needed.value === next) return;
+  if (needed.value === next && neededByContent === bound) return;
   needed.value = next;
-  emit('size', props.element.id, next);
+  neededByContent = bound;
+  emit('size', props.element.id, next, bound);
 }
 
 function scheduleMeasure(): void {
@@ -178,7 +190,7 @@ function onKeydown(event: KeyboardEvent): void {
     @focus="emit('select', element.id)"
     @keydown="onKeydown"
   >
-    <div class="content"><CatalogElement :element="element" mode="edit" :selected="selected" /></div>
+    <div class="content"><CatalogElement :element="element" mode="edit" :selected="selected" design :design-hidden="!showFeedback" /></div>
     <span v-if="showTag" class="tag" aria-hidden="true">{{ tag }}</span>
   </div>
 </template>

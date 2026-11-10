@@ -40,8 +40,9 @@ export const hotspotComponent = defineComponent({
   propsSchema: z.object({
     label: z.string().trim().min(1).max(80).describe('Etiqueta del punto'),
     content: z.string().trim().min(1).max(500).describe('Contenido que se muestra al hacer clic'),
+    side: z.enum(['top', 'bottom', 'left', 'right']).optional().describe('Lado del punto donde aparece el contenido; si se omite, a la derecha'),
   }),
-  defaults: { label: 'Ver más', content: 'Contenido del punto interactivo.' },
+  defaults: { label: 'Ver más', content: 'Contenido del punto interactivo.', side: 'right' },
   defaultSize: { w: 8, h: 8 },
   usesMedia: false,
   isQuestion: false,

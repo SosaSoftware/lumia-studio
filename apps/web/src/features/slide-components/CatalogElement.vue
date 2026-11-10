@@ -4,12 +4,12 @@ import type { SlideElement } from '../../api/types.ts';
 import { componentFor } from './index.ts';
 import type { ElementMode } from './element-mode.ts';
 
-const props = withDefaults(defineProps<{ element: SlideElement; mode: ElementMode; selected?: boolean }>(), { selected: false });
+const props = withDefaults(defineProps<{ element: SlideElement; mode: ElementMode; selected?: boolean; design?: boolean; designHidden?: boolean }>(), { selected: false, design: false, designHidden: false });
 const view = computed(() => componentFor(props.element.component));
 </script>
 
 <template>
-  <component :is="view" v-if="view" :data="element.props" :mode="mode" :media="element.media" :element-id="element.id" :selected="selected" />
+  <component :is="view" v-if="view" :data="element.props" :mode="mode" :media="element.media" :element-id="element.id" :selected="selected" :design="design" :design-hidden="designHidden" />
   <div v-else class="el-unknown">Componente desconocido: {{ element.component }}</div>
 </template>
 

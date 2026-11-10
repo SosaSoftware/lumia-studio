@@ -171,6 +171,7 @@ export const properties: typeof esProperties = {
     targets: 'Targets',
     correctItemId: 'Correct item',
     pairs: 'Pairs',
+    side: 'Message side',
     left: 'Left',
     right: 'Right',
     id: 'Id',
@@ -190,6 +191,7 @@ export const properties: typeof esProperties = {
       connector: { style: { straight: 'Straight', elbow: 'Elbow' } },
       shape: { kind: { rectangle: 'Rectangle', ellipse: 'Ellipse', line: 'Line', arrow: 'Arrow' } },
       diagram: { kind: { flow: 'Flow', cycle: 'Cycle', hierarchy: 'Hierarchy' } },
+      hotspot: { side: { top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' } },
     },
   },
   booleans: {

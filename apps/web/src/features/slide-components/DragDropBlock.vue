@@ -109,7 +109,7 @@ const zoneColors = (index: number): { line: string; tint: string } =>
         <span v-else-if="student" class="drop">{{ held ? 'Suelta aquí' : 'Arrastra aquí' }}</span>
       </div>
     </div>
-    <QuestionFooter v-if="student" :state="state" :can-check="targets.every((target) => placed[target.id])" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="targets.every((target) => placed[target.id])" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 

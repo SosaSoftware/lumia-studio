@@ -91,7 +91,7 @@ function onInput(event: Event, index: number): void {
       <span class="bank-label">Banco de palabras</span>
       <component :is="student ? 'button' : 'span'" v-for="(word, index) in bank" :key="index" :type="student ? 'button' : undefined" class="chip" :disabled="student ? state.locked.value : undefined" @click.stop="student && useWord(word)">{{ word }}</component>
     </div>
-    <QuestionFooter v-if="student" :state="state" :can-check="values.every((value) => value.trim() !== '')" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="values.every((value) => value.trim() !== '')" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 

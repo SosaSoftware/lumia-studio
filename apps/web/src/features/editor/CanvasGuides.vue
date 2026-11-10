@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DEFAULT_MARGIN, canvasMargins } from '../../composables/canvas-margins.ts';
+import { canvasMargins, defaultMargin } from '../../composables/canvas-margins.ts';
 import { t } from '../../i18n/index.ts';
 import type { MarginSide } from '../../composables/canvas-margins.ts';
 import type { Guides, Segment } from './alignment.ts';
@@ -55,7 +55,7 @@ function onPointerUp(event: PointerEvent): void {
 }
 
 function reset(side: MarginSide): void {
-  canvasMargins[side] = DEFAULT_MARGIN;
+  canvasMargins[side] = defaultMargin(side);
 }
 </script>
 

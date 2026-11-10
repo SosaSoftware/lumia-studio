@@ -40,7 +40,7 @@ function look(value: boolean): 'correct' | 'wrong' | 'idle' {
       <button type="button" class="answer" :data-look="look(true)" :disabled="!student || state.locked.value" :tabindex="student ? 0 : -1" data-testid="question-tf-true" @click.stop="choose(true)">Verdadero</button>
       <button type="button" class="answer" :data-look="look(false)" :disabled="!student || state.locked.value" :tabindex="student ? 0 : -1" data-testid="question-tf-false" @click.stop="choose(false)">Falso</button>
     </div>
-    <QuestionFooter v-if="student" :state="state" :can-check="false" :show-check="false" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" />
+    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="false" :show-check="false" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" />
   </div>
 </template>
 
