@@ -6,6 +6,7 @@ import { canChange } from '../../composables/edit-lock.ts';
 import { useDismiss } from '../../composables/dismiss.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
+import ConfirmDialog from '../../ui/ConfirmDialog.vue';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import { slideTypeName } from '../editor/catalog-labels.ts';
 import { slideFooter } from './slide-style.ts';
@@ -148,10 +149,30 @@ function duplicate(id: string): void {
   void session.duplicateSlide(id);
 }
 
+/** The slide that is waiting for the person to confirm its deletion. */
+const pendingDelete = ref<string | null>(null);
+const pendingSlide = computed(() => {
+  const index = slides.value.findIndex((slide) => slide.id === pendingDelete.value);
+  const slide = slides.value[index];
+  return slide === undefined ? null : { id: slide.id, number: index + 1, title: slide.title };
+});
+
+/** Asks before deleting: a slide takes its elements, clips and notes with it. */
 function remove(id: string): void {
   if (slides.value.length <= 1) return;
   menu.value = null;
-  void session.deleteSlide(id);
+  pendingDelete.value = id;
+}
+
+function confirmRemove(): void {
+  const id = pendingSlide.value?.id;
+  pendingDelete.value = null;
+  if (id !== undefined) void session.deleteSlide(id);
+}
+
+function cancelRemove(): void {
+  pendingDelete.value = null;
+  menuTrigger?.focus();
 }
 
 function move(id: string, index: number): void {
@@ -373,6 +394,15 @@ function placeStyle(view: ReorderView): Record<string, string> {
       <button type="button" class="nav" :aria-label="t('slides.next')" data-testid="slides-next" @click="go(currentIndex + 1)"><StudioIcon name="chevron-right" :size="14" :stroke="2" /></button>
     </div>
     <div class="sr-only" role="status" aria-live="polite">{{ announcement }}</div>
+    <ConfirmDialog
+      v-if="pendingSlide"
+      :title="t('slides.confirmDeleteTitle', { number: pendingSlide.number })"
+      :message="t('slides.confirmDeleteMessage', { title: pendingSlide.title })"
+      :confirm-label="t('slides.delete')"
+      danger
+      @confirm="confirmRemove"
+      @cancel="cancelRemove"
+    />
   </section>
 </template>
 

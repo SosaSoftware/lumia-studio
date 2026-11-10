@@ -39,6 +39,7 @@ export const app: typeof esApp = {
 
 export const common: typeof esCommon = {
   close: 'Close',
+  cancel: 'Cancel',
   retry: 'Retry',
   needClass: '{name} · Open a class to use it',
   hide: 'Hide',

@@ -11,6 +11,8 @@ export const slides = {
   duplicate: 'Duplicar',
   delete: 'Eliminar',
   deleteSlide: 'Eliminar la diapositiva {number}',
+  confirmDeleteTitle: 'Eliminar la diapositiva {number}',
+  confirmDeleteMessage: 'Se eliminará «{title}» con todo lo que contiene.',
   needOne: 'La clase necesita al menos una diapositiva',
   move: 'Mover la diapositiva {number}',
   moveLeft: 'Mover la diapositiva {number} a la izquierda',

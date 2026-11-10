@@ -37,6 +37,7 @@ export const app = {
 
 export const common = {
   close: 'Cerrar',
+  cancel: 'Cancelar',
   retry: 'Reintentar',
   needClass: '{name} · Abre una clase para usarlo',
   hide: 'Ocultar',

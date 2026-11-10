@@ -13,6 +13,8 @@ export const slides: typeof esSlides = {
   duplicate: 'Duplicate',
   delete: 'Delete',
   deleteSlide: 'Delete slide {number}',
+  confirmDeleteTitle: 'Delete slide {number}',
+  confirmDeleteMessage: '“{title}” and everything in it will be deleted.',
   needOne: 'The class needs at least one slide',
   move: 'Move slide {number}',
   moveLeft: 'Move slide {number} to the left',
