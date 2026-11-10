@@ -58,7 +58,7 @@ function flushOnLeave(): void {
 }
 
 function addFirstSlide(): void {
-  if (canEdit.value) void session.addSlide('cover');
+  if (canEdit.value) void session.addSlide();
 }
 
 function dropComponent(component: string, x: number, y: number): void {
@@ -108,8 +108,8 @@ function dropComponent(component: string, x: number, y: number): void {
             <div class="box">
               <LumiStar :size="40" />
               <h2>{{ className }} todavía no tiene contenido</h2>
-              <p>Agrega la primera diapositiva aquí o desde el grupo Diapositivas de la barra de la izquierda.</p>
-              <button type="button" class="cta" :aria-disabled="!canEdit" :title="canEdit ? 'Agregar una portada' : changeDenial('No tienes permiso para editar la clase')" data-testid="add-first-slide" @click="addFirstSlide">
+              <p>Agrega la primera diapositiva, en blanco, aquí o desde el grupo Diapositivas de la barra de la izquierda.</p>
+              <button type="button" class="cta" :aria-disabled="!canEdit" :title="canEdit ? 'Agregar una diapositiva en blanco' : changeDenial('No tienes permiso para editar la clase')" data-testid="add-first-slide" @click="addFirstSlide">
                 <StudioIcon name="plus" :size="13" :stroke="2" /> Agregar diapositiva
               </button>
             </div>

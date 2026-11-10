@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
-import type { SlideTypeKey } from '@lumia/packages/catalog';
 import type { Slide } from '../../api/types.ts';
 import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange } from '../../composables/edit-lock.ts';
@@ -20,18 +19,13 @@ const position = computed(() => (slides.value.length > 0 && currentIndex.value >
 
 /** Widths of the menus, as in the design; their place is computed from the button that opens them. */
 const THUMB_MENU_WIDTH = 132;
-const ADD_MENU_WIDTH = 200;
 const MENU_GAP = 4;
 const VIEWPORT_MARGIN = 8;
 
 const menu = ref<string | null>(null);
-const addOpen = ref(false);
 const menuPlace = ref<Record<string, string>>({});
-const addPlace = ref<Record<string, string>>({});
 let menuTrigger: HTMLElement | null = null;
-let addTrigger: HTMLElement | null = null;
 const menuEl = ref<HTMLElement | null>(null);
-const addEl = ref<HTMLElement | null>(null);
 const strip = ref<HTMLElement | null>(null);
 /** What the strip shows while a slide is dragged: which one, where it would land and how far it is from its place. */
 interface ReorderView {
@@ -57,14 +51,10 @@ let suppressClick = false;
 useDismiss(menuEl, () => menu.value !== null, () => {
   menu.value = null;
 });
-useDismiss(addEl, () => addOpen.value, () => {
-  addOpen.value = false;
-});
 
 /** The menus are fixed to the window so the scrolling strip does not clip them; they close when it moves. */
 function closeMenus(): void {
   menu.value = null;
-  addOpen.value = false;
 }
 
 onMounted(() => {
@@ -141,31 +131,13 @@ function toggleMenu(event: MouseEvent, id: string): void {
   const rect = button.getBoundingClientRect();
   menuTrigger = button;
   menuPlace.value = { left: `${String(clampLeft(rect.right - THUMB_MENU_WIDTH, THUMB_MENU_WIDTH))}px`, top: `${String(rect.bottom + MENU_GAP)}px` };
-  addOpen.value = false;
   menu.value = id;
   void focusFirstItem('.thumb-menu');
 }
 
-/** Opens the slide types above the button, because the panel sits at the bottom of the window. */
-function toggleAdd(event: MouseEvent): void {
-  if (addOpen.value) {
-    addOpen.value = false;
-    return;
-  }
-  const button = event.currentTarget;
-  if (!(button instanceof HTMLElement)) return;
-  const rect = button.getBoundingClientRect();
-  addTrigger = button;
-  addPlace.value = { left: `${String(clampLeft(rect.left, ADD_MENU_WIDTH))}px`, bottom: `${String(window.innerHeight - rect.top + MENU_GAP)}px` };
-  menu.value = null;
-  addOpen.value = true;
-  void focusFirstItem('.add-menu');
-}
-
 function escapeMenu(): void {
-  const trigger = menu.value !== null ? menuTrigger : addTrigger;
   closeMenus();
-  trigger?.focus();
+  menuTrigger?.focus();
 }
 
 function duplicate(id: string): void {
@@ -184,9 +156,8 @@ function move(id: string, index: number): void {
   void session.moveSlide(id, index);
 }
 
-function add(type: SlideTypeKey): void {
-  addOpen.value = false;
-  void session.addSlide(type);
+function add(): void {
+  void session.addSlide();
 }
 
 /** Position of the pointer in the scrolled content of the strip. */
@@ -390,23 +361,10 @@ function placeStyle(view: ReorderView): Record<string, string> {
           <span class="cap" :style="{ color: slide.id === session.state.selectedSlideId ? 'var(--s-text)' : 'var(--s-text-2)' }"><span class="n">{{ index + 1 }}</span><span class="t">{{ typeName(slide) }}</span></span>
         </div>
 
-        <div v-if="canEdit" ref="addEl" class="add-anchor">
-          <button type="button" class="add" aria-label="Nueva diapositiva" title="Nueva diapositiva" aria-haspopup="menu" :aria-expanded="addOpen" data-testid="slides-add" @click="toggleAdd">
+        <div v-if="canEdit" class="add-anchor">
+          <button type="button" class="add" aria-label="Nueva diapositiva en blanco" title="Nueva diapositiva en blanco" data-testid="slides-add" @click="add">
             <StudioIcon name="plus" :size="15" />
           </button>
-          <div v-if="addOpen" class="s-menu add-menu" role="menu" aria-label="Tipo de diapositiva" :style="addPlace" @keydown.esc="escapeMenu">
-            <span class="lbl add-title">Nueva diapositiva</span>
-            <button
-              v-for="type in workspace.catalog.info.value.slideTypes"
-              :key="type.key"
-              type="button"
-              class="mi small"
-              role="menuitem"
-              :title="type.usage"
-              :data-testid="`slides-add-${type.key}`"
-              @click="add(type.key)"
-            ><StudioIcon :name="`slide-${type.key}`" :size="14" :stroke="1.8" />{{ type.name }}</button>
-          </div>
         </div>
       </div>
       <button type="button" class="nav" aria-label="Diapositiva siguiente" data-testid="slides-next" @click="go(currentIndex + 1)"><StudioIcon name="chevron-right" :size="14" :stroke="2" /></button>
@@ -441,6 +399,4 @@ function placeStyle(view: ReorderView): Record<string, string> {
 .add { width: 150px; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px dashed var(--s-border); border-radius: 5px; color: var(--s-text-2); cursor: pointer; }
 .add:hover { background: var(--s-hover); color: var(--s-text); }
 .add:focus-visible { outline: 2px solid var(--s-active); outline-offset: 1px; }
-.add-menu { position: fixed; width: 200px; z-index: 60; }
-.add-title { padding: 6px 8px 4px; }
 </style>

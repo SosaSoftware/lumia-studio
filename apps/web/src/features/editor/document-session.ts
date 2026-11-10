@@ -1,12 +1,10 @@
 import { reactive } from 'vue';
-import { slideLayoutEngine } from '@lumia/packages/catalog';
 import type { SlideTypeKey } from '@lumia/packages/catalog';
 import { ApiError } from '../../api/graphql-client.ts';
 import type { StudioApi } from '../../api/studio-api.ts';
 import type {
   AudioClip,
   ClassDocument,
-  DraftElementInput,
   ElementPatch,
   MediaAsset,
   MediaRef,
@@ -126,6 +124,8 @@ export class IdRemap {
   }
 }
 
+/** Type of a new slide. */
+const NEW_SLIDE_TYPE: SlideTypeKey = 'explanatory';
 const NOTICE_MS = 8000;
 const SAVE_DEBOUNCE_MS = 400;
 
@@ -393,26 +393,18 @@ export class DocumentSession {
 
   // -- Slides ---------------------------------------------------------------
 
-  /** Adds a slide of a type after the current one, with the starter elements of its template. */
-  public async addSlide(type: SlideTypeKey): Promise<void> {
+  /**
+   * Adds a blank slide at the end of the class, with the title and the defaults of the default type; the person changes
+   * them in the properties of the slide.
+   */
+  public async addSlide(): Promise<void> {
     await this.run(async () => {
       await this.prepare();
       const versionId = this.requireVersion();
-      const definition = this.catalog.slideType(type);
+      const definition = this.catalog.slideType(NEW_SLIDE_TYPE);
       if (definition === undefined) throw new ApiError('ValidationError', 'type: el tipo de diapositiva no existe.');
-      const placed = slideLayoutEngine.place(
-        type,
-        definition.starterComponents.map((component) => ({ component })),
-      );
-      const elements = definition.starterComponents.flatMap((component, index): DraftElementInput[] => {
-        const info = this.catalog.component(component);
-        const place = placed[index];
-        if (info === undefined || place === undefined) return [];
-        return [{ component, name: info.name, ...place, props: { ...info.defaults } }];
-      });
-      const after = this.currentSlide?.position ?? null;
-      const created = await this.api.applySlidesDraft(versionId, after, [
-        { type, title: definition.name, background: definition.defaultBackground, durationS: definition.defaultDurationS, elements },
+      const created = await this.api.applySlidesDraft(versionId, null, [
+        { type: NEW_SLIDE_TYPE, title: definition.name, background: definition.defaultBackground, durationS: definition.defaultDurationS, elements: [] },
       ]);
       await this.reload();
       this.selectSlide(created[0]?.id ?? this.state.selectedSlideId);

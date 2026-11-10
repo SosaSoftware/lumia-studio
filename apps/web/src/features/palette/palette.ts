@@ -12,7 +12,7 @@ export const PALETTE_GROUP_NAMES: Readonly<Record<PaletteGroup, string>> = {
 
 /** Hint above each group of the palette, as in the design. */
 export const PALETTE_HINTS: Readonly<Record<PaletteGroup, string>> = {
-  slides: 'Elige un tipo para agregar una diapositiva nueva a la clase.',
+  slides: 'Agrega una diapositiva en blanco al final de la clase.',
   text: 'Arrastra un componente a la diapositiva.',
   media: 'Arrastra un componente a la diapositiva.',
   shapes: 'Arrastra un componente a la diapositiva.',

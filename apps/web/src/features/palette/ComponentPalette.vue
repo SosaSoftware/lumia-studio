@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { SlideTypeKey } from '@lumia/packages/catalog';
 import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange, changeDenial } from '../../composables/edit-lock.ts';
 import { panels } from '../../composables/panels.ts';
@@ -15,11 +14,10 @@ const workspace = useWorkspace();
 const canEdit = computed(() => canChange(ACTIONS.edit));
 const denied = computed(() => changeDenial('No tienes permiso para editar'));
 const name = computed(() => PALETTE_GROUP_NAMES[props.group]);
-const slideTypes = computed(() => workspace.catalog.info.value.slideTypes);
 const components = computed(() => (props.group === 'slides' ? [] : componentsOf(props.group, workspace.catalog.info.value.components)));
 
-function addSlide(type: SlideTypeKey): void {
-  if (canEdit.value) void workspace.session.addSlide(type);
+function addSlide(): void {
+  if (canEdit.value) void workspace.session.addSlide();
 }
 
 function addComponent(key: string): void {
@@ -47,17 +45,15 @@ function dragStart(event: DragEvent, key: string): void {
       <p v-if="!canEdit" class="hint denied" role="note">{{ changeDenial('No tienes permiso para editar esta clase.') }}</p>
       <div v-if="group === 'slides'" class="grid">
         <button
-          v-for="type in slideTypes"
-          :key="type.key"
           type="button"
           class="ct"
           :aria-disabled="!canEdit"
-          :title="canEdit ? `Agregar diapositiva: ${type.name}` : denied"
-          :data-testid="`palette-item-slide-${type.key}`"
-          @click="addSlide(type.key)"
+          :title="canEdit ? 'Agregar una diapositiva en blanco al final' : denied"
+          data-testid="palette-item-slide-blank"
+          @click="addSlide"
         >
-          <span class="ico"><StudioIcon :name="`slide-${type.key}`" :size="22" :stroke="1.6" /></span>
-          <span>{{ type.name }}</span>
+          <span class="ico"><StudioIcon name="plus" :size="22" :stroke="1.6" /></span>
+          <span>En blanco</span>
         </button>
       </div>
       <div v-else class="grid">

@@ -148,15 +148,15 @@ describe('DocumentSession', () => {
     const session = new DocumentSession(api, new CatalogStore(), () => undefined, 5);
     await session.open(NODE);
     expect(session.state.slides).toHaveLength(0);
-    await session.addSlide('cover');
+    await session.addSlide();
     expect(createDocument).toHaveBeenCalledTimes(1);
     const [versionId, after, drafts] = applySlidesDraft.mock.calls[0] ?? [];
     expect(versionId).toBe('v1');
-    expect(after).toBe(1);
-    // The starter elements of the cover template come from the layout engine.
-    expect(drafts?.[0]?.type).toBe('cover');
-    expect(drafts?.[0]?.elements.map((item) => item.component)).toEqual(['title', 'paragraph']);
-    expect(drafts?.[0]?.elements[0]).toMatchObject({ x: 6, w: 88, z: 1 });
+    // A new slide goes at the end of the class.
+    expect(after).toBeNull();
+    // A new slide is blank: the type sets its attributes, not its content.
+    expect(drafts?.[0]?.type).toBe('explanatory');
+    expect(drafts?.[0]?.elements).toEqual([]);
     expect(session.state.slides).toHaveLength(1);
     expect(session.state.selectedSlideId).toBe('slide-1');
   });
