@@ -15,18 +15,8 @@ export interface CatalogComponentDto {
   isQuestion: boolean;
 }
 
-export interface CatalogSlideTypeDto {
-  key: string;
-  name: string;
-  usage: string;
-  defaultBackground: string;
-  defaultDurationS: number;
-  starterComponents: string[];
-}
-
 export interface ComponentCatalogDto {
   components: CatalogComponentDto[];
-  slideTypes: CatalogSlideTypeDto[];
 }
 
 /** Presents the component catalog, with `propsSchema` and `defaults` as JSON, for the editor and Lumi. */
@@ -46,14 +36,6 @@ export class CatalogService {
         defaultSize: { w: definition.defaultSize.w, h: definition.defaultSize.h },
         usesMedia: definition.usesMedia,
         isQuestion: definition.isQuestion,
-      })),
-      slideTypes: this.catalog.slideTypes.map((type) => ({
-        key: type.key,
-        name: type.name,
-        usage: type.usage,
-        defaultBackground: type.defaultBackground,
-        defaultDurationS: type.defaultDurationS,
-        starterComponents: [...type.starterComponents],
       })),
     };
   }

@@ -9,7 +9,7 @@ const DEFINITION = {
   format: 'lumia',
   formatVersion: 1,
   class: { displayName: 'Demo Video' },
-  slides: [{ id: 's1', position: 1, type: 'cover', title: 'Portada', background: 'surface', durationS: 6, transition: 'none', advance: 'auto', elements: [], narrationClips: [], pauses: [], audioClips: [] }],
+  slides: [{ id: 's1', position: 1, title: 'Portada', background: 'surface', durationS: 6, transition: 'none', advance: 'auto', elements: [], narrationClips: [], pauses: [], audioClips: [] }],
   media: {},
 };
 

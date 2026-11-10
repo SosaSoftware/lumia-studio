@@ -2,7 +2,7 @@ import type { StudioClaims } from '../auth/index.ts';
 import type { Database } from '../infrastructure/db/index.ts';
 import { AppError } from '../shared/errors/index.ts';
 import type { ObjectStorage } from '../infrastructure/storage/index.ts';
-import { SLIDE_HEIGHT, SLIDE_WIDTH, THEME_COLOR_KEYS, componentCatalog, findSlideType, SLIDE_TYPE_KEYS } from '@lumia/packages/catalog';
+import { DEFAULT_SLIDE_ADVANCE, DEFAULT_SLIDE_BACKGROUND, DEFAULT_SLIDE_DURATION_S, SLIDE_HEIGHT, SLIDE_WIDTH, THEME_COLOR_KEYS, componentCatalog } from '@lumia/packages/catalog';
 import type { ComponentCatalog } from '@lumia/packages/catalog';
 import type { DeletedResultDto, ElementDto, SlideDto } from '../domain/dto.ts';
 import { ADVANCE_MODES, ENTRANCES, TRANSITIONS, inRange, oneOf } from '../domain/enums.ts';
@@ -17,7 +17,6 @@ export interface SaveSlideRequest {
   id?: string;
   versionId: string;
   position?: number;
-  type?: string;
   title?: string;
   background?: string;
   durationS?: number;
@@ -55,10 +54,11 @@ export interface DraftElement {
 }
 
 export interface DraftSlide {
-  type: string;
   title: string;
   background?: string;
   durationS?: number;
+  transition?: string;
+  advance?: string;
   elements: DraftElement[];
 }
 
@@ -256,13 +256,17 @@ export class SlideService extends StudioService {
     const mediaIds = new Set<string>();
     const prepared = slides.map((slide, slideIndex) => {
       const slideLabel = `Diapositiva ${String(slideIndex + 1)}`;
-      const type = findSlideType(slide.type);
-      if (type === undefined) {
-        issues.push(`${slideLabel}, type: el tipo "${slide.type}" no existe.`);
-      }
-      const background = slide.background ?? type?.defaultBackground ?? 'surface';
+      const background = slide.background ?? DEFAULT_SLIDE_BACKGROUND;
       if (!THEME_COLOR_KEYS.some((key) => key === background)) {
         issues.push(`${slideLabel}, background: debe ser una llave de color del tema.`);
+      }
+      const transition = slide.transition ?? 'none';
+      if (!TRANSITIONS.some((key) => key === transition)) {
+        issues.push(`${slideLabel}, transition: debe ser una de ${TRANSITIONS.join(', ')}.`);
+      }
+      const advance = slide.advance ?? DEFAULT_SLIDE_ADVANCE;
+      if (!ADVANCE_MODES.some((key) => key === advance)) {
+        issues.push(`${slideLabel}, advance: debe ser uno de ${ADVANCE_MODES.join(', ')}.`);
       }
       const elements = slide.elements.flatMap((element, elementIndex): ElementValues[] => {
         try {
@@ -291,12 +295,11 @@ export class SlideService extends StudioService {
       });
       return {
         values: {
-          type: slide.type,
           title: slide.title,
           background,
-          durationS: slide.durationS ?? type?.defaultDurationS ?? 10,
-          transition: 'none',
-          advance: type?.defaultAdvance ?? 'click',
+          durationS: slide.durationS ?? DEFAULT_SLIDE_DURATION_S,
+          transition,
+          advance,
         },
         elements,
       };
@@ -310,9 +313,6 @@ export class SlideService extends StudioService {
 
   private slideChanges(request: SaveSlideRequest): SlideChanges {
     const changes: SlideChanges = {};
-    if (request.type !== undefined) {
-      changes.type = oneOf('type', request.type, SLIDE_TYPE_KEYS);
-    }
     if (request.title !== undefined) {
       changes.title = request.title;
     }
@@ -332,22 +332,17 @@ export class SlideService extends StudioService {
   }
 
   private async createSlide(repos: RepositorySet, request: SaveSlideRequest, changes: SlideChanges): Promise<string> {
-    if (changes.type === undefined) {
-      throw AppError.validation('type: es obligatorio al crear una diapositiva.');
-    }
-    const definition = findSlideType(changes.type);
     const total = (await repos.slides.orderedIds(request.versionId)).length;
     const position = Math.min(Math.max(request.position ?? total + 1, 1), total + 1);
     await repos.slides.openGap(request.versionId, position - 1, 1);
     return repos.slides.insert({
       versionId: request.versionId,
       position,
-      type: changes.type,
       title: changes.title ?? '',
-      background: changes.background ?? definition?.defaultBackground ?? 'surface',
-      durationS: changes.durationS ?? definition?.defaultDurationS ?? 10,
+      background: changes.background ?? DEFAULT_SLIDE_BACKGROUND,
+      durationS: changes.durationS ?? DEFAULT_SLIDE_DURATION_S,
       transition: changes.transition ?? 'none',
-      advance: changes.advance ?? definition?.defaultAdvance ?? 'click',
+      advance: changes.advance ?? DEFAULT_SLIDE_ADVANCE,
     });
   }
 

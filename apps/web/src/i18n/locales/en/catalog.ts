@@ -31,12 +31,4 @@ export const catalog: typeof esCatalog = {
     ordering: { name: 'Ordering', usage: 'List of items that the student must put in the correct order. 2 to 8 items.' },
     matching: { name: 'Matching', usage: 'Pairs that the student must match correctly. 2 to 6 pairs.' },
   },
-  slideTypes: {
-    cover: { name: 'Cover', usage: 'First slide: the title of the class and a sentence that introduces the topic.' },
-    explanatory: { name: 'Explanatory', usage: 'Explains a concept with text, lists, images or callouts.' },
-    video: { name: 'Video', usage: 'Shows a video with a title and, optionally, a short note.' },
-    whiteboard: { name: 'Animated whiteboard', usage: 'Develops a procedure step by step, as on a whiteboard.' },
-    quiz: { name: 'Quiz', usage: 'Questions to check what was learned: multiple choice or true or false.' },
-    closing: { name: 'Closing', usage: 'Last slide: a summary of what was learned and a closing message.' },
-  },
 };

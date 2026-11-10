@@ -7,7 +7,7 @@ export const NARRATION_FIELDS = 'id slideId startsAtS script voice speed generat
 export const PAUSE_FIELDS = 'id slideId startsAtS durationS message onEnd timerElementId';
 export const AUDIO_FIELDS = `id slideId mediaId media { ${MEDIA_FIELDS} } startsAtS durationS name kind volume`;
 const COMMENT_FIELDS = 'id authorName body createdAt';
-export const SLIDE_FIELDS = `id versionId position type title background durationS transition advance
+export const SLIDE_FIELDS = `id versionId position title background durationS transition advance
   elements { ${ELEMENT_FIELDS} } narrationClips { ${NARRATION_FIELDS} } pauses { ${PAUSE_FIELDS} }
   audioClips { ${AUDIO_FIELDS} } comments { ${COMMENT_FIELDS} }`;
 export const VERSION_FIELDS = `id documentId number status slides { ${SLIDE_FIELDS} }`;
@@ -80,7 +80,6 @@ export interface SlideData {
   readonly id: string;
   readonly versionId: string;
   readonly position: number;
-  readonly type: string;
   readonly title: string;
   readonly background: string;
   readonly durationS: number;
@@ -188,7 +187,6 @@ export function decodeSlide(value: unknown): SlideData {
     id: text(slide.id),
     versionId: text(slide.versionId),
     position: num(slide.position),
-    type: text(slide.type),
     title: text(slide.title),
     background: text(slide.background),
     durationS: num(slide.durationS),
@@ -233,7 +231,6 @@ export function decodeDocument(value: unknown): DocumentData | null {
 export interface SlideSummary {
   readonly id: string;
   readonly position: number;
-  readonly type: string;
   readonly title: string;
   readonly durationS: number;
   readonly transition: string;
@@ -249,7 +246,6 @@ export function slideSummary(slide: SlideData): SlideSummary {
   return {
     id: slide.id,
     position: slide.position,
-    type: slide.type,
     title: slide.title,
     durationS: slide.durationS,
     transition: slide.transition,
@@ -289,7 +285,6 @@ export function slideView(slide: SlideData): SlideView {
   return {
     id: slide.id,
     position: slide.position,
-    type: slide.type,
     title: slide.title,
     background: slide.background,
     durationS: slide.durationS,

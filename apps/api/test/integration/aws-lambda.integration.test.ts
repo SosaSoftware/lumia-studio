@@ -103,7 +103,7 @@ describe('AppSync Lambda entry points', () => {
     const document = await dataOf(call('documents', creator, 'Mutation', 'createDocument', { nodeId: data.classes.lifecycle }));
     const versionId = String(json(document.editingVersion).id);
     const image = { component: 'image', x: 10, y: 10, w: 40, h: 30, z: 1, appearsAtS: 0, props: JSON.stringify({ ...json(componentCatalog.get('image')?.defaults), mediaId: asset.id }) };
-    await call('documents', creator, 'Mutation', 'applySlidesDraft', { versionId, afterPosition: null, slides: [{ type: 'cover', title: 'Portada', elements: [image] }] });
+    await call('documents', creator, 'Mutation', 'applySlidesDraft', { versionId, afterPosition: null, slides: [{ title: 'Portada', elements: [image] }] });
     const published = await dataOf(call('publish', creator, 'Mutation', 'publishVersion', { documentId: document.id }));
     expect(published.status).toBe('published');
     expect(requested).toEqual([versionId]);

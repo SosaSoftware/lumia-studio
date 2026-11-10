@@ -7,7 +7,7 @@ import { canChange } from '../../composables/edit-lock.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t, tn } from '../../i18n/index.ts';
-import { componentName, slideTypeName } from '../editor/catalog-labels.ts';
+import { componentName } from '../editor/catalog-labels.ts';
 import MediaLibraryDialog from '../media/MediaLibraryDialog.vue';
 import { groupColor } from '../palette/palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
@@ -42,11 +42,6 @@ const canEdit = computed(() => canChange(ACTIONS.edit));
 const duration = computed(() => (slide.value === null ? 20 : slideDuration(slide.value)));
 const marks = computed(() => ticks(duration.value));
 const position = computed(() => session.state.slides.findIndex((candidate) => candidate.id === slide.value?.id) + 1);
-const typeName = computed(() => {
-  if (slide.value === null) return '';
-  const type = workspace.catalog.slideType(slide.value.type);
-  return type === undefined ? slide.value.type : slideTypeName(type);
-});
 const libraryOpen = ref(false);
 
 /** First text of a list prop: a string item or an item with a text-like field. */
@@ -413,7 +408,7 @@ onBeforeUnmount(stop);
   <section class="timeline" :aria-label="t('timeline.panelLabel', { position })" data-testid="panel-timeline">
     <div class="head">
       <span class="lbl">{{ t('timeline.title') }}</span>
-      <span v-if="slide" class="pill"><b>{{ t('timeline.slideTag', { position }) }}</b><span class="muted">{{ typeName }}</span></span>
+      <span v-if="slide" class="pill"><b>{{ t('timeline.slideTag', { position }) }}</b><span class="muted">{{ slide.title }}</span></span>
       <span class="spacer"></span>
       <button type="button" class="nav play" :aria-label="t('timeline.restart')" :title="t('timeline.restart')" :disabled="time === 0" data-testid="timeline-restart" @click="seek(0)">
         <StudioIcon name="skip-back" :size="12" />

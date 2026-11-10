@@ -5,7 +5,7 @@ import CatalogElement from '../slide-components/CatalogElement.vue';
 import type { SlideContext } from '../slide-components/slide-context.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
-import { hasFooter, slideFooter } from '../slides/slide-style.ts';
+import { slideFooter } from '../slides/slide-style.ts';
 import SlideSurface from '../slides/SlideSurface.vue';
 import { narrationDuration } from '../timeline/timeline-model.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
@@ -307,7 +307,7 @@ onBeforeUnmount(() => {
     </div>
     <div class="stage" @click="onStageClick">
       <div v-if="slide" :key="slide.id" class="deck" :data-transition="slide.transition" :data-testid="`preview-slide-${index}`" :data-slide-id="slide.id">
-        <SlideSurface :background="slide.background" :type="slide.type" :footer="hasFooter(slide.type) ? footer : null" :context="context">
+        <SlideSurface :background="slide.background" :footer="footer" :context="context">
           <div
             v-for="element in slide.elements"
             :key="element.id"

@@ -3,7 +3,6 @@ import type { app as esApp, common as esCommon, config as esConfig, errors as es
 export const errors: typeof esErrors = {
   saveFailed: 'The change could not be saved.',
   noClassOpen: 'There is no open class.',
-  slideTypeMissing: 'the slide type does not exist.',
   slidesChanged: 'The slides changed from another tab or by Lumi. The list was updated; move the slide again.',
   componentMissing: 'the component does not exist in the catalog.',
   slideGone: 'The slide no longer exists.',

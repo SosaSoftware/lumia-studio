@@ -37,11 +37,9 @@ function defaultsOf(component: string): Record<string, unknown> {
 }
 
 /** A slide draft built with the catalog defaults and the layout engine, as Lumi would send it. */
-function draftSlide(type: 'cover' | 'explanatory' | 'quiz', title: string): Record<string, unknown> {
-  const components = type === 'quiz' ? ['title', 'multiple_choice'] : ['title', 'paragraph'];
-  const placed = slideLayoutEngine.place(type, components.map((component) => ({ component })));
+function draftSlide(title: string, components: readonly string[] = ['title', 'paragraph']): Record<string, unknown> {
+  const placed = slideLayoutEngine.place(components.map((component) => ({ component })));
   return {
-    type,
     title,
     elements: components.map((component, index) => ({
       component,
@@ -140,9 +138,9 @@ describe('class life cycle', () => {
   it('applies a draft of three slides with elements', async () => {
     slides = (await run(creator, 'Mutation', 'applySlidesDraft', {
       versionId: document.editingVersion.id,
-      slides: [draftSlide('cover', 'Fracciones'), draftSlide('explanatory', 'Qué es una fracción'), draftSlide('quiz', 'Comprueba')],
+      slides: [draftSlide('Fracciones'), draftSlide('Qué es una fracción'), draftSlide('Comprueba', ['title', 'multiple_choice'])],
     })) as SlideDto[];
-    expect(slides.map((slide) => [slide.position, slide.type, slide.elements.length])).toEqual([[1, 'cover', 2], [2, 'explanatory', 2], [3, 'quiz', 2]]);
+    expect(slides.map((slide) => [slide.position, slide.title, slide.elements.length])).toEqual([[1, 'Fracciones', 2], [2, 'Qué es una fracción', 2], [3, 'Comprueba', 2]]);
     expect(slides[0]?.elements[0]?.props).toMatchObject({ text: 'Fracciones' });
   });
 
@@ -271,12 +269,12 @@ describe('slide editing', () => {
     await expect(save({ component: 'hologram' })).rejects.toMatchObject({ errorType: 'ValidationError' });
 
     const before = ((await run(creator, 'Query', 'version', { id: version.id })) as DocumentVersionDto).slides.length;
-    const bad = draftSlide('quiz', 'Roto');
+    const bad = draftSlide('Roto', ['title', 'multiple_choice']);
     const elements = bad.elements as { props: string }[];
     await expect(
       run(creator, 'Mutation', 'applySlidesDraft', {
         versionId: version.id,
-        slides: [draftSlide('cover', 'Bueno'), { ...bad, elements: elements.map((element) => ({ ...element, props: JSON.stringify({ text: 5 }) })) }],
+        slides: [draftSlide('Bueno'), { ...bad, elements: elements.map((element) => ({ ...element, props: JSON.stringify({ text: 5 }) })) }],
       }),
     ).rejects.toMatchObject({ errorType: 'ValidationError' });
     expect(((await run(creator, 'Query', 'version', { id: version.id })) as DocumentVersionDto).slides).toHaveLength(before);
@@ -284,7 +282,7 @@ describe('slide editing', () => {
 
   it('inserts a draft after a given position', async () => {
     const before = ((await run(creator, 'Query', 'version', { id: version.id })) as DocumentVersionDto).slides;
-    await run(creator, 'Mutation', 'applySlidesDraft', { versionId: version.id, afterPosition: 1, slides: [draftSlide('cover', 'Nueva')] });
+    await run(creator, 'Mutation', 'applySlidesDraft', { versionId: version.id, afterPosition: 1, slides: [draftSlide('Nueva')] });
     const after = ((await run(creator, 'Query', 'version', { id: version.id })) as DocumentVersionDto).slides;
     expect(after.map((slide) => slide.position)).toEqual(after.map((_, index) => index + 1));
     expect(after[1]?.title).toBe('Nueva');
@@ -412,9 +410,8 @@ describe('slide editing', () => {
 
   it('serves the component catalog as JSON', async () => {
     // AWSJSON fields are JSON values; AppSync serializes them once for the client.
-    const catalog = (await run(creator, 'Query', 'componentCatalog')) as { components: { key: string; propsSchema: unknown; defaults: unknown }[]; slideTypes: { key: string }[] };
+    const catalog = (await run(creator, 'Query', 'componentCatalog')) as { components: { key: string; propsSchema: unknown; defaults: unknown }[] };
     expect(catalog.components).toHaveLength(28);
-    expect(catalog.slideTypes).toHaveLength(6);
     for (const component of catalog.components) {
       expect(component.propsSchema).toMatchObject({ type: 'object' });
       expect(componentCatalog.validateProps(component.key, component.defaults).ok).toBe(true);

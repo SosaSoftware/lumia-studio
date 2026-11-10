@@ -8,7 +8,6 @@ import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
 import ConfirmDialog from '../../ui/ConfirmDialog.vue';
 import StudioIcon from '../../ui/StudioIcon.vue';
-import { slideTypeName } from '../editor/catalog-labels.ts';
 import { slideFooter } from './slide-style.ts';
 import SlideThumbnail from './SlideThumbnail.vue';
 import { REORDER_THRESHOLD_PX, SlideReorderSession } from './slide-reorder-session.ts';
@@ -80,9 +79,10 @@ async function focusFirstItem(selector: string): Promise<void> {
   document.querySelector<HTMLElement>(`${selector} [role="menuitem"]`)?.focus({ preventScroll: true });
 }
 
-function typeName(slide: Slide): string {
-  const type = workspace.catalog.slideType(slide.type);
-  return type === undefined ? slide.title : slideTypeName(type);
+/** What the strip shows next to the number of a slide: its title, or a generic name while it has none. */
+function captionOf(slide: Slide): string {
+  const title = slide.title.trim();
+  return title === '' ? t('slides.defaultTitle') : title;
 }
 
 function footer(index: number): ReturnType<typeof slideFooter> {
@@ -382,7 +382,7 @@ function placeStyle(view: ReorderView): Record<string, string> {
               <button type="button" class="ovb" :aria-label="t('slides.moveRight', { number: index + 1 })" :title="t('slides.moveRightShort')" :aria-disabled="index === slides.length - 1" :data-testid="`slide-move-right-${slide.id}`" @click="move(slide.id, index + 1)"><StudioIcon name="chevron-right" :size="12" :stroke="2.4" /></button>
             </div>
           </div>
-          <span class="cap" :style="{ color: slide.id === session.state.selectedSlideId ? 'var(--s-text)' : 'var(--s-text-2)' }"><span class="n">{{ index + 1 }}</span><span class="t">{{ typeName(slide) }}</span></span>
+          <span class="cap" :style="{ color: slide.id === session.state.selectedSlideId ? 'var(--s-text)' : 'var(--s-text-2)' }"><span class="n">{{ index + 1 }}</span><span class="t" :title="captionOf(slide)">{{ captionOf(slide) }}</span></span>
         </div>
 
         <div v-if="canEdit" class="add-anchor">
@@ -425,9 +425,11 @@ function placeStyle(view: ReorderView): Record<string, string> {
 .mi.small { min-height: 28px; gap: 8px; padding: 0 8px; font-size: 12px; }
 .mi.danger { color: var(--s-danger); }
 .mi[aria-disabled='true'] { cursor: not-allowed; }
-.cap { display: flex; gap: 6px; font-size: 11px; color: var(--s-text-2); }
-.cap .n { font-weight: 600; }
-.cap .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The caption never grows past the thumbnail, so a long title wraps instead of widening its slide in the strip. */
+.cap { box-sizing: border-box; max-width: 150px; display: flex; align-items: flex-start; gap: 6px; font-size: 11px; line-height: 1.3; color: var(--s-text-2); }
+.cap .n { flex: none; font-weight: 600; }
+/* A title of up to 40 characters takes two lines under the thumbnail; a longer one is cut with an ellipsis. */
+.cap .t { min-width: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .add-anchor { position: relative; flex: none; margin-bottom: 20px; }
 .add { width: 150px; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px dashed var(--s-border); border-radius: 5px; color: var(--s-text-2); cursor: pointer; }
 .add:hover { background: var(--s-hover); color: var(--s-text); }

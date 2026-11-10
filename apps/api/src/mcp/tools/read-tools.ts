@@ -143,14 +143,14 @@ const getSlide = defineTool({
 const listComponents = defineTool({
   name: 'list_components',
   description:
-    'Catálogo de Studio. Sin keys: todos los componentes y tipos de diapositiva, con su uso. Con keys: el esquema de props, los valores por defecto y el tamaño de esos componentes, para armar props válidas.',
+    'Catálogo de Studio. Sin keys: todos los componentes, con su uso. Con keys: el esquema de props, los valores por defecto y el tamaño de esos componentes, para armar props válidas.',
   action: ACTIONS.documentsView,
   input: z.object({ keys: z.array(z.string().min(1)).max(28).optional().describe('Llaves de los componentes cuyo esquema necesitas, por ejemplo ["title", "multiple_choice"].') }),
   run: async ({ keys }, { studio }) => {
     const catalog = record(
       (
         await studio.request(
-          'query { componentCatalog { components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion } slideTypes { key name usage defaultBackground defaultDurationS starterComponents } } }',
+          'query { componentCatalog { components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion } } }',
         )
       ).componentCatalog,
     );
@@ -165,9 +165,6 @@ const listComponents = defineTool({
           usesMedia: component.usesMedia === true,
           isQuestion: component.isQuestion === true,
         })),
-        slideTypes: list(catalog.slideTypes)
-          .map(record)
-          .map((type) => ({ key: text(type.key), name: text(type.name), usage: text(type.usage), defaultDurationS: num(type.defaultDurationS), starterComponents: texts(type.starterComponents) })),
         note: 'Pide con keys los componentes que vas a usar para ver su esquema de props.',
       };
     }

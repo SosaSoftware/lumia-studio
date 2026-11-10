@@ -28,7 +28,7 @@ export * from './component-catalog.ts';
 export * from './component-definition.ts';
 export * from './geometry.ts';
 export * from './icons.ts';
-export * from './slide-types.ts';
+export * from './slide-properties.ts';
 export * from './theme-tokens.ts';
 export * from './layout/slide-layout-engine.ts';
 

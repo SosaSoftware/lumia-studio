@@ -44,7 +44,7 @@ async function settlesWithin(promise: Promise<unknown>, ms: number): Promise<boo
 /** Creates the document of a fixture class with one slide in draft. */
 async function draftWithOneSlide(nodeId: string): Promise<{ documentId: string; versionId: string }> {
   const document = await documents.createDocument(creator, nodeId);
-  await slides.saveSlide(creator, { versionId: document.editingVersion.id, type: 'cover', title: 'Uno' });
+  await slides.saveSlide(creator, { versionId: document.editingVersion.id, title: 'Uno' });
   return { documentId: document.id, versionId: document.editingVersion.id };
 }
 
@@ -74,7 +74,7 @@ describe('draft-only rule under concurrency', () => {
 
     await studioDb.transaction(async (tx) => {
       await tx.query('select id from studio.document_version where id = :id::uuid for update', { id: versionId });
-      edit = slides.saveSlide(creator, { versionId, type: 'cover', title: 'Tarde' });
+      edit = slides.saveSlide(creator, { versionId, title: 'Tarde' });
       edit.catch(() => undefined);
       // The edit must be waiting for the row lock, not writing.
       expect(await settlesWithin(edit, HOLD_MS)).toBe(false);

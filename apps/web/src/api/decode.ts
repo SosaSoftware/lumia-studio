@@ -1,5 +1,5 @@
 import type { ThemeColorKey } from '@lumia/packages/catalog';
-import { ADVANCE_MODES, SLIDE_TYPE_KEYS, THEME_COLOR_KEYS } from '@lumia/packages/catalog';
+import { ADVANCE_MODES, THEME_COLOR_KEYS } from '@lumia/packages/catalog';
 import type {
   AdvanceMode,
   AudioClip,
@@ -150,7 +150,6 @@ export function decodeSlide(value: unknown): Slide {
     id: str(slide.id),
     versionId: str(slide.versionId),
     position: num(slide.position),
-    type: oneOf(slide.type, SLIDE_TYPE_KEYS, 'explanatory'),
     title: str(slide.title),
     background: oneOf<ThemeColorKey>(slide.background, THEME_COLOR_KEYS, 'surface'),
     durationS: num(slide.durationS),
@@ -258,17 +257,6 @@ export function decodeCatalog(value: unknown): CatalogInfo {
         defaultSize: { w: num(size.w), h: num(size.h) },
         usesMedia: component.usesMedia === true,
         isQuestion: component.isQuestion === true,
-      };
-    }),
-    slideTypes: list(catalog.slideTypes).map((item) => {
-      const type = rec(item);
-      return {
-        key: oneOf(type.key, SLIDE_TYPE_KEYS, 'explanatory'),
-        name: str(type.name),
-        usage: str(type.usage),
-        defaultBackground: oneOf<ThemeColorKey>(type.defaultBackground, THEME_COLOR_KEYS, 'surface'),
-        defaultDurationS: num(type.defaultDurationS),
-        starterComponents: list(type.starterComponents).map((component) => str(component)),
       };
     }),
   };

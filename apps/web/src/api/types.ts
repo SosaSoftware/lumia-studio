@@ -1,4 +1,4 @@
-import type { AdvanceMode, SlideTypeKey, ThemeColorKey } from '@lumia/packages/catalog';
+import type { AdvanceMode, ThemeColorKey } from '@lumia/packages/catalog';
 
 export type DocumentStatus = 'no_content' | 'draft' | 'published';
 export type VersionStatus = 'draft' | 'published' | 'archived';
@@ -129,7 +129,6 @@ export interface Slide {
   id: string;
   versionId: string;
   position: number;
-  type: SlideTypeKey;
   title: string;
   background: ThemeColorKey;
   durationS: number;
@@ -178,7 +177,6 @@ export interface ElementPatch {
 }
 
 export interface SlidePatch {
-  type?: SlideTypeKey;
   title?: string;
   background?: ThemeColorKey;
   durationS?: number;
@@ -200,10 +198,11 @@ export interface DraftElementInput {
 }
 
 export interface DraftSlideInput {
-  type: SlideTypeKey;
   title: string;
   background?: ThemeColorKey;
   durationS?: number;
+  transition?: Transition;
+  advance?: AdvanceMode;
   elements: DraftElementInput[];
 }
 
@@ -243,16 +242,6 @@ export interface CatalogComponentInfo {
   isQuestion: boolean;
 }
 
-export interface CatalogSlideTypeInfo {
-  key: SlideTypeKey;
-  name: string;
-  usage: string;
-  defaultBackground: ThemeColorKey;
-  defaultDurationS: number;
-  starterComponents: string[];
-}
-
 export interface CatalogInfo {
   components: CatalogComponentInfo[];
-  slideTypes: CatalogSlideTypeInfo[];
 }

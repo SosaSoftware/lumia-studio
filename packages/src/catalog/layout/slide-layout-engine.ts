@@ -1,8 +1,6 @@
 import type { ComponentCatalog } from '../component-catalog.ts';
 import type { Geometry } from '../geometry.ts';
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '../geometry.ts';
-import type { SlideTypeKey } from '../slide-types.ts';
-import { findSlideType } from '../slide-types.ts';
 
 export interface LayoutRequest {
   component: string;
@@ -30,42 +28,29 @@ const APPEAR_STEP_S = 0.8;
 const FULL_WIDTH_GROUPS = new Set(['text', 'questions']);
 
 /**
- * Computes element positions for a slide type so that callers (Lumi and the editor) only choose components and content.
+ * Computes element positions for a slide so that callers (Lumi and the editor) only choose components and content:
+ * the title on top and the rest below it, with the media on one side of the text when there is both.
  * Results never overlap and always stay inside the slide.
  */
 export class SlideLayoutEngine {
   public constructor(private readonly catalog: ComponentCatalog) {}
 
-  public place(slideType: SlideTypeKey, elements: readonly LayoutRequest[]): PlacedElement[] {
-    const layout = findSlideType(slideType)?.layout ?? 'content';
+  public place(elements: readonly LayoutRequest[]): PlacedElement[] {
     const placed = new Array<Geometry | undefined>(elements.length);
     const titleIndex = elements.findIndex((element) => element.component === 'title');
     const rest = elements.map((element, index) => ({ element, index })).filter(({ index }) => index !== titleIndex);
-    const centered = layout === 'centered';
 
-    if (titleIndex >= 0) {
-      placed[titleIndex] = centered
-        ? { x: MARGIN_X, y: 12, w: CONTENT_WIDTH, h: 12 }
-        : { x: MARGIN_X, y: 4, w: CONTENT_WIDTH, h: 8 };
-    }
-    const top = titleIndex >= 0 ? (centered ? 27 : 14) : centered ? 12 : 5;
+    if (titleIndex >= 0) placed[titleIndex] = { x: MARGIN_X, y: 4, w: CONTENT_WIDTH, h: 8 };
+    const top = titleIndex >= 0 ? 14 : 5;
 
     const media = rest.filter(({ element }) => this.catalog.get(element.component)?.usesMedia === true);
     const body = rest.filter(({ element }) => this.catalog.get(element.component)?.usesMedia !== true);
 
-    if (media.length > 0 && body.length > 0 && !centered) {
-      const mediaFirst = layout === 'media';
-      const mediaRegion: Region = mediaFirst
-        ? { x: MARGIN_X, w: 56, top, bottom: BOTTOM, centered: false }
-        : { x: 60, w: 34, top, bottom: BOTTOM, centered: false };
-      const bodyRegion: Region = mediaFirst
-        ? { x: 66, w: 28, top, bottom: BOTTOM, centered: false }
-        : { x: MARGIN_X, w: 50, top, bottom: BOTTOM, centered: false };
-      this.stack(media, mediaRegion, placed);
-      this.stack(body, bodyRegion, placed);
+    if (media.length > 0 && body.length > 0) {
+      this.stack(media, { x: 60, w: 34, top, bottom: BOTTOM, centered: false }, placed);
+      this.stack(body, { x: MARGIN_X, w: 50, top, bottom: BOTTOM, centered: false }, placed);
     } else {
-      const region: Region = { x: MARGIN_X, w: CONTENT_WIDTH, top, bottom: BOTTOM, centered: centered || layout === 'media' };
-      this.stack(rest, region, placed);
+      this.stack(rest, { x: MARGIN_X, w: CONTENT_WIDTH, top, bottom: BOTTOM, centered: false }, placed);
     }
 
     let order = 0;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ADVANCE_MODES, SLIDE_TYPE_KEYS, THEME_COLOR_KEYS, componentCatalog, findSlideType, slideLayoutEngine } from '@lumia/packages/catalog';
+import { ADVANCE_MODES, DEFAULT_SLIDE_ADVANCE, DEFAULT_SLIDE_BACKGROUND, DEFAULT_SLIDE_DURATION_S, SLIDE_TITLE_MAX_LENGTH, THEME_COLOR_KEYS, componentCatalog, slideLayoutEngine } from '@lumia/packages/catalog';
 import { ACTIONS } from '../../auth/index.ts';
 import { ENTRANCES, TRANSITIONS } from '../../domain/enums.ts';
 import { SLIDE_FIELDS, decodeSlide, slideSummary } from '../class-data.ts';
@@ -20,25 +20,24 @@ const draftElementInput = z.object({
 });
 
 const draftSlideInput = z.object({
-  type: z.enum(SLIDE_TYPE_KEYS).describe('Tipo de diapositiva (list_components, slideTypes).'),
-  title: z.string().trim().min(1).describe('Título de la diapositiva.'),
-  background: z.enum(THEME_COLOR_KEYS).optional().describe('Color de fondo del tema; por defecto, el del tipo.'),
-  durationS: z.number().positive().optional().describe('Duración en segundos; por defecto, la del tipo.'),
+  title: z.string().trim().min(1).max(SLIDE_TITLE_MAX_LENGTH).describe(`Título de la diapositiva, de hasta ${String(SLIDE_TITLE_MAX_LENGTH)} caracteres.`),
+  background: z.enum(THEME_COLOR_KEYS).optional().describe(`Color de fondo del tema; por defecto, ${DEFAULT_SLIDE_BACKGROUND}.`),
+  durationS: z.number().positive().optional().describe(`Duración en segundos; por defecto, ${String(DEFAULT_SLIDE_DURATION_S)}.`),
+  transition: z.enum(TRANSITIONS).optional().describe('Transición al entrar a la diapositiva; por defecto, none.'),
+  advance: z.enum(ADVANCE_MODES).optional().describe(`auto: al terminar su tiempo; click: con un clic; on_complete: al completar sus preguntas. Por defecto, ${DEFAULT_SLIDE_ADVANCE}; usa on_complete en las diapositivas con preguntas.`),
   elements: z
     .array(draftElementInput)
     .optional()
-    .describe('Componentes de la diapositiva. Sin posición se acomodan con el diseño del tipo. Si no se indican, se usan los componentes iniciales del tipo.'),
+    .describe('Componentes de la diapositiva. Sin posición se acomodan solos: el título arriba y el resto debajo. Si no se indican, la diapositiva queda en blanco.'),
 });
 
 type DraftSlideSpec = z.output<typeof draftSlideInput>;
 type DraftElementSpec = z.output<typeof draftElementInput>;
 
-/** Builds the `DraftSlideInput` of one slide: catalog defaults, validated props and the layout of its type. */
+/** Builds the `DraftSlideInput` of one slide: catalog defaults, validated props and their layout. */
 function buildDraftSlide(spec: DraftSlideSpec, slideIndex: number): Record<string, unknown> {
-  const type = findSlideType(spec.type);
-  if (type === undefined) throw ToolError.invalidInput(`Diapositiva ${String(slideIndex + 1)}: el tipo "${spec.type}" no existe.`);
-  const requested: DraftElementSpec[] = spec.elements ?? type.starterComponents.map((component) => ({ component }));
-  const placed = slideLayoutEngine.place(spec.type, requested.map((element) => ({ component: element.component })));
+  const requested: DraftElementSpec[] = spec.elements ?? [];
+  const placed = slideLayoutEngine.place(requested.map((element) => ({ component: element.component })));
   const elements = requested.map((element, elementIndex) => {
     const label = `Diapositiva ${String(slideIndex + 1)}, componente ${String(elementIndex + 1)} (${element.component})`;
     const definition = componentCatalog.get(element.component);
@@ -59,7 +58,14 @@ function buildDraftSlide(spec: DraftSlideSpec, slideIndex: number): Record<strin
       props: JSON.stringify(props.props),
     };
   });
-  return { type: spec.type, title: spec.title, background: spec.background ?? type.defaultBackground, durationS: spec.durationS ?? type.defaultDurationS, elements };
+  return {
+    title: spec.title,
+    ...(spec.background === undefined ? {} : { background: spec.background }),
+    ...(spec.durationS === undefined ? {} : { durationS: spec.durationS }),
+    ...(spec.transition === undefined ? {} : { transition: spec.transition }),
+    ...(spec.advance === undefined ? {} : { advance: spec.advance }),
+    elements,
+  };
 }
 
 const addSlides = defineTool({
@@ -78,7 +84,7 @@ const addSlides = defineTool({
     const created = list(
       (
         await studio.request(
-          'mutation($v: ID!, $after: Int, $slides: [DraftSlideInput!]!) { applySlidesDraft(versionId: $v, afterPosition: $after, slides: $slides) { id position type title elements { id component name } } }',
+          'mutation($v: ID!, $after: Int, $slides: [DraftSlideInput!]!) { applySlidesDraft(versionId: $v, afterPosition: $after, slides: $slides) { id position title elements { id component name } } }',
           { v: session.version.id, after: afterPosition ?? null, slides: drafts },
         )
       ).applySlidesDraft,
@@ -88,7 +94,6 @@ const addSlides = defineTool({
       slides: created.map((slide) => ({
         id: text(slide.id),
         position: num(slide.position),
-        type: text(slide.type),
         title: text(slide.title),
         elements: list(slide.elements)
           .map(record)
@@ -101,13 +106,12 @@ const addSlides = defineTool({
 
 const updateSlide = defineTool({
   name: 'update_slide',
-  description: 'Cambia datos de una diapositiva: título, tipo, fondo, duración, transición o modo de avance. Solo cambia lo que indiques.',
+  description: 'Cambia datos de una diapositiva: título, fondo, duración, transición o modo de avance. Solo cambia lo que indiques.',
   action: ACTIONS.documentsEdit,
   input: z.object({
     nodeId: nodeIdInput,
     slideId: slideIdInput,
-    title: z.string().trim().min(1).optional(),
-    type: z.enum(SLIDE_TYPE_KEYS).optional(),
+    title: z.string().trim().min(1).max(SLIDE_TITLE_MAX_LENGTH).optional().describe(`Título de la diapositiva, de hasta ${String(SLIDE_TITLE_MAX_LENGTH)} caracteres.`),
     background: z.enum(THEME_COLOR_KEYS).optional(),
     durationS: z.number().positive().optional().describe('Duración en segundos.'),
     transition: z.enum(TRANSITIONS).optional().describe('Transición al entrar a la diapositiva.'),

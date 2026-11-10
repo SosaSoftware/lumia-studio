@@ -30,7 +30,7 @@ let lumi: LumiRuntime;
 let lumiUrl: string;
 const tokens = { creator: '', viewer: '' };
 
-const SlideList = z.object({ slides: z.array(z.looseObject({ id: z.string(), title: z.string(), type: z.string() })) });
+const SlideList = z.object({ slides: z.array(z.looseObject({ id: z.string(), title: z.string() })) });
 const TextResult = z.object({ content: z.array(z.looseObject({ type: z.string(), text: z.string().optional() })) });
 
 /** The slides of a class, read through the MCP as the person. */
@@ -166,7 +166,7 @@ describe('Lumi with a content creator', () => {
   it('changes nothing when the person declines', async () => {
     const [cover] = await slidesOf(tokens.creator, nodeId());
     if (cover === undefined) throw new Error('The cover is missing.');
-    screen = { ...screen, openClass: { nodeId: nodeId(), displayName: 'Las fracciones', slideCount: 1 }, selection: { slideId: cover.id, slidePosition: 1, slideType: cover.type, slideTitle: cover.title } };
+    screen = { ...screen, openClass: { nodeId: nodeId(), displayName: 'Las fracciones', slideCount: 1 }, selection: { slideId: cover.id, slidePosition: 1, slideTitle: cover.title } };
     confirmed = false;
     const turn = await browser.turn('Borra esta diapositiva.');
     report('decline delete', turn);

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { SlideTypeKey, ThemeColorKey } from '@lumia/packages/catalog';
+import { SLIDE_TITLE_MAX_LENGTH } from '@lumia/packages/catalog';
+import type { ThemeColorKey } from '@lumia/packages/catalog';
 import { ADVANCE_MODES, TRANSITIONS } from '../../api/types.ts';
 import type { AdvanceMode, Slide, Transition } from '../../api/types.ts';
 import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange } from '../../composables/edit-lock.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
-import { componentName, slideTypeName } from '../editor/catalog-labels.ts';
+import { componentName } from '../editor/catalog-labels.ts';
 import { advanceLabel, audioKindLabel, autoTimerEnd, formatTime, narrationDuration, slideDuration, transitionLabel } from '../timeline/timeline-model.ts';
 import { groupColor, tagGroup } from '../palette/palette.ts';
 import ChipGroup from './ChipGroup.vue';
@@ -70,11 +71,6 @@ const extension = computed(() =>
     : t('properties.slide.narrationEnds', { time: formatTime(narrationEnd.value) }),
 );
 
-function setType(event: Event): void {
-  const type = workspace.catalog.slideType(inputValue(event));
-  if (type !== undefined) session.updateSlide(props.slide.id, { type: type.key satisfies SlideTypeKey });
-}
-
 function setTitle(event: Event): void {
   session.updateSlide(props.slide.id, { title: inputValue(event) });
 }
@@ -102,13 +98,7 @@ function setAdvance(value: AdvanceMode): void {
       <h3 class="lbl">{{ t('properties.slide.section') }}</h3>
       <div class="prop-field">
         <label class="prop-label" for="prop-slide-title">{{ t('properties.slide.title') }}</label>
-        <input id="prop-slide-title" class="pv prop-control" type="text" maxlength="120" :value="slide.title" :disabled="!canEdit" data-testid="prop-slide-title" @input="setTitle" />
-      </div>
-      <div class="prop-field">
-        <label class="prop-label" for="prop-slide-type">{{ t('common.type') }}</label>
-        <select id="prop-slide-type" class="pv prop-control" :value="slide.type" :disabled="!canEdit" data-testid="prop-slide-type" @change="setType">
-          <option v-for="type in workspace.catalog.info.value.slideTypes" :key="type.key" :value="type.key">{{ slideTypeName(type) }}</option>
-        </select>
+        <input id="prop-slide-title" class="pv prop-control" type="text" :maxlength="SLIDE_TITLE_MAX_LENGTH" :value="slide.title" :disabled="!canEdit" data-testid="prop-slide-title" @input="setTitle" />
       </div>
       <div class="prop-field">
         <span class="prop-label">{{ t('properties.slide.background') }}</span>

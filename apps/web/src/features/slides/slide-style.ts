@@ -1,15 +1,11 @@
 import type { StyleValue } from 'vue';
-import type { SlideTypeKey, ThemeColorKey } from '@lumia/packages/catalog';
+import type { ThemeColorKey } from '@lumia/packages/catalog';
 import { t } from '../../i18n/index.ts';
 
-/**
- * Background and text colors of a slide for a theme color key.
- * Covers on the default surface get the soft gradient of the design.
- */
-export function slideStyle(background: ThemeColorKey, type?: SlideTypeKey): StyleValue {
-  const paint = type === 'cover' && background === 'surface' ? 'var(--sl-cover-gradient)' : `var(--sl-${background})`;
+/** Background and text colors of a slide for a theme color key. */
+export function slideStyle(background: ThemeColorKey): StyleValue {
   return {
-    background: paint,
+    background: `var(--sl-${background})`,
     '--sl-fg': `var(--sl-on-${background})`,
     '--sl-fg-2': `var(--sl-on-${background}-2)`,
     '--sl-kicker': `var(--sl-kicker-${background})`,
@@ -26,11 +22,6 @@ export interface SlideFooter {
 export function slideFooter(node: { displayName: string } | null, position: number): SlideFooter | null {
   if (node === null) return null;
   return { left: node.displayName, right: String(position) };
-}
-
-/** Slides other than the cover show the class and the slide number at the bottom, as in the design. */
-export function hasFooter(type: SlideTypeKey): boolean {
-  return type !== 'cover';
 }
 
 /** Name of a theme color key in the current language, for backgrounds and component colors. */

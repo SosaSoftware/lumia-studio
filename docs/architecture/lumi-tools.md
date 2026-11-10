@@ -13,7 +13,7 @@ El gateway nombra cada herramienta `<target>___<tool>`, por ejemplo `studio-slid
 | `studio-read` | `list_tree` | `documents.view` | Carpetas y clases de una subcategoría |
 | `studio-read` | `get_class` | `documents.view` | Resumen de una clase |
 | `studio-read` | `get_slide` | `documents.view` | Diapositiva completa |
-| `studio-read` | `list_components` | `documents.view` | Catálogo de componentes y tipos de diapositiva |
+| `studio-read` | `list_components` | `documents.view` | Catálogo de componentes |
 | `studio-read` | `search_media` | `documents.view` | Búsqueda en la biblioteca de medios |
 | `studio-read` | `list_voices` | `documents.view` | Voces de Amazon Polly |
 | `studio-slides` | `add_slides` | `documents.edit` | Agrega diapositivas |

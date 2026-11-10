@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
-import { componentName, slideTypeName } from '../editor/catalog-labels.ts';
+import { componentName } from '../editor/catalog-labels.ts';
 import { tagGroup } from '../palette/palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import AudioProperties from './AudioProperties.vue';
@@ -25,11 +25,6 @@ const narration = computed(() => session.selectedNarration);
 const audio = computed(() => session.selectedAudio);
 const pause = computed(() => session.selectedPause);
 const className = computed(() => workspace.activeClass.value?.displayName ?? '');
-const typeName = computed(() => {
-  if (slide.value === null) return '';
-  const type = workspace.catalog.slideType(slide.value.type);
-  return type === undefined ? slide.value.type : slideTypeName(type);
-});
 
 /** What the breadcrumb shows after "Diapositiva N", as in the design. */
 const selectionLabel = computed(() => {
@@ -72,7 +67,6 @@ function clear(): void {
           <span class="s-identity-where">{{ t('properties.panel.slideWhere', { className, position, total }) }}</span>
           <span class="s-identity-title">{{ slide.title }}</span>
         </span>
-        <span class="s-identity-pill">{{ typeName }}</span>
       </div>
       <div v-if="selectionLabel" class="crumb">
         <button type="button" class="lnk" data-testid="properties-back" @click="clear">{{ t('properties.panel.slideCrumb', { position }) }}</button>

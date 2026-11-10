@@ -23,8 +23,8 @@ export class SlideCopier {
     const slideMap: IdPair[] = sources.map((source) => ({ old_id: source.slideId, new_id: randomUUID(), position: source.position }));
     const slideIds = SqlParam.json(slideMap);
     await this.db.execute(
-      `insert into studio.slide (id, version_id, position, type, title, background, duration_s, transition, advance)
-       select m.new_id, :targetVersionId::uuid, m.position, s.type, s.title, s.background, s.duration_s, s.transition, s.advance
+      `insert into studio.slide (id, version_id, position, title, background, duration_s, transition, advance)
+       select m.new_id, :targetVersionId::uuid, m.position, s.title, s.background, s.duration_s, s.transition, s.advance
          from studio.slide s
          join jsonb_to_recordset(:slideMap) as m(old_id uuid, new_id uuid, position smallint) on m.old_id = s.id`,
       { targetVersionId, slideMap: slideIds },

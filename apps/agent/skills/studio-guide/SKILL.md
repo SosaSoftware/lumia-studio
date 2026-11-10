@@ -22,7 +22,7 @@ description: Explain how Lumia Studio works and guide the person through its scr
 ## Screen tools
 - `open_panel(panel)`: `explorer`, `components`, `slides`, `timeline`, `properties`, `comments` or `lumi`. Most panels need an open class.
 - `select_slide(slideId)` and `select_element(elementId)`: ids from `get_class` and `get_slide`.
-- `highlight_element(target)`: points at a control for a few seconds. Targets: `topbar-preview`, `topbar-publish`, `topbar-category`, `topbar-subcategory`, `slides-add`, `activity-explorer`, `activity-components`, `activity-slides`, `activity-timeline`, `activity-properties`, `activity-comments`, `palette-group-<group>`, `palette-item-<component key>`, `palette-item-slide-<slide type>`, `slide-thumb-<slideId>`, or the id of a component on the canvas.
+- `highlight_element(target)`: points at a control for a few seconds. Targets: `topbar-preview`, `topbar-publish`, `topbar-category`, `topbar-subcategory`, `slides-add`, `activity-explorer`, `activity-components`, `activity-slides`, `activity-timeline`, `activity-properties`, `activity-comments`, `palette-group-<group>`, `palette-item-<component key>`, `palette-item-slide-blank`, `slide-thumb-<slideId>`, or the id of a component on the canvas.
 - `filter_tree(status?, text?)`: filters the tree by state (`all`, `no_content`, `draft`, `published`) or text.
 - `start_preview(slideId?)`: opens the preview, from a slide when given.
 

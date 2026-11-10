@@ -84,14 +84,6 @@ export const STUDIO_ICONS: Readonly<Record<string, readonly IconShape[]>> = {
   library: [r(3, 3, 7, 7, 1), r(14, 3, 7, 7, 1), r(3, 14, 7, 7, 1), r(14, 14, 7, 7, 1)],
   link: [p('M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5')],
 
-  // Slide types (palette group Diapositivas)
-  'slide-cover': [r(3, 5, 18, 14, 2), p('M7 10h8M7 14h5')],
-  'slide-explanatory': [r(3, 5, 18, 14, 2), p('M6 9h6M6 12h6M6 15h4'), r(14, 9, 4, 6, 1)],
-  'slide-video': [r(3, 5, 18, 14, 2), p('m10 9 5 3-5 3z')],
-  'slide-whiteboard': [p('M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z')],
-  'slide-quiz': [p('M10 6h11M10 12h11M10 18h11M3 6l1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17')],
-  'slide-closing': [p('M5 21V4h12l-2 4 2 4H5')],
-
   // Components (palette groups)
   'cmp-title': [p('M5 7V4h14v3M12 4v16M9 20h6')],
   'cmp-paragraph': [p('M4 6h16M4 10h16M4 14h16M4 18h10')],

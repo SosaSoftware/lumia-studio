@@ -198,7 +198,7 @@ export function buildContext(workspace: WorkspaceStore, user: ContextUser | null
     const slide = session.currentSlide;
     const element = session.selectedElement;
     if (slide !== null) {
-      const selection: Record<string, unknown> = { slideId: slide.id, slidePosition: slide.position, slideType: slide.type, slideTitle: slide.title };
+      const selection: Record<string, unknown> = { slideId: slide.id, slidePosition: slide.position, slideTitle: slide.title };
       if (element !== null) {
         selection.elementId = element.id;
         selection.elementComponent = element.component;

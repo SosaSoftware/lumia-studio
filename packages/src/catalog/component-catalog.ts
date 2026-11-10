@@ -3,8 +3,6 @@ import type { ComponentDefinition } from './component-definition.ts';
 import { COMPONENT_GROUP_NAMES } from './component-definition.ts';
 import type { Geometry } from './geometry.ts';
 import { geometryErrors } from './geometry.ts';
-import type { SlideTypeDefinition } from './slide-types.ts';
-import { SLIDE_TYPES } from './slide-types.ts';
 
 export interface CatalogIssue {
   path: string;
@@ -47,16 +45,13 @@ interface JsonSchemaNode {
 }
 
 /**
- * Registry of Studio components and slide types.
+ * Registry of Studio components.
  * Validates element props and geometry, and exports JSON Schema and compact descriptions for Lumi.
  */
 export class ComponentCatalog {
   private readonly byKey: ReadonlyMap<string, ComponentDefinition>;
 
-  public constructor(
-    private readonly definitions: readonly ComponentDefinition[],
-    public readonly slideTypes: readonly SlideTypeDefinition[] = SLIDE_TYPES,
-  ) {
+  public constructor(private readonly definitions: readonly ComponentDefinition[]) {
     this.byKey = new Map(definitions.map((definition) => [definition.key, definition]));
   }
 

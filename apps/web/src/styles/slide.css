@@ -110,7 +110,6 @@
   --sl-shadow: rgba(0, 0, 0, 0.1);
   --sl-shadow-2: rgba(0, 0, 0, 0.2);
   --sl-foot: #8F8D88;
-  --sl-cover-gradient: linear-gradient(120deg, #FBFAF7 50%, #E3F5FC 100%);
 
   /* Defaults for content outside a slide surface (thumbnails of the palette, tests). */
   --sl-fg: var(--sl-on-surface);

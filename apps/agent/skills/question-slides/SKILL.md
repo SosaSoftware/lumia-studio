@@ -6,11 +6,11 @@ description: Write questions for a class, on a new quiz slide or on an existing 
 
 ## Steps
 1. Read the class with `studio-read___get_class`, and the slide with `studio-read___get_slide` when the questions go on an existing one.
-2. Read the catalog with `studio-read___list_components` and no `keys`. Question components are the ones marked `isQuestion`; the slide type for questions is described there too.
+2. Read the catalog with `studio-read___list_components` and no `keys`. Question components are the ones marked `isQuestion`.
 3. Read the schema of the question components you will use with `list_components` and `keys`. Follow it exactly: the options and their ids, which answer is correct and the feedback for right and wrong answers.
 4. Base the questions on what the person gave you or on the content of the class you read. Do not add topics they did not ask for.
 5. Prepare the call:
-   - new slide: `studio-slides___add_slides` with the question slide and its question components;
+   - new slide: `studio-slides___add_slides` with the question slide, its question components and `advance: "on_complete"`, so the slide moves on when its questions are done;
    - existing slide: `studio-elements___add_element` for each question, with `nodeId`, `slideId`, `component` and `props`.
 6. Ask for consent with `confirm_change`, one change per call, with summaries such as "Add 4 multiple choice questions about photosynthesis on a new slide at the end". Then wait.
 7. When confirmed, run the calls with exactly the approved arguments and say in one sentence what you added.

@@ -36,7 +36,6 @@ const version: DocumentVersionDto = {
       id: 's-1',
       versionId: 'v-1',
       position: 1,
-      type: 'cover',
       title: 'Portada',
       background: 'surface',
       durationS: 8,

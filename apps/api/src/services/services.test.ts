@@ -114,22 +114,22 @@ describe('SlideService', () => {
   it('only edits the draft version', async () => {
     const db = new ScriptedDatabase([{ match: 'from studio.document_version v join studio.class_document', rows: [ownerRow('published')] }]);
     const service = new SlideService(db, new MemoryStorage());
-    await expect(service.saveSlide(claims, { versionId: ID, type: 'cover' })).rejects.toMatchObject({ errorType: 'Conflict' });
+    await expect(service.saveSlide(claims, { versionId: ID, title: 'Portada' })).rejects.toMatchObject({ errorType: 'Conflict' });
     await expect(service.applySlidesDraft(claims, ID, undefined, [])).rejects.toMatchObject({ errorType: 'Conflict' });
     await expect(service.reorderSlides(claims, ID, [])).rejects.toMatchObject({ errorType: 'Conflict' });
     expect(db.ran('insert into')).toBe(false);
   });
 
-  it('creates a quiz slide that waits for its questions and accepts every advance mode', async () => {
+  it('creates a slide that advances with a click and accepts every advance mode', async () => {
     const versionOwner = { match: 'from studio.document_version v join studio.class_document', rows: [ownerRow('draft')] };
     const db = new ScriptedDatabase([versionOwner, lockAnswer, { match: 'from studio.slide s', rows: [] }]);
     const service = new SlideService(db, new MemoryStorage());
-    await service.saveSlide(claims, { versionId: ID, type: 'quiz' }).catch(() => undefined);
+    await service.saveSlide(claims, { versionId: ID, title: 'Quiz' }).catch(() => undefined);
     const insert = db.statements.find((statement) => statement.sql.includes('insert into studio.slide'));
-    expect(insert?.params.advance).toBe('on_complete');
-    await service.saveSlide(claims, { versionId: ID, type: 'explanatory', advance: 'on_complete' }).catch(() => undefined);
+    expect(insert?.params.advance).toBe('click');
+    await service.saveSlide(claims, { versionId: ID, title: 'Quiz', advance: 'on_complete' }).catch(() => undefined);
     expect(db.statements.filter((statement) => statement.sql.includes('insert into studio.slide')).at(-1)?.params.advance).toBe('on_complete');
-    await expect(service.saveSlide(claims, { versionId: ID, type: 'cover', advance: 'never' })).rejects.toMatchObject({ errorType: 'ValidationError' });
+    await expect(service.saveSlide(claims, { versionId: ID, title: 'Portada', advance: 'never' })).rejects.toMatchObject({ errorType: 'ValidationError' });
   });
 
   const element = { component: 'title', x: 6, y: 4, w: 88, h: 9, appearsAtS: 0 };
@@ -153,8 +153,8 @@ describe('SlideService', () => {
 
   it('validates every element of a draft before writing anything', async () => {
     const db = new ScriptedDatabase([{ match: 'from studio.document_version v join studio.class_document', rows: [ownerRow('draft')] }]);
-    const good = { type: 'cover', title: 'Portada', elements: [{ ...element, z: 1, props: { text: 'Hola', level: 'h1', align: 'center' } }] };
-    const bad = { type: 'quiz', title: 'Quiz', elements: [{ ...element, z: 1, props: { text: 7 } }] };
+    const good = { title: 'Portada', elements: [{ ...element, z: 1, props: { text: 'Hola', level: 'h1', align: 'center' } }] };
+    const bad = { title: 'Quiz', elements: [{ ...element, z: 1, props: { text: 7 } }] };
     await expect(new SlideService(db, new MemoryStorage()).applySlidesDraft(claims, ID, undefined, [good, bad])).rejects.toMatchObject({
       errorType: 'ValidationError',
       message: expect.stringMatching(/Diapositiva 2, elemento 1.*props\.text/s) as string,

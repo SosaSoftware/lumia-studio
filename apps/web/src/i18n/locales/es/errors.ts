@@ -1,7 +1,6 @@
 export const errors = {
   saveFailed: 'No se pudo guardar el cambio.',
   noClassOpen: 'No hay una clase abierta.',
-  slideTypeMissing: 'el tipo de diapositiva no existe.',
   slidesChanged: 'Las diapositivas cambiaron desde otra pestaña o por Lumi. Se actualizó la lista; vuelve a mover la diapositiva.',
   componentMissing: 'el componente no existe en el catálogo.',
   slideGone: 'La diapositiva ya no existe.',

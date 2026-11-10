@@ -40,7 +40,7 @@ const PAUSE_FIELDS = `id slideId startsAtS durationS message onEnd timerElementI
 const AUDIO_FIELDS = `id slideId mediaId media { id name mimeType url } startsAtS durationS name kind volume`;
 const COMMENT_FIELDS = `id slideId authorSub authorName body createdAt`;
 const ELEMENT_FIELDS = `id slideId component name x y w h z appearsAtS entrance props mediaId media { id name mimeType url }`;
-const SLIDE_FIELDS = `id versionId position type title background durationS transition advance elements { ${ELEMENT_FIELDS} } narrationClips { ${NARRATION_FIELDS} } pauses { ${PAUSE_FIELDS} } audioClips { ${AUDIO_FIELDS} } comments { ${COMMENT_FIELDS} }`;
+const SLIDE_FIELDS = `id versionId position title background durationS transition advance elements { ${ELEMENT_FIELDS} } narrationClips { ${NARRATION_FIELDS} } pauses { ${PAUSE_FIELDS} } audioClips { ${AUDIO_FIELDS} } comments { ${COMMENT_FIELDS} }`;
 const VERSION_FIELDS = `id documentId number status slides { ${SLIDE_FIELDS} }`;
 const DOCUMENT_FIELDS = `id nodeId status currentVersion publishedVersion versions { id number status } editingVersion { ${VERSION_FIELDS} }`;
 const TREE_NODE_FIELDS = `id subcategoryId parentId kind name displayName description position documentId documentStatus currentVersion publishedVersion`;
@@ -85,8 +85,7 @@ export class StudioApi {
 
   public async componentCatalog(): Promise<CatalogInfo> {
     const data = await this.client.request(
-      `query { componentCatalog { components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion }
-        slideTypes { key name usage defaultBackground defaultDurationS starterComponents } } }`,
+      `query { componentCatalog { components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion } }`,
     );
     return decodeCatalog(data.componentCatalog);
   }

@@ -1,5 +1,5 @@
 import type { AdvanceMode, AudioKind, Entrance, PauseEnd, Slide, SlideElement, Transition } from '../../api/types.ts';
-import type { SlideTypeKey, ThemeColorKey } from '@lumia/packages/catalog';
+import type { ThemeColorKey } from '@lumia/packages/catalog';
 import type { IdHandles } from './id-handles.ts';
 
 /** Copy of a value that holds only JSON data. */
@@ -81,7 +81,6 @@ export type ClipSnapshot = (
 
 /** A slide and what it holds, as `restoreSlide` receives it. */
 export interface SlideData {
-  readonly type: SlideTypeKey;
   readonly title: string;
   readonly background: ThemeColorKey;
   readonly durationS: number;
@@ -134,7 +133,6 @@ export function snapshotSlide(handles: IdHandles, slide: Slide): SlideSnapshot {
   const audio = slide.audioClips.filter((clip) => clip.mediaId !== null);
   return {
     handle: handles.handle(slide.id),
-    type: slide.type,
     title: slide.title,
     background: slide.background,
     durationS: slide.durationS,

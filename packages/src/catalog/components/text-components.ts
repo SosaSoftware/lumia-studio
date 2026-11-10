@@ -10,7 +10,7 @@ export const titleComponent = defineComponent({
   usage: 'Título o encabezado de la diapositiva. Uno por diapositiva.',
   propsSchema: z.object({
     text: z.string().trim().min(1).max(120).describe('Texto del título'),
-    level: z.enum(['h1', 'h2']).describe('h1 para portada y cierre, h2 para el resto'),
+    level: z.enum(['h1', 'h2']).describe('h1 para el título principal de la clase, h2 para el resto'),
     align: alignSchema,
   }),
   defaults: { text: 'Título', level: 'h2', align: 'left' },

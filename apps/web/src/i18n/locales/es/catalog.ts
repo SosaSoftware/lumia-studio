@@ -30,12 +30,4 @@ export const catalog = {
     ordering: { name: 'Ordenar', usage: 'Lista de elementos que el estudiante debe ordenar correctamente. De 2 a 8 elementos.' },
     matching: { name: 'Unir', usage: 'Pares que el estudiante debe emparejar correctamente. De 2 a 6 pares.' },
   },
-  slideTypes: {
-    cover: { name: 'Portada', usage: 'Primera diapositiva: título de la clase y una frase que presenta el tema.' },
-    explanatory: { name: 'Explicativa', usage: 'Explica un concepto con texto, listas, imágenes o destacados.' },
-    video: { name: 'Video', usage: 'Muestra un video con un título y, opcionalmente, una nota breve.' },
-    whiteboard: { name: 'Pizarra animada', usage: 'Desarrolla un procedimiento paso a paso, como en una pizarra.' },
-    quiz: { name: 'Quiz', usage: 'Preguntas para comprobar lo aprendido: opción múltiple o verdadero o falso.' },
-    closing: { name: 'Cierre', usage: 'Última diapositiva: resumen de lo aprendido y un mensaje de cierre.' },
-  },
 };

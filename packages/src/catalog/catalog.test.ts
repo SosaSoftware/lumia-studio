@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ADVANCE_MODES, BASE_COMPONENTS, componentCatalog, geometryErrors, overlaps, SLIDE_TYPE_KEYS, SLIDE_TYPES, slideLayoutEngine } from './index.ts';
+import { BASE_COMPONENTS, componentCatalog, geometryErrors, overlaps, slideLayoutEngine } from './index.ts';
 
 describe('media of the components', () => {
   it('tells a single media field from media per item', () => {
@@ -13,15 +13,6 @@ describe('media of the components', () => {
     expect(componentCatalog.mediaIds('image', { mediaId: id })).toEqual([id]);
     expect(componentCatalog.mediaIds('gallery', { items: [{ mediaId: id }, { mediaId: null }, { mediaId: id }] })).toEqual([id]);
     expect(componentCatalog.mediaIds('title', { mediaId: id })).toEqual([]);
-  });
-});
-
-describe('slide types', () => {
-  it('advance with a click by default, except quizzes, which wait for their questions', () => {
-    for (const type of SLIDE_TYPES) {
-      expect(ADVANCE_MODES).toContain(type.defaultAdvance);
-      expect(type.defaultAdvance).toBe(type.key === 'quiz' ? 'on_complete' : 'click');
-    }
   });
 });
 
@@ -162,14 +153,14 @@ describe('slide layout engine', () => {
     }
   }
 
-  it.each(SLIDE_TYPE_KEYS)('places 1 to 4 elements inside a %s slide without overlaps', (slideType) => {
+  it('places 1 to 4 elements inside a slide without overlaps', () => {
     for (const components of [...combinations, ['title', 'paragraph', 'image'], ['title', 'video', 'paragraph']]) {
-      const placed = slideLayoutEngine.place(slideType, components.map((component) => ({ component })));
+      const placed = slideLayoutEngine.place(components.map((component) => ({ component })));
       expect(placed).toHaveLength(components.length);
       placed.forEach((geometry, index) => {
-        expect(geometryErrors(geometry), `${slideType} ${components.join(',')} #${String(index)}`).toEqual([]);
+        expect(geometryErrors(geometry), `${components.join(',')} #${String(index)}`).toEqual([]);
         placed.slice(index + 1).forEach((other) => {
-          expect(overlaps(geometry, other), `${slideType} ${components.join(',')}`).toBe(false);
+          expect(overlaps(geometry, other), components.join(',')).toBe(false);
         });
       });
     }

@@ -63,15 +63,6 @@ enum VersionStatus {
   archived
 }
 
-enum SlideType {
-  cover
-  explanatory
-  video
-  whiteboard
-  quiz
-  closing
-}
-
 enum Transition {
   none
   fade
@@ -291,7 +282,6 @@ type Slide {
   id: ID!
   versionId: ID!
   position: Int!
-  type: SlideType!
   title: String!
   background: String!
   durationS: Float!
@@ -362,18 +352,8 @@ type CatalogComponent {
   isQuestion: Boolean!
 }
 
-type CatalogSlideType {
-  key: SlideType!
-  name: String!
-  usage: String!
-  defaultBackground: String!
-  defaultDurationS: Float!
-  starterComponents: [String!]!
-}
-
 type ComponentCatalog {
   components: [CatalogComponent!]!
-  slideTypes: [CatalogSlideType!]!
 }
 
 type DeletedResult {
@@ -407,7 +387,6 @@ input SlideInput {
   id: ID
   versionId: ID!
   position: Int
-  type: SlideType
   title: String
   background: String
   durationS: Float
@@ -446,10 +425,11 @@ input DraftElementInput {
 }
 
 input DraftSlideInput {
-  type: SlideType!
   title: String!
   background: String
   durationS: Float
+  transition: Transition
+  advance: AdvanceMode
   elements: [DraftElementInput!]!
 }
 

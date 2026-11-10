@@ -23,7 +23,6 @@ function slideRequest(input: InputReader): SaveSlideRequest {
     id: input.optionalId('id'),
     versionId: input.id('versionId'),
     position: input.optionalInteger('position'),
-    type: input.optionalString('type'),
     title: input.optionalString('title'),
     background: input.optionalString('background'),
     durationS: input.optionalNumber('durationS'),
@@ -67,10 +66,11 @@ function draftElement(input: InputReader): DraftElement {
 
 function draftSlide(input: InputReader): DraftSlide {
   return defined({
-    type: input.string('type'),
     title: input.string('title'),
     background: input.optionalString('background'),
     durationS: input.optionalNumber('durationS'),
+    transition: input.optionalString('transition'),
+    advance: input.optionalString('advance'),
     elements: input.objects('elements').map(draftElement),
   });
 }

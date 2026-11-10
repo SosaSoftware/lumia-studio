@@ -14,13 +14,13 @@ Domain terms with their names in code and the file that defines each. User-facin
 | Editing version | `editingVersion` | `apps/api/src/graphql/schema.graphql` | The draft if one exists, otherwise the published version. |
 | Publication | `publishVersion`, `PublishService`, `export_status` | `apps/api/src/services/publish-service.ts`, `0007_version_export.sql` | Turns the draft into the published version, archives the previous one, requests the export. |
 | `.lumia` file | `buildArchive`, `exportKey`, `LUMIA_FORMAT_VERSION` | `apps/api/src/services/lumia-archive.ts` | Zip with `definition.json`, media and narration audio of a published version, stored in bucket `Published`. |
-| Slide | `studio.slide`, `Slide`, `SLIDE_TYPES` | `0003_documents.sql`, `packages/src/catalog/slide-types.ts` | Screen of a class: type, title, background, duration, transition, advance mode. |
-| Advance mode | `ADVANCE_MODES`: `auto`, `click`, `on_complete` | `packages/src/catalog/slide-types.ts` | How a slide moves on. |
+| Slide | `studio.slide`, `Slide` | `0003_documents.sql`, `packages/src/catalog/slide-properties.ts` | Screen of a class: title, background, duration, transition, advance mode. |
+| Advance mode | `ADVANCE_MODES`: `auto`, `click`, `on_complete` | `packages/src/catalog/slide-properties.ts` | How a slide moves on. |
 | Element (component instance) | `studio.slide_element`, `SlideElement` | `0004_media_and_timeline.sql` | A component placed on a slide: `component` key, `props`, geometry `x y w h`, `z`, `appearsAtS`. |
 | Component | `ComponentDefinition`, `defineComponent` | `packages/src/catalog/component-definition.ts` | Catalog entry: key, group, usage, Zod `propsSchema`, defaults, default size, `usesMedia`, `isQuestion`. |
-| Catalog | `ComponentCatalog`, `componentCatalog`, `BASE_COMPONENTS` | `packages/src/catalog/component-catalog.ts`, `packages/src/catalog/index.ts` | Single source of components and slide types for API, web and Lumi. |
+| Catalog | `ComponentCatalog`, `componentCatalog`, `BASE_COMPONENTS` | `packages/src/catalog/component-catalog.ts`, `packages/src/catalog/index.ts` | Single source of components for API, web and Lumi. |
 | Slide units | `SLIDE_WIDTH` 100, `SLIDE_HEIGHT` 56.25 | `packages/src/catalog/geometry.ts` | Geometry is in container query units (`cqw`). |
-| Layout engine | `SlideLayoutEngine`, `slideLayoutEngine` | `packages/src/catalog/layout/slide-layout-engine.ts` | Places elements of a slide type without overlaps. |
+| Layout engine | `SlideLayoutEngine`, `slideLayoutEngine` | `packages/src/catalog/layout/slide-layout-engine.ts` | Places the elements of a slide without overlaps: the title on top and the rest below it. |
 | Media asset | `studio.media_asset`, `MediaAsset` | `0004_media_and_timeline.sql`, `apps/api/src/services/media-service.ts` | File in a category's library, key `media/<categoryId>/<assetId>/<file>`. |
 | Timeline | `studio.narration_clip`, `studio.audio_clip`, `studio.pause` | `0004_media_and_timeline.sql` | Time-based items of a slide. |
 | Narration | `NarrationClip`, `NarrationService`, status `pending`, `generating`, `ready`, `failed` | `apps/api/src/services/narration-service.ts` | Script voiced with Amazon Polly. |

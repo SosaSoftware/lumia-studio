@@ -3,7 +3,6 @@ import type { Slide } from '../../api/types.ts';
 import CatalogElement from '../slide-components/CatalogElement.vue';
 import type { SlideContext } from '../slide-components/slide-context.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
-import { hasFooter } from './slide-style.ts';
 import type { SlideFooter } from './slide-style.ts';
 import SlideSurface from './SlideSurface.vue';
 
@@ -15,7 +14,7 @@ const context: SlideContext = { elements: () => props.slide.elements, media: (id
 
 <template>
   <div class="thumb" aria-hidden="true">
-    <SlideSurface :background="slide.background" :type="slide.type" :footer="hasFooter(slide.type) ? footer : null" :context="context">
+    <SlideSurface :background="slide.background" :footer="footer" :context="context">
       <div
         v-for="element in slide.elements"
         :key="element.id"

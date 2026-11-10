@@ -94,7 +94,6 @@ export function buildDefinition(
     slides: version.slides.map((slide) => ({
       id: slide.id,
       position: slide.position,
-      type: slide.type,
       title: slide.title,
       background: slide.background,
       durationS: slide.durationS,

@@ -5,7 +5,6 @@ import { ACTIONS, can, useApp } from '../../composables/app-context.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { formatDateTime, t } from '../../i18n/index.ts';
-import { slideTypeName } from '../editor/catalog-labels.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import { initialsOf } from '../shell/user-display.ts';
 
@@ -18,11 +17,6 @@ const total = computed(() => session.state.slides.length);
 const comments = computed<SlideComment[]>(() => [...(slide.value?.comments ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
 const canEdit = computed(() => can(ACTIONS.edit));
 const className = computed(() => workspace.activeClass.value?.displayName ?? '');
-const typeName = computed(() => {
-  if (slide.value === null) return '';
-  const type = workspace.catalog.slideType(slide.value.type);
-  return type === undefined ? slide.value.type : slideTypeName(type);
-});
 const body = ref('');
 const saving = ref(false);
 const list = ref<HTMLElement | null>(null);
@@ -80,7 +74,6 @@ watch(() => slide.value?.id, () => {
           <span class="s-identity-where">{{ t('properties.panel.slideWhere', { className, position, total }) }}</span>
           <span class="s-identity-title">{{ slide.title }}</span>
         </span>
-        <span class="s-identity-pill">{{ typeName }}</span>
       </div>
       <div ref="list" class="list" data-testid="comments-list" aria-live="polite">
         <span class="title">{{ t('comments.listTitle', { position }) }}</span>

@@ -1,5 +1,4 @@
 import { reactive } from 'vue';
-import type { SlideTypeKey } from '@lumia/packages/catalog';
 import { ApiError } from '../../api/graphql-client.ts';
 import type { StudioApi } from '../../api/studio-api.ts';
 import type {
@@ -143,8 +142,6 @@ export class IdRemap {
   }
 }
 
-/** Type of a new slide. */
-const NEW_SLIDE_TYPE: SlideTypeKey = 'explanatory';
 const NOTICE_MS = 8000;
 const SAVE_DEBOUNCE_MS = 400;
 
@@ -468,11 +465,9 @@ export class DocumentSession implements HistoryOps {
     await this.run(async () => {
       await this.prepare();
       const versionId = this.requireVersion();
-      const definition = this.catalog.slideType(NEW_SLIDE_TYPE);
-      if (definition === undefined) throw new ApiError('ValidationError', `type: ${t('errors.slideTypeMissing')}`);
-      const created = await this.api.applySlidesDraft(versionId, null, [
-        { type: NEW_SLIDE_TYPE, title: definition.name, background: definition.defaultBackground, durationS: definition.defaultDurationS, elements: [] },
-      ]);
+      // The API gives the new slide its default background, duration and advance mode.
+      const title = `${t('slides.defaultTitle')} ${String(this.state.slides.length + 1)}`;
+      const created = await this.api.applySlidesDraft(versionId, null, [{ title, elements: [] }]);
       await this.reload();
       this.selectSlide(created[0]?.id ?? this.state.selectedSlideId);
       this.recordSlideCreated(created[0]?.id);
@@ -600,7 +595,6 @@ export class DocumentSession implements HistoryOps {
       if (latest === undefined) return;
       try {
         await this.api.saveSlide(slideId, latest.versionId, {
-          type: latest.type,
           title: latest.title,
           background: latest.background,
           durationS: latest.durationS,
@@ -637,7 +631,6 @@ export class DocumentSession implements HistoryOps {
         const geometry = clampGeometry({ x: (100 - size.w) / 2, y: 4, ...size });
         const created = await this.api.applySlidesDraft(versionId, null, [
           {
-            type: 'explanatory',
             title: t('slides.defaultTitle'),
             elements: [{ component, name: componentName(info), ...geometry, z: 1, appearsAtS: 0, props: { ...info.defaults } }],
           },
@@ -1158,14 +1151,18 @@ export class DocumentSession implements HistoryOps {
       const versionId = this.requireVersion();
       const position = Math.min(Math.max(index, 0), this.state.slides.length);
       const drafts = await this.api.applySlidesDraft(versionId, position, [
-        { type: data.type, title: data.title, background: data.background, durationS: data.durationS, elements: data.elements.map((element) => ({ ...element })) },
+        {
+          title: data.title,
+          background: data.background,
+          durationS: data.durationS,
+          transition: data.transition,
+          advance: data.advance,
+          elements: data.elements.map((element) => ({ ...element })),
+        },
       ]);
       const created = drafts[0];
       if (created === undefined) throw new ApiError('Conflict', t('errors.slideGone'));
       const elementIds = pairElements(data.elements, created.elements);
-      if (created.transition !== data.transition || created.advance !== data.advance) {
-        await this.api.saveSlide(created.id, created.versionId, { type: data.type, title: data.title, background: data.background, durationS: data.durationS, transition: data.transition, advance: data.advance });
-      }
       const pauseIds: string[] = [];
       for (const pause of data.pauses) {
         const timer = pause.timerIndex === null ? null : (elementIds[pause.timerIndex] ?? null);

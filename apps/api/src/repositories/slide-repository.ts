@@ -10,7 +10,6 @@ export interface SlideRecord {
 export interface NewSlide {
   versionId: string;
   position: number;
-  type: string;
   title: string;
   background: string;
   durationS: number;
@@ -19,7 +18,6 @@ export interface NewSlide {
 }
 
 export interface SlideChanges {
-  type?: string;
   title?: string;
   background?: string;
   durationS?: number;
@@ -52,8 +50,8 @@ export class SlideRepository {
   public async insert(slide: NewSlide): Promise<string> {
     const id = randomUUID();
     await this.db.execute(
-      `insert into studio.slide (id, version_id, position, type, title, background, duration_s, transition, advance)
-       values (:id::uuid, :versionId::uuid, :position, :type::studio.slide_type, :title, :background, :durationS::numeric,
+      `insert into studio.slide (id, version_id, position, title, background, duration_s, transition, advance)
+       values (:id::uuid, :versionId::uuid, :position, :title, :background, :durationS::numeric,
                :transition::studio.transition, :advance::studio.advance_mode)`,
       { id, ...slide },
     );
@@ -63,7 +61,6 @@ export class SlideRepository {
   public async update(slideId: string, changes: SlideChanges): Promise<void> {
     await this.db.execute(
       `update studio.slide set
-          type = coalesce(:type::studio.slide_type, type),
           title = coalesce(:title, title),
           background = coalesce(:background, background),
           duration_s = coalesce(:durationS::numeric, duration_s),
@@ -72,7 +69,6 @@ export class SlideRepository {
         where id = :id::uuid`,
       {
         id: slideId,
-        type: changes.type ?? null,
         title: changes.title ?? null,
         background: changes.background ?? null,
         durationS: changes.durationS ?? null,

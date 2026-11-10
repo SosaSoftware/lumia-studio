@@ -8,7 +8,6 @@ import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t, tn } from '../../i18n/index.ts';
 import { componentName } from './catalog-labels.ts';
-import { hasFooter } from '../slides/slide-style.ts';
 import type { SlideFooter } from '../slides/slide-style.ts';
 import SlideSurface from '../slides/SlideSurface.vue';
 import { COMPONENT_MIME, tagGroup } from '../palette/palette.ts';
@@ -386,7 +385,7 @@ function onDrop(event: DragEvent): void {
         @dragover="onDragOver"
         @drop="onDrop"
       >
-        <SlideSurface :background="slide.background" :type="slide.type" :footer="hasFooter(slide.type) ? footer : null" :context="context" @pointerdown.self="onBackgroundPointerDown">
+        <SlideSurface :background="slide.background" :footer="footer" :context="context" @pointerdown.self="onBackgroundPointerDown">
           <!-- Behind the elements, which stack above it. -->
           <div v-if="canvasGrid.visible" class="grid" :style="{ backgroundSize: `${String(GRID_SIZE)}cqw ${String(GRID_SIZE)}cqw` }" aria-hidden="true" data-testid="canvas-grid-lines"></div>
           <ElementFrame

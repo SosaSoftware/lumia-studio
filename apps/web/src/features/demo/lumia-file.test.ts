@@ -29,7 +29,7 @@ function definition(overrides: Record<string, unknown> = {}): Record<string, unk
         pauses: [],
         audioClips: [],
       },
-      { id: 's1', position: 1, type: 'cover', title: 'Portada', background: 'primary', durationS: 4, transition: 'none', advance: 'click', elements: [], narrationClips: [], pauses: [], audioClips: [] },
+      { id: 's1', position: 1, title: 'Portada', background: 'primary', durationS: 4, transition: 'none', advance: 'click', elements: [], narrationClips: [], pauses: [], audioClips: [] },
     ],
     media: { [IMAGE]: { path: `media/${IMAGE}/robot.png`, name: 'robot.png', mimeType: 'image/png', sizeBytes: 3 } },
     ...overrides,

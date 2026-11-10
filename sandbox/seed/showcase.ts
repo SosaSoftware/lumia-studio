@@ -13,9 +13,9 @@ const title = (text: string, level: 'h1' | 'h2' = 'h2'): DraftElement => el('tit
 /** Eight slides that use every component of the catalog, in the order of the palette groups. */
 export const SHOWCASE_SLIDES: DraftSlide[] = [
   {
-    type: 'cover',
     title: 'Portada',
     background: 'surface',
+    durationS: 8,
     elements: [
       el('paragraph', 7, 12, 50, 4, { text: 'Fundamentos de inteligencia artificial', align: 'left', size: 'sm' }),
       el('title', 7, 16, 48, 14, { text: '¿Qué es la inteligencia artificial?', level: 'h1', align: 'left' }, 0.5),
@@ -25,7 +25,6 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'explanatory',
     title: 'Texto',
     background: 'surface',
     elements: [
@@ -38,7 +37,6 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'explanatory',
     title: 'Multimedia',
     background: 'surface',
     elements: [
@@ -53,9 +51,9 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'whiteboard',
     title: 'Formas y diagramas',
     background: 'surface-alt',
+    durationS: 45,
     elements: [
       title('Cómo responde un asistente'),
       el('shape', 6, 14, 18, 12, { kind: 'rectangle', fill: 'accent', stroke: 'accent', strokeWidth: 1 }, 1),
@@ -76,7 +74,6 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'explanatory',
     title: 'Interactivos A',
     background: 'surface',
     elements: [
@@ -96,7 +93,6 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'explanatory',
     title: 'Interactivos B',
     background: 'surface',
     elements: [
@@ -126,9 +122,10 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'quiz',
     title: 'Preguntas A',
     background: 'surface',
+    durationS: 60,
+    advance: 'on_complete',
     elements: [
       title('Comprueba lo que aprendiste'),
       el('multiple_choice', 6, 13, 56, 24, {
@@ -144,9 +141,10 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     ],
   },
   {
-    type: 'quiz',
     title: 'Preguntas B',
     background: 'surface',
+    durationS: 60,
+    advance: 'on_complete',
     elements: [
       title('Practica'),
       el('drag_drop', 6, 13, 56, 24, {

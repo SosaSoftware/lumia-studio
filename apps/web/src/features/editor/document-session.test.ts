@@ -25,7 +25,7 @@ function element(id: string, slideId: string): SlideElement {
 }
 
 function slide(id: string, versionId: string, elementId: string): Slide {
-  return { id, versionId, position: 1, type: 'cover', title: 'Portada', background: 'primary', durationS: 8, transition: 'none', advance: 'click', elements: [element(elementId, id)], narrationClips: [], pauses: [], audioClips: [], comments: [] };
+  return { id, versionId, position: 1, title: 'Portada', background: 'primary', durationS: 8, transition: 'none', advance: 'click', elements: [element(elementId, id)], narrationClips: [], pauses: [], audioClips: [], comments: [] };
 }
 
 function documentOf(status: 'draft' | 'published', version: string, slideId: string, elementId: string, number: number): ClassDocument {
@@ -154,8 +154,7 @@ describe('DocumentSession', () => {
     expect(versionId).toBe('v1');
     // A new slide goes at the end of the class.
     expect(after).toBeNull();
-    // A new slide is blank: the type sets its attributes, not its content.
-    expect(drafts?.[0]?.type).toBe('explanatory');
+    // A new slide is blank and takes its background, duration and advance mode from the API.
     expect(drafts?.[0]?.elements).toEqual([]);
     expect(session.state.slides).toHaveLength(1);
     expect(session.state.selectedSlideId).toBe('slide-1');

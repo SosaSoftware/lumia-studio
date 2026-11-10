@@ -12,7 +12,6 @@ interface SlideRow {
   id: string;
   version_id: string;
   position: number;
-  type: string;
   title: string;
   background: string;
   duration_s: number;
@@ -202,7 +201,7 @@ export class VersionReader {
     const where = FILTERS[filter];
     const params = { id };
     const slideRows = await this.db.query<SlideRow>(
-      `select s.id::text as id, s.version_id::text as version_id, s.position, s.type::text as type, s.title, s.background,
+      `select s.id::text as id, s.version_id::text as version_id, s.position, s.title, s.background,
               s.duration_s, s.transition::text as transition, s.advance::text as advance
          from studio.slide s where ${where} order by s.position`,
       params,
@@ -224,7 +223,6 @@ export class VersionReader {
         id: row.id,
         versionId: row.version_id,
         position: row.position,
-        type: row.type,
         title: row.title,
         background: row.background,
         durationS: row.duration_s,

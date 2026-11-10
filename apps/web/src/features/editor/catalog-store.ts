@@ -1,8 +1,8 @@
 import { shallowRef } from 'vue';
-import { COMPONENT_GROUP_NAMES, SLIDE_TYPES, componentCatalog } from '@lumia/packages/catalog';
+import { COMPONENT_GROUP_NAMES, componentCatalog } from '@lumia/packages/catalog';
 import { rec } from '../../api/decode.ts';
 import type { StudioApi } from '../../api/studio-api.ts';
-import type { CatalogComponentInfo, CatalogInfo, CatalogSlideTypeInfo } from '../../api/types.ts';
+import type { CatalogComponentInfo, CatalogInfo } from '../../api/types.ts';
 
 /** Catalog bundled with the app; it covers the base subset when the API is not reachable. */
 export function localCatalog(): CatalogInfo {
@@ -19,16 +19,6 @@ export function localCatalog(): CatalogInfo {
         defaultSize: { ...definition.defaultSize },
         usesMedia: definition.usesMedia,
         isQuestion: definition.isQuestion,
-      }),
-    ),
-    slideTypes: SLIDE_TYPES.map(
-      (type): CatalogSlideTypeInfo => ({
-        key: type.key,
-        name: type.name,
-        usage: type.usage,
-        defaultBackground: type.defaultBackground,
-        defaultDurationS: type.defaultDurationS,
-        starterComponents: [...type.starterComponents],
       }),
     ),
   };
@@ -62,11 +52,7 @@ export class CatalogStore {
     return componentCatalog.get(key)?.fitsContent === true;
   }
 
-  public slideType(key: string): CatalogSlideTypeInfo | undefined {
-    return this.info.value.slideTypes.find((type) => type.key === key);
-  }
-
-  /** Component groups in catalog order, without the slide types. */
+  /** Component groups in catalog order. */
   public groups(): PaletteGroup[] {
     const groups = new Map<string, PaletteGroup>();
     for (const component of this.info.value.components) {

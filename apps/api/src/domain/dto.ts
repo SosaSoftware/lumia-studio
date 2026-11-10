@@ -157,7 +157,6 @@ export interface SlideDto {
   id: string;
   versionId: string;
   position: number;
-  type: string;
   title: string;
   background: string;
   durationS: number;
