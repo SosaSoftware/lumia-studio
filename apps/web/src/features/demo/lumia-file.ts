@@ -1,6 +1,7 @@
 import { strFromU8, unzipSync } from 'fflate';
 import { componentCatalog } from '@lumia/packages/catalog';
 import { decodeSlide, list, rec, str } from '../../api/decode.ts';
+import { t } from '../../i18n/index.ts';
 import type { MediaRef, Slide } from '../../api/types.ts';
 
 /** Format written by the export of the API (`definition.json` inside the zip). */
@@ -41,16 +42,16 @@ type FileUrl = (path: unknown, mimeType: string) => string | null;
 
 function readDefinition(files: Readonly<Record<string, Uint8Array>>): Record<string, unknown> {
   const raw = files[DEFINITION_FILE];
-  if (raw === undefined) throw new LumiaFileError('El archivo .lumia no tiene definition.json.');
+  if (raw === undefined) throw new LumiaFileError(t('demo.missingDefinition'));
   let definition: unknown;
   try {
     definition = JSON.parse(strFromU8(raw));
   } catch {
-    throw new LumiaFileError('El definition.json del archivo .lumia no es un JSON válido.');
+    throw new LumiaFileError(t('demo.invalidDefinition'));
   }
   const value = rec(definition);
   if (value.format !== FORMAT || value.formatVersion !== FORMAT_VERSION) {
-    throw new LumiaFileError(`El archivo no es un .lumia de la versión ${String(FORMAT_VERSION)}.`);
+    throw new LumiaFileError(t('demo.wrongVersion', { version: FORMAT_VERSION }));
   }
   return value;
 }
@@ -89,7 +90,7 @@ export function openLumia(bytes: Uint8Array, urls: ObjectUrls = BROWSER_URLS): L
   try {
     files = unzipSync(bytes);
   } catch {
-    throw new LumiaFileError('El archivo no es un .lumia válido.');
+    throw new LumiaFileError(t('demo.invalidFile'));
   }
   const definition = readDefinition(files);
   const created: string[] = [];

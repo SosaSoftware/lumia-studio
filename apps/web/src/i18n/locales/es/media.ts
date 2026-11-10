@@ -1,0 +1,16 @@
+export const media = {
+  title: 'Biblioteca de medios',
+  selectHint: 'Elige un archivo o sube uno nuevo.',
+  browseHint: 'Imágenes, audio y video que puedes usar en tus clases.',
+  filterLabel: 'Tipo de medio',
+  filters: { all: 'Todos', image: 'Imágenes', audio: 'Audio', video: 'Video', documents: 'Documentos' },
+  uploading: 'Subiendo…',
+  upload: 'Subir archivo',
+  loading: 'Cargando…',
+  empty: 'No hay medios todavía.',
+  emptyOfType: 'No hay medios de este tipo todavía.',
+  choose: 'Elegir {name}',
+  unsupported: 'Ese tipo de archivo no se puede subir. Usa imágenes, audio, video o PDF.',
+  tooBig: 'El archivo pesa más de {mb} MB, el límite para {kind}.',
+  kinds: { image: 'imágenes', audio: 'audio', video: 'video', pdf: 'PDF' },
+};

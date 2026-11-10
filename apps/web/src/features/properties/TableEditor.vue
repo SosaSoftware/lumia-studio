@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { list, str } from '../../api/decode.ts';
+import { t } from '../../i18n/index.ts';
 import { inputValue } from './controls.ts';
 
 const props = defineProps<{ columns: unknown; rows: unknown; disabled: boolean; errors: Readonly<Record<string, string>> }>();
@@ -43,13 +44,13 @@ function removeRow(index: number): void {
 
 <template>
   <div class="table-editor" data-testid="table-editor">
-    <span class="label">Celdas</span>
+    <span class="label">{{ t('properties.table.cells') }}</span>
     <div class="scroll">
       <div class="grid" :style="{ gridTemplateColumns: `repeat(${headers.length}, minmax(72px, 1fr)) 22px` }">
         <template v-for="(cell, index) in headers" :key="`h${index}`">
           <span class="cell head">
-            <input class="pv control" :value="cell" :aria-label="`Columna ${index + 1}`" :disabled="disabled" :data-testid="`field-columns-${index}`" @input="setHeader(index, inputValue($event))" />
-            <button type="button" class="ib remove" :aria-label="`Quitar la columna ${index + 1}`" title="Quitar columna" :disabled="disabled || headers.length <= 1" :data-testid="`field-columns-remove-${index}`" @click="removeColumn(index)">×</button>
+            <input class="pv control" :value="cell" :aria-label="t('properties.table.column', { number: index + 1 })" :disabled="disabled" :data-testid="`field-columns-${index}`" @input="setHeader(index, inputValue($event))" />
+            <button type="button" class="ib remove" :aria-label="t('properties.table.removeColumn', { number: index + 1 })" :title="t('properties.table.removeColumnShort')" :disabled="disabled || headers.length <= 1" :data-testid="`field-columns-remove-${index}`" @click="removeColumn(index)">×</button>
           </span>
         </template>
         <span></span>
@@ -59,18 +60,18 @@ function removeRow(index: number): void {
             :key="`c${rowIndex}-${cellIndex}`"
             class="pv control"
             :value="cell"
-            :aria-label="`Fila ${rowIndex + 1}, columna ${cellIndex + 1}`"
+            :aria-label="t('properties.table.cell', { row: rowIndex + 1, column: cellIndex + 1 })"
             :disabled="disabled"
             :data-testid="`field-rows-${rowIndex}-${cellIndex}`"
             @input="setCell(rowIndex, cellIndex, inputValue($event))"
           />
-          <button type="button" class="ib" :aria-label="`Quitar la fila ${rowIndex + 1}`" title="Quitar fila" :disabled="disabled || body.length <= 1" :data-testid="`field-rows-remove-${rowIndex}`" @click="removeRow(rowIndex)">×</button>
+          <button type="button" class="ib" :aria-label="t('properties.table.removeRow', { number: rowIndex + 1 })" :title="t('properties.table.removeRowShort')" :disabled="disabled || body.length <= 1" :data-testid="`field-rows-remove-${rowIndex}`" @click="removeRow(rowIndex)">×</button>
         </template>
       </div>
     </div>
     <div class="actions">
-      <button type="button" class="prv" :disabled="disabled || headers.length >= MAX_COLUMNS" data-testid="field-columns-add" @click="addColumn">Agregar columna</button>
-      <button type="button" class="prv" :disabled="disabled || body.length >= MAX_ROWS" data-testid="field-rows-add" @click="addRow">Agregar fila</button>
+      <button type="button" class="prv" :disabled="disabled || headers.length >= MAX_COLUMNS" data-testid="field-columns-add" @click="addColumn">{{ t('properties.table.addColumn') }}</button>
+      <button type="button" class="prv" :disabled="disabled || body.length >= MAX_ROWS" data-testid="field-rows-add" @click="addRow">{{ t('properties.table.addRow') }}</button>
     </div>
     <span v-if="errors.columns || errors.rows" class="error" role="alert" data-testid="field-error-rows">{{ errors.columns ?? errors.rows }}</span>
   </div>

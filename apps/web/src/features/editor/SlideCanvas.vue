@@ -6,6 +6,8 @@ import { GRID_SIZE, canvasGrid } from '../../composables/canvas-grid.ts';
 import { canvasMargins } from '../../composables/canvas-margins.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
+import { componentName } from './catalog-labels.ts';
 import { hasFooter } from '../slides/slide-style.ts';
 import type { SlideFooter } from '../slides/slide-style.ts';
 import SlideSurface from '../slides/SlideSurface.vue';
@@ -52,7 +54,7 @@ const guides = ref<Guides>(NO_GUIDES);
 const heights = reactive<Record<string, number>>({});
 let observer: ResizeObserver | null = null;
 
-const label = computed(() => `Diapositiva ${String(props.position)} de ${String(props.total)}: ${props.slide.title}`);
+const label = computed(() => t('editor.slideLabel', { position: props.position, total: props.total, title: props.slide.title }));
 const context: SlideContext = { elements: () => props.slide.elements, media: (id) => workspace.media.get(id), navigator: null };
 const tags = computed(() => panels.tags);
 const selectedElement = computed(() => (props.editable ? (props.slide.elements.find((element) => element.id === props.selectedElementId) ?? null) : null));
@@ -79,7 +81,7 @@ const selectionGeometry = computed<Geometry | null>(() => {
 
 function tagOf(component: string): string {
   const info = workspace.catalog.component(component);
-  return info === undefined ? component : `${tagGroup(info.group)} · ${info.name}`;
+  return info === undefined ? component : `${tagGroup(info.group)} · ${componentName(info)}`;
 }
 
 onMounted(() => {
@@ -146,29 +148,29 @@ function onDrop(event: DragEvent): void {
         type="button"
         class="prv"
         :aria-pressed="canvasGrid.visible"
-        title="Mostrar u ocultar la cuadrícula"
+        :title="t('editor.gridToggle')"
         :style="{ borderColor: canvasGrid.visible ? 'var(--s-active)' : undefined }"
         data-testid="canvas-grid"
         @click="canvasGrid.visible = !canvasGrid.visible"
       >
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1 4.5h11M1 8.5h11M4.5 1v11M8.5 1v11" /></svg>Guías
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1 4.5h11M1 8.5h11M4.5 1v11M8.5 1v11" /></svg>{{ t('editor.guides') }}
       </button>
       <button
         type="button"
         class="prv tags"
         :aria-pressed="tags"
-        title="Mostrar u ocultar el nombre de cada componente"
+        :title="t('editor.tagsToggle')"
         :style="{ borderColor: tags ? 'var(--s-active)' : undefined }"
         data-testid="canvas-tags"
         @click="panels.tags = !panels.tags"
       >
-        <StudioIcon name="eye" :size="13" :stroke="2" />Componentes
+        <StudioIcon name="eye" :size="13" :stroke="2" />{{ t('editor.components') }}
       </button>
     </div>
-    <button v-if="navigation" type="button" class="step prev" :aria-disabled="position <= 1" aria-label="Diapositiva anterior" title="Diapositiva anterior" data-testid="canvas-prev" @click="step(-1)">
+    <button v-if="navigation" type="button" class="step prev" :aria-disabled="position <= 1" :aria-label="t('slides.previous')" :title="t('slides.previous')" data-testid="canvas-prev" @click="step(-1)">
       <StudioIcon name="chevron-left" :size="16" :stroke="2" />
     </button>
-    <button v-if="navigation" type="button" class="step next" :aria-disabled="position >= total" aria-label="Diapositiva siguiente" title="Diapositiva siguiente" data-testid="canvas-next" @click="step(1)">
+    <button v-if="navigation" type="button" class="step next" :aria-disabled="position >= total" :aria-label="t('slides.next')" :title="t('slides.next')" data-testid="canvas-next" @click="step(1)">
       <StudioIcon name="chevron-right" :size="16" :stroke="2" />
     </button>
     <div class="slide-box">

@@ -1,5 +1,6 @@
 import { nextTick } from 'vue';
 import { isPaletteGroup, openGroup, openPanel, PANEL_NAMES, panels } from '../../composables/panels.ts';
+import { t, translateOr } from '../../i18n/index.ts';
 import type { PaletteGroup, PanelName } from '../../composables/panels.ts';
 import type { WorkspaceStore } from '../workspace/workspace-store.ts';
 import { parseStatusFilter } from '../workspace/workspace-store.ts';
@@ -111,42 +112,6 @@ export function isFrontendTool(name: string): boolean {
   return TOOL_NAMES.has(name);
 }
 
-/** What Lumi is doing while a tool runs, next to the "Pulso" animation. Keys are the tool names without the gateway target. */
-const ACTIVITY: Readonly<Record<string, string>> = {
-  get_my_access: 'Revisando tus permisos…',
-  list_categories: 'Revisando las categorías…',
-  list_tree: 'Buscando en el árbol…',
-  get_class: 'Leyendo la clase…',
-  get_slide: 'Revisando la diapositiva…',
-  list_components: 'Revisando los componentes…',
-  search_media: 'Buscando en la biblioteca…',
-  list_voices: 'Revisando las voces…',
-  add_slides: 'Agregando diapositivas…',
-  update_slide: 'Cambiando la diapositiva…',
-  move_slide: 'Moviendo la diapositiva…',
-  duplicate_slide: 'Duplicando la diapositiva…',
-  delete_slide: 'Borrando la diapositiva…',
-  add_element: 'Agregando un componente…',
-  update_element: 'Cambiando un componente…',
-  delete_element: 'Borrando un componente…',
-  save_narration: 'Guardando la narración…',
-  generate_narration_audio: 'Generando el audio de la narración…',
-  delete_narration: 'Borrando la narración…',
-  save_audio_clip: 'Ajustando el audio…',
-  delete_audio_clip: 'Quitando el audio…',
-  save_pause: 'Ajustando la pausa…',
-  delete_pause: 'Borrando la pausa…',
-  open_class: 'Abriendo la clase…',
-  select_slide: 'Seleccionando la diapositiva…',
-  select_element: 'Seleccionando el elemento…',
-  open_panel: 'Abriendo el panel…',
-  highlight_element: 'Señalando en la pantalla…',
-  filter_tree: 'Filtrando el árbol…',
-  start_preview: 'Abriendo la vista previa…',
-  confirm_change: 'Esperando tu confirmación…',
-  knowledge___Retrieve: 'Consultando la base de conocimiento…',
-};
-
 /** Tools of the Studio MCP that save changes to a class. */
 const CLASS_CHANGES = new Set([
   'add_slides',
@@ -172,8 +137,9 @@ export function baseToolName(name: string): string {
   return cut === -1 ? name : name.slice(cut + 3);
 }
 
+/** What Lumi is doing while a tool runs, next to the "Pulso" animation. Keys are the tool names without the gateway target. */
 export function activityLabel(name: string): string {
-  return ACTIVITY[name] ?? ACTIVITY[baseToolName(name)] ?? 'Lumi está trabajando…';
+  return translateOr(`lumi.activity.${name}`, translateOr(`lumi.activity.${baseToolName(name)}`, t('lumi.activity.default')));
 }
 
 /** Whether a tool of Lumi saved a change to a class, so the editor has to show it. */

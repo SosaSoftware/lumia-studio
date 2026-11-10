@@ -3,8 +3,9 @@ import { computed, ref } from 'vue';
 import { useDismiss } from '../../composables/dismiss.ts';
 import { panels, toggleBottom, toggleRight } from '../../composables/panels.ts';
 import type { BottomPanel, RightPanel } from '../../composables/panels.ts';
-import { isLangAvailable, lang, setLang, theme, toggleTheme } from '../../composables/theme.ts';
-import type { Lang } from '../../composables/theme.ts';
+import { theme, toggleTheme } from '../../composables/theme.ts';
+import { LANGS, LANG_NAMES, lang, setLang, t } from '../../i18n/index.ts';
+import type { Lang } from '../../i18n/index.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import LumiStar from '../../ui/LumiStar.vue';
 import StudioIcon from '../../ui/StudioIcon.vue';
@@ -18,8 +19,6 @@ const canInspect = computed(() => canEdit.value || workspace.inspectedNode.value
 function available(name: RightPanel): boolean {
   return name === 'lumi' || (name === 'properties' ? canInspect.value : canEdit.value);
 }
-const LANGS: Record<Lang, string> = { es: 'Español', en: 'English' };
-const LANG_CODES: readonly Lang[] = ['es', 'en'];
 
 const langOpen = ref(false);
 const langMenu = ref<HTMLElement | null>(null);
@@ -44,20 +43,19 @@ function pickBottom(name: BottomPanel): void {
 }
 
 function tip(name: string): string {
-  return canEdit.value ? name : `${name} · Abre una clase para usarlo`;
+  return canEdit.value ? name : t('common.needClass', { name });
 }
 
 function pickLang(next: Lang): void {
-  if (!isLangAvailable(next)) return;
   setLang(next);
   langOpen.value = false;
 }
 
-const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noche' : 'Cambiar a modo día'));
+const themeNext = computed(() => (theme.value === 'light' ? t('shell.sidebar.themeToNight') : t('shell.sidebar.themeToDay')));
 </script>
 
 <template>
-  <nav class="sidebar" aria-label="Paneles y preferencias">
+  <nav class="sidebar" :aria-label="t('shell.sidebar.label')">
     <div class="column">
       <button type="button" class="ab" aria-label="Lumi" :aria-pressed="rightOn('lumi')" data-testid="activity-lumi" @click="pickRight('lumi')">
         <span v-if="rightOn('lumi')" class="ind r" aria-hidden="true"></span>
@@ -67,7 +65,7 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
       <button
         type="button"
         class="ab"
-        aria-label="Propiedades"
+        :aria-label="t('shell.sidebar.properties')"
         :aria-pressed="rightOn('properties')"
         :aria-disabled="!canInspect"
         aria-describedby="tip-rpb-props"
@@ -76,12 +74,12 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
       >
         <span v-if="rightOn('properties')" class="ind r" aria-hidden="true"></span>
         <StudioIcon name="properties" :size="20" :stroke="1.6" />
-        <span id="tip-rpb-props" class="tip r" role="tooltip">{{ canInspect ? 'Propiedades' : 'Propiedades · Elige un elemento del árbol o abre una clase' }}</span>
+        <span id="tip-rpb-props" class="tip r" role="tooltip">{{ canInspect ? t('shell.sidebar.properties') : t('shell.sidebar.propertiesDisabled') }}</span>
       </button>
       <button
         type="button"
         class="ab"
-        aria-label="Comentarios"
+        :aria-label="t('shell.sidebar.comments')"
         :aria-pressed="rightOn('comments')"
         :aria-disabled="!canEdit"
         aria-describedby="tip-rpb-coms"
@@ -90,15 +88,15 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
       >
         <span v-if="rightOn('comments')" class="ind r" aria-hidden="true"></span>
         <StudioIcon name="comments" :size="20" :stroke="1.6" />
-        <span id="tip-rpb-coms" class="tip r" role="tooltip">{{ tip('Comentarios') }}</span>
+        <span id="tip-rpb-coms" class="tip r" role="tooltip">{{ tip(t('shell.sidebar.comments')) }}</span>
       </button>
     </div>
     <div class="column bottom">
-      <div role="group" aria-label="Panel inferior" class="column">
+      <div role="group" :aria-label="t('shell.sidebar.bottomPanel')" class="column">
         <button
           type="button"
           class="ab"
-          aria-label="Diapositivas"
+          :aria-label="t('shell.sidebar.slides')"
           :aria-pressed="bottomOn('slides')"
           :aria-disabled="!canEdit"
           aria-describedby="tip-bpb-slides"
@@ -107,12 +105,12 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
         >
           <span v-if="bottomOn('slides')" class="ind r" aria-hidden="true"></span>
           <StudioIcon name="panel-slides" :size="20" :stroke="1.6" />
-          <span id="tip-bpb-slides" class="tip r" role="tooltip">{{ tip('Diapositivas') }}</span>
+          <span id="tip-bpb-slides" class="tip r" role="tooltip">{{ tip(t('shell.sidebar.slides')) }}</span>
         </button>
         <button
           type="button"
           class="ab"
-          aria-label="Línea de tiempo"
+          :aria-label="t('shell.sidebar.timeline')"
           :aria-pressed="bottomOn('timeline')"
           :aria-disabled="!canEdit"
           aria-describedby="tip-bpb-tl"
@@ -121,7 +119,7 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
         >
           <span v-if="bottomOn('timeline')" class="ind r" aria-hidden="true"></span>
           <StudioIcon name="panel-timeline" :size="20" :stroke="1.6" />
-          <span id="tip-bpb-tl" class="tip r" role="tooltip">{{ tip('Línea de tiempo') }}</span>
+          <span id="tip-bpb-tl" class="tip r" role="tooltip">{{ tip(t('shell.sidebar.timeline')) }}</span>
         </button>
       </div>
       <div role="separator" class="separator"></div>
@@ -135,30 +133,26 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
           class="ab"
           aria-haspopup="listbox"
           :aria-expanded="langOpen"
-          :aria-label="`Idioma: ${LANGS[lang]}`"
+          :aria-label="t('shell.sidebar.languageCurrent', { name: LANG_NAMES[lang] })"
           data-testid="activity-lang"
           @click="langOpen = !langOpen"
         >
           <span class="lang-code" :style="{ background: langOpen ? 'var(--s-hover)' : 'transparent' }">{{ lang.toUpperCase() }}</span>
-          <span class="tip r" aria-hidden="true">Idioma: {{ LANGS[lang] }}</span>
+          <span class="tip r" aria-hidden="true">{{ t('shell.sidebar.languageCurrent', { name: LANG_NAMES[lang] }) }}</span>
         </button>
-        <div v-if="langOpen" class="s-menu langs" role="listbox" aria-label="Idioma">
+        <div v-if="langOpen" class="s-menu langs" role="listbox" :aria-label="t('shell.sidebar.language')">
           <button
-            v-for="code in LANG_CODES"
+            v-for="code in LANGS"
             :key="code"
             type="button"
             class="mi lang-option"
             role="option"
             :aria-selected="code === lang"
-            :aria-disabled="!isLangAvailable(code)"
-            :disabled="!isLangAvailable(code)"
-            :title="isLangAvailable(code) ? undefined : 'Todavía no disponible'"
             :style="{ background: code === lang ? 'var(--s-hover)' : undefined }"
             :data-testid="`lang-${code}`"
             @click="pickLang(code)"
           >
-            <span :lang="code">{{ LANGS[code] }}</span>
-            <span v-if="!isLangAvailable(code)" class="soon">Próximamente</span>
+            <span :lang="code">{{ LANG_NAMES[code] }}</span>
             <span v-if="code === lang" class="s-check"><StudioIcon name="check" :size="14" :stroke="2.2" /></span>
           </button>
         </div>
@@ -176,6 +170,4 @@ const themeNext = computed(() => (theme.value === 'light' ? 'Cambiar a modo noch
 .lang-code { width: 28px; height: 22px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 1px solid var(--s-border); border-radius: 5px; }
 .langs { right: calc(100% + 4px); bottom: 0; width: 160px; }
 .lang-option { justify-content: space-between; }
-.lang-option:disabled { cursor: default; opacity: 0.55; }
-.soon { margin-left: auto; font-size: 11px; color: var(--s-text-2); }
 </style>

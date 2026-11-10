@@ -1,0 +1,15 @@
+export const tree = {
+  title: 'Explorador',
+  collapseAll: 'Contraer todo',
+  hide: 'Ocultar el explorador',
+  hideShort: 'Ocultar',
+  filtered: 'Filtrado: {summary}',
+  clear: 'Limpiar',
+  contentOf: 'Contenido de {name}',
+  loading: 'Cargando el contenido…',
+  noAccess: 'Todavía no tienes acceso a ninguna categoría.',
+  noClasses: 'Esta subcategoría todavía no tiene clases.',
+  noMatches: 'No hay clases que coincidan con el filtro.',
+  loadCategoriesFailed: 'No se pudieron cargar las categorías.',
+  loadTreeFailed: 'No se pudo cargar el árbol.',
+};

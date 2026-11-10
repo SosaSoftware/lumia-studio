@@ -7,6 +7,7 @@ import { useDismiss } from '../../composables/dismiss.ts';
 import { resetWorkspace, useWorkspace } from '../../composables/workspace.ts';
 import { describeClass } from '../workspace/class-status.ts';
 import { badgeOf, groupByName } from '../workspace/scope-model.ts';
+import { t } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import { initialsOf } from './user-display.ts';
 
@@ -36,7 +37,7 @@ function toggle(name: Menu): void {
 
 const node = computed(() => workspace.activeClass.value);
 const view = computed(() =>
-  describeClass({ hasClass: node.value !== null, document: session.state.document, slideCount: session.state.slides.length, canPublish: app.can(ACTIONS.publish), lockedReason: editLock.reason }),
+  describeClass({ hasClass: node.value !== null, document: session.state.document, slideCount: session.state.slides.length, canPublish: app.can(ACTIONS.publish), lockedReason: editLock.reason === null ? null : t(editLock.reason) }),
 );
 const STATUS_COLORS: Record<string, { fg: string; bg: string }> = {
   no_content: { fg: 'var(--s-text-2)', bg: 'var(--s-hover)' },
@@ -86,7 +87,7 @@ async function signOut(): Promise<void> {
           class="tb"
           aria-haspopup="listbox"
           :aria-expanded="menu === 'category'"
-          :aria-label="`Categoría: ${workspace.category.value.displayName}`"
+          :aria-label="t('shell.topBar.categoryCurrent', { name: workspace.category.value.displayName })"
           :style="{ background: menu === 'category' ? 'var(--s-hover)' : undefined }"
           data-testid="topbar-category"
           @click="toggle('category')"
@@ -95,7 +96,7 @@ async function signOut(): Promise<void> {
           <span class="strong">{{ workspace.category.value.displayName }}</span>
           <StudioIcon name="chevron-down" :size="14" :stroke="2" class="chev" />
         </button>
-        <div v-if="menu === 'category'" class="s-menu list categories" role="listbox" aria-label="Categoría">
+        <div v-if="menu === 'category'" class="s-menu list categories" role="listbox" :aria-label="t('shell.topBar.category')">
           <div v-for="group in categoryGroups" :key="group.name ?? ''" :role="group.name === null ? 'none' : 'group'" :aria-label="group.name ?? undefined">
             <div v-if="group.name !== null" class="menu-group" aria-hidden="true" data-testid="topbar-category-group">{{ group.name }}</div>
             <button
@@ -123,7 +124,7 @@ async function signOut(): Promise<void> {
           class="tb"
           aria-haspopup="listbox"
           :aria-expanded="menu === 'subcategory'"
-          :aria-label="`Subcategoría: ${workspace.subcategory.value.displayName}`"
+          :aria-label="t('shell.topBar.subcategoryCurrent', { name: workspace.subcategory.value.displayName })"
           :style="{ background: menu === 'subcategory' ? 'var(--s-hover)' : undefined }"
           data-testid="topbar-subcategory"
           @click="toggle('subcategory')"
@@ -132,7 +133,7 @@ async function signOut(): Promise<void> {
           <span class="ellipsis">{{ workspace.subcategory.value.displayName }}</span>
           <StudioIcon name="chevron-down" :size="14" :stroke="2" class="chev" />
         </button>
-        <div v-if="menu === 'subcategory'" class="s-menu list subcategories" role="listbox" aria-label="Subcategoría">
+        <div v-if="menu === 'subcategory'" class="s-menu list subcategories" role="listbox" :aria-label="t('shell.topBar.subcategory')">
           <div v-for="group in subcategoryGroups" :key="group.name ?? ''" :role="group.name === null ? 'none' : 'group'" :aria-label="group.name ?? undefined">
             <div v-if="group.name !== null" class="menu-group" aria-hidden="true" data-testid="topbar-subcategory-group">{{ group.name }}</div>
             <button
@@ -157,16 +158,16 @@ async function signOut(): Promise<void> {
     </div>
 
     <div class="end">
-      <div v-if="node" class="class-group" role="group" :aria-label="`Clase abierta: ${node.displayName}`">
+      <div v-if="node" class="class-group" role="group" :aria-label="t('shell.topBar.openClass', { name: node.displayName })">
         <span class="status" :style="{ background: colors.bg, color: colors.fg }" :data-status="view.status" data-testid="topbar-status">
           <span class="dot" aria-hidden="true" :style="{ background: colors.fg }"></span>{{ view.statusLabel }}
         </span>
         <span v-if="view.versionLabel" class="version" :title="view.versionTip" data-testid="topbar-version">{{ view.versionLabel }}</span>
         <button type="button" class="prv" :aria-disabled="view.previewDisabled" :title="view.previewTip" data-testid="topbar-preview" @click="preview">
-          <StudioIcon name="eye" :size="13" :stroke="2" />Vista previa
+          <StudioIcon name="eye" :size="13" :stroke="2" />{{ t('shell.topBar.preview') }}
         </button>
         <button type="button" class="pub" :aria-disabled="view.publishDisabled" :title="view.publishTip" data-testid="topbar-publish" @click="publish">
-          <StudioIcon name="upload" :size="13" :stroke="2" />Publicar
+          <StudioIcon name="upload" :size="13" :stroke="2" />{{ t('shell.topBar.publish') }}
         </button>
       </div>
       <div ref="accountMenu" class="menu-anchor">
@@ -176,18 +177,18 @@ async function signOut(): Promise<void> {
           :title="`${user?.name ?? ''} · ${role}`"
           aria-haspopup="menu"
           :aria-expanded="menu === 'account'"
-          :aria-label="`Cuenta de ${user?.name ?? ''}`"
+          :aria-label="t('shell.topBar.accountOf', { name: user?.name ?? '' })"
           data-testid="topbar-user"
           @click="toggle('account')"
         >{{ initials }}</button>
-        <div v-if="menu === 'account'" class="s-menu account" role="menu" aria-label="Cuenta">
+        <div v-if="menu === 'account'" class="s-menu account" role="menu" :aria-label="t('shell.topBar.account')">
           <div class="who">
             <span class="avatar big" aria-hidden="true">{{ initials }}</span>
             <span class="who-text"><strong>{{ user?.name }}</strong><span>{{ user?.email }}</span><span>{{ role }}</span></span>
           </div>
           <div class="sep" role="separator"></div>
           <button type="button" class="mi" role="menuitem" data-testid="topbar-signout" @click="signOut">
-            <StudioIcon name="sign-out" :size="15" />Cerrar sesión
+            <StudioIcon name="sign-out" :size="15" />{{ t('shell.topBar.signOut') }}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import type { DocumentStatus, TreeNode } from '../../api/types.ts';
+import { compareText } from '../../i18n/index.ts';
 
 /** Filters of the tree. People do not see filter controls; Lumi's `filter_tree` sets them and the panel shows them. */
 export interface TreeFilters {
@@ -30,7 +31,7 @@ function normalize(text: string): string {
 }
 
 function bySiblingOrder(a: TreeItem, b: TreeItem): number {
-  return a.node.position - b.node.position || a.node.displayName.localeCompare(b.node.displayName, 'es') || a.node.name.localeCompare(b.node.name);
+  return a.node.position - b.node.position || compareText(a.node.displayName, b.node.displayName) || a.node.name.localeCompare(b.node.name);
 }
 
 /** Builds the tree from the flat list the API returns; a node whose parent is missing is shown at the root. */

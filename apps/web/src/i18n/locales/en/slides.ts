@@ -1,0 +1,25 @@
+import type { slides as esSlides } from '../es/slides.ts';
+
+export const slides: typeof esSlides = {
+  panel: 'Slides of the class',
+  count: 'Slides · {count}',
+  list: 'Slides',
+  previous: 'Previous slide',
+  next: 'Next slide',
+  slideLabel: 'Slide {number}: {title}',
+  actions: 'Actions for slide {number}',
+  moreActions: 'More actions for slide {number}',
+  moreActionsShort: 'More actions',
+  duplicate: 'Duplicate',
+  delete: 'Delete',
+  deleteSlide: 'Delete slide {number}',
+  needOne: 'The class needs at least one slide',
+  move: 'Move slide {number}',
+  moveLeft: 'Move slide {number} to the left',
+  moveLeftShort: 'Move to the left',
+  moveRight: 'Move slide {number} to the right',
+  moveRightShort: 'Move to the right',
+  newBlank: 'New blank slide',
+  moved: 'Slide moved to position {position} of {total}',
+  defaultTitle: 'Slide',
+};

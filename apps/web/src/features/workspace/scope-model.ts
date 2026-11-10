@@ -1,4 +1,5 @@
 import type { Category, Subcategory } from '../../api/types.ts';
+import { upperCase } from '../../i18n/index.ts';
 
 /** Category and subcategory whose tree the workspace shows. */
 export interface WorkspaceScope {
@@ -29,7 +30,7 @@ export function badgeOf(displayName: string): string {
   const words = displayName.split(/\s+/).filter((word) => /\p{L}|\p{N}/u.test(word));
   const [first, second] = words;
   if (first === undefined) return '';
-  return (second === undefined ? first.slice(0, 2) : `${first.charAt(0)}${second.charAt(0)}`).toLocaleUpperCase('es');
+  return upperCase(second === undefined ? first.slice(0, 2) : `${first.charAt(0)}${second.charAt(0)}`);
 }
 
 /** Items of a menu under their visual group; `name` is null for the items without a group. */

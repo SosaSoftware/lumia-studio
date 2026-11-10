@@ -1,4 +1,5 @@
 import { rec, str } from '../../api/decode.ts';
+import { t } from '../../i18n/index.ts';
 
 /** Written by the CDK next to config.json: `{ "file": "/demo-content/demo.lumia" }`. */
 export const DEMO_SETTINGS_URL = '/demo.json';
@@ -6,7 +7,7 @@ export const DEMO_SETTINGS_URL = '/demo.json';
 /** There is no demo to show yet (no settings, or the file is not in the demo bucket). */
 export class DemoUnavailableError extends Error {
   public constructor() {
-    super('La demo todavía no está disponible.');
+    super(t('demo.unavailable'));
     this.name = 'DemoUnavailableError';
   }
 }
@@ -27,7 +28,7 @@ export async function download(url: string, onProgress: (fraction: number) => vo
   const response = await fetcher(url);
   // The bucket answers 403 (not 404) for a file that is not there yet.
   if (response.status === 403 || response.status === 404) throw new DemoUnavailableError();
-  if (!response.ok || response.body === null) throw new Error(`No se pudo descargar la demo (${String(response.status)}).`);
+  if (!response.ok || response.body === null) throw new Error(t('errors.demoDownload', { status: response.status }));
   const total = Number(response.headers.get('content-length') ?? '0');
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];

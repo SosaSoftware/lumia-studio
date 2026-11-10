@@ -1,10 +1,10 @@
 import type { ClassDocument, DocumentStatus } from '../../api/types.ts';
+import { t } from '../../i18n/index.ts';
 
-export const STATUS_LABELS: Readonly<Record<DocumentStatus, string>> = {
-  no_content: 'Sin contenido',
-  draft: 'Borrador',
-  published: 'Publicada',
-};
+/** Label of a document status in the current language. */
+export function statusLabel(status: DocumentStatus): string {
+  return t(`workspace.status.${status}`);
+}
 
 export interface ClassStatusInput {
   hasClass: boolean;
@@ -40,25 +40,25 @@ export function describeClass(input: ClassStatusInput): ClassStatusView {
     versionTip =
       status === 'draft'
         ? published === null
-          ? `Versión ${String(number)} en borrador`
-          : `Versión ${String(number)} en borrador · la versión ${String(published)} está publicada`
-        : `Versión ${String(number)} publicada`;
+          ? t('workspace.version.draft', { number })
+          : t('workspace.version.draftWithPublished', { number, published })
+        : t('workspace.version.published', { number });
   }
 
-  let previewTip = 'Ver la clase como la verán los estudiantes';
-  if (!input.hasClass) previewTip = 'Abre una clase para ver su vista previa';
-  else if (!hasContent) previewTip = 'La clase todavía no tiene contenido';
+  let previewTip = t('workspace.previewTip.ready');
+  if (!input.hasClass) previewTip = t('workspace.previewTip.noClass');
+  else if (!hasContent) previewTip = t('workspace.previewTip.noContent');
 
-  let publishTip = `Publicar la versión ${String(number)}`;
-  if (!input.hasClass) publishTip = 'Abre una clase para publicarla';
-  else if (!input.canPublish) publishTip = 'No tienes permiso para publicar';
+  let publishTip = t('workspace.publishTip.ready', { number });
+  if (!input.hasClass) publishTip = t('workspace.publishTip.noClass');
+  else if (!input.canPublish) publishTip = t('workspace.publishTip.noPermission');
   else if (input.lockedReason) publishTip = input.lockedReason;
-  else if (status === 'published') publishTip = 'No hay cambios por publicar';
-  else if (!hasContent) publishTip = 'La clase todavía no tiene contenido';
+  else if (status === 'published') publishTip = t('workspace.publishTip.nothingToPublish');
+  else if (!hasContent) publishTip = t('workspace.publishTip.noContent');
 
   return {
     status,
-    statusLabel: STATUS_LABELS[status],
+    statusLabel: statusLabel(status),
     versionLabel: version === null ? null : `v${String(number)}`,
     versionTip,
     previewDisabled: !input.hasClass || !hasContent,

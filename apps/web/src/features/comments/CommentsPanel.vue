@@ -4,6 +4,8 @@ import type { SlideComment } from '../../api/types.ts';
 import { ACTIONS, can, useApp } from '../../composables/app-context.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { formatDateTime, t } from '../../i18n/index.ts';
+import { slideTypeName } from '../editor/catalog-labels.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import { initialsOf } from '../shell/user-display.ts';
 
@@ -16,7 +18,11 @@ const total = computed(() => session.state.slides.length);
 const comments = computed<SlideComment[]>(() => [...(slide.value?.comments ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
 const canEdit = computed(() => can(ACTIONS.edit));
 const className = computed(() => workspace.activeClass.value?.displayName ?? '');
-const typeName = computed(() => (slide.value === null ? '' : (workspace.catalog.slideType(slide.value.type)?.name ?? slide.value.type)));
+const typeName = computed(() => {
+  if (slide.value === null) return '';
+  const type = workspace.catalog.slideType(slide.value.type);
+  return type === undefined ? slide.value.type : slideTypeName(type);
+});
 const body = ref('');
 const saving = ref(false);
 const list = ref<HTMLElement | null>(null);
@@ -32,8 +38,7 @@ function isOwn(comment: SlideComment): boolean {
 }
 
 function formatDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime()) ? iso : date.toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return formatDateTime(iso);
 }
 
 async function add(): Promise<void> {
@@ -64,29 +69,29 @@ watch(() => slide.value?.id, () => {
 <template>
   <aside class="panel" aria-labelledby="h-coms" data-testid="panel-comments">
     <div class="s-panel-head">
-      <h2 id="h-coms" class="lbl">Comentarios</h2>
-      <button type="button" class="ib" aria-label="Ocultar comentarios" title="Ocultar" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>
+      <h2 id="h-coms" class="lbl">{{ t('comments.title') }}</h2>
+      <button type="button" class="ib" :aria-label="t('comments.hide')" :title="t('common.hide')" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>
     </div>
-    <p v-if="!slide" class="empty">Elige una diapositiva para ver sus comentarios.</p>
+    <p v-if="!slide" class="empty">{{ t('comments.emptySlide') }}</p>
     <template v-else>
-      <div class="s-identity" :aria-label="`Estás viendo la diapositiva ${position} de ${total}: ${slide.title}`">
+      <div class="s-identity" :aria-label="t('comments.viewing', { position, total, title: slide.title })">
         <span class="s-identity-num" aria-hidden="true">{{ position }}</span>
         <span class="s-identity-meta">
-          <span class="s-identity-where">{{ className }} · Diapositiva {{ position }} de {{ total }}</span>
+          <span class="s-identity-where">{{ t('properties.panel.slideWhere', { className, position, total }) }}</span>
           <span class="s-identity-title">{{ slide.title }}</span>
         </span>
         <span class="s-identity-pill">{{ typeName }}</span>
       </div>
       <div ref="list" class="list" data-testid="comments-list" aria-live="polite">
-        <span class="title">Comentarios de la diapositiva {{ position }}</span>
-        <p v-if="comments.length === 0" class="none">Todavía no hay comentarios en esta diapositiva.</p>
+        <span class="title">{{ t('comments.listTitle', { position }) }}</span>
+        <p v-if="comments.length === 0" class="none">{{ t('comments.none') }}</p>
         <article v-for="comment in comments" :key="comment.id" class="comment" :data-testid="`comment-${comment.id}`">
           <span class="avatar" aria-hidden="true">{{ initialsOf(author(comment)) }}</span>
           <div class="content">
             <div class="meta">
               <strong>{{ author(comment) }}</strong>
               <time :datetime="comment.createdAt">{{ formatDate(comment.createdAt) }}</time>
-              <button v-if="isOwn(comment) && canEdit" type="button" class="ib del" aria-label="Eliminar mi comentario" title="Eliminar" :data-testid="`comment-delete-${comment.id}`" @click="session.deleteComment(comment.id)">
+              <button v-if="isOwn(comment) && canEdit" type="button" class="ib del" :aria-label="t('comments.deleteMine')" :title="t('comments.delete')" :data-testid="`comment-delete-${comment.id}`" @click="session.deleteComment(comment.id)">
                 <StudioIcon name="trash" :size="13" />
               </button>
             </div>
@@ -95,21 +100,21 @@ watch(() => slide.value?.id, () => {
         </article>
       </div>
       <div class="composer">
-        <label for="comment-body" class="sr-only">Escribe un comentario</label>
+        <label for="comment-body" class="sr-only">{{ t('comments.write') }}</label>
         <textarea
           id="comment-body"
           v-model="body"
           class="pa"
           rows="3"
           :maxlength="MAX"
-          placeholder="Escribe notas, pendientes o sugerencias para esta diapositiva…"
+          :placeholder="t('comments.placeholder')"
           :disabled="saving || !canEdit"
           data-testid="comment-input"
           @keydown="onKeydown"
         ></textarea>
         <div class="composer-row">
-          <span class="note">Los estudiantes no ven estos comentarios.</span>
-          <button type="button" class="pub" :aria-disabled="saving || body.trim() === '' || !canEdit" data-testid="comment-send" @click="add">{{ saving ? 'Guardando…' : 'Comentar' }}</button>
+          <span class="note">{{ t('comments.hiddenFromStudents') }}</span>
+          <button type="button" class="pub" :aria-disabled="saving || body.trim() === '' || !canEdit" data-testid="comment-send" @click="add">{{ saving ? t('comments.saving') : t('comments.send') }}</button>
         </div>
       </div>
     </template>

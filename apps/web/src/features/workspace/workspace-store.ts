@@ -3,6 +3,7 @@ import { ApiError } from '../../api/graphql-client.ts';
 import type { StudioApi } from '../../api/studio-api.ts';
 import type { Category, DocumentStatus, TreeNode } from '../../api/types.ts';
 import { isPaletteGroup, panels } from '../../composables/panels.ts';
+import { t } from '../../i18n/index.ts';
 import { CatalogStore } from '../editor/catalog-store.ts';
 import { DocumentSession } from '../editor/document-session.ts';
 import { MediaStore } from '../media/media-store.ts';
@@ -122,7 +123,7 @@ export class WorkspaceStore {
       this.categories.value = categories;
       this.error.value = null;
     } catch (error) {
-      this.error.value = WorkspaceStore.messageOf(error, 'No se pudieron cargar las categorías.');
+      this.error.value = WorkspaceStore.messageOf(error, t('tree.loadCategoriesFailed'));
     }
     this.scope.value = resolveScope(this.categories.value, readScope(this.storage));
     this.media.useCategory(this.scope.value?.categoryId ?? null);
@@ -148,7 +149,7 @@ export class WorkspaceStore {
       this.nodes.value = await this.api.treeNodes(subcategoryId);
       this.error.value = null;
     } catch (error) {
-      this.error.value = WorkspaceStore.messageOf(error, 'No se pudo cargar el árbol.');
+      this.error.value = WorkspaceStore.messageOf(error, t('tree.loadTreeFailed'));
     }
   }
 

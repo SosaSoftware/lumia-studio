@@ -1,4 +1,6 @@
-/** Error returned by the API, with the AppSync `errorType` and the Spanish message. */
+import { t } from '../i18n/index.ts';
+
+/** Error returned by the API, with the AppSync `errorType` and its message (the API writes it in Spanish). */
 export class ApiError extends Error {
   public constructor(
     public readonly errorType: string,
@@ -58,24 +60,24 @@ export class GraphqlClient {
         body: JSON.stringify({ query, variables }),
       });
     } catch {
-      throw new ApiError('NetworkError', 'No se pudo conectar con el servidor.');
+      throw new ApiError('NetworkError', t('errors.network'));
     }
     const body: unknown = await response.json().catch(() => null);
     if (response.status === 401 || response.status === 403) {
       this.onUnauthorized();
-      throw new ApiError('Unauthorized', 'Tu sesión terminó. Inicia sesión de nuevo.');
+      throw new ApiError('Unauthorized', t('errors.sessionEnded'));
     }
-    if (!isRecord(body)) throw new ApiError('InternalError', 'La respuesta del servidor no es válida.');
+    if (!isRecord(body)) throw new ApiError('InternalError', t('errors.invalidResponse'));
     const errors: unknown = body.errors;
     const first: unknown = Array.isArray(errors) ? errors[0] : undefined;
     if (isRecord(first)) {
       const errorType = typeof first.errorType === 'string' ? first.errorType : 'InternalError';
-      const message = typeof first.message === 'string' ? first.message : 'Ocurrió un error.';
+      const message = typeof first.message === 'string' ? first.message : t('errors.generic');
       const error = new ApiError(errorType, message, parseFieldErrors(message));
       if (error.isUnauthorized) this.onUnauthorized();
       throw error;
     }
-    if (!isRecord(body.data)) throw new ApiError('InternalError', 'La respuesta del servidor no trae datos.');
+    if (!isRecord(body.data)) throw new ApiError('InternalError', t('errors.noData'));
     return body.data;
   }
 }

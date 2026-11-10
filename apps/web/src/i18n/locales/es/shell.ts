@@ -1,0 +1,42 @@
+export const shell = {
+  sidebar: {
+    label: 'Paneles y preferencias',
+    properties: 'Propiedades',
+    propertiesDisabled: 'Propiedades · Elige un elemento del árbol o abre una clase',
+    comments: 'Comentarios',
+    bottomPanel: 'Panel inferior',
+    slides: 'Diapositivas',
+    timeline: 'Línea de tiempo',
+    themeToNight: 'Cambiar a modo noche',
+    themeToDay: 'Cambiar a modo día',
+    language: 'Idioma',
+    languageCurrent: 'Idioma: {name}',
+  },
+  activity: {
+    label: 'Herramientas',
+    explorer: 'Explorador',
+    groups: 'Grupos de componentes',
+    settings: 'Configuración',
+    settingsSoon: 'Configuración · Próximamente',
+  },
+  topBar: {
+    category: 'Categoría',
+    categoryCurrent: 'Categoría: {name}',
+    subcategory: 'Subcategoría',
+    subcategoryCurrent: 'Subcategoría: {name}',
+    openClass: 'Clase abierta: {name}',
+    preview: 'Vista previa',
+    publish: 'Publicar',
+    account: 'Cuenta',
+    accountOf: 'Cuenta de {name}',
+    signOut: 'Cerrar sesión',
+  },
+  statusBar: {
+    route: 'Ruta',
+    saving: 'Guardando…',
+    slideOf: 'Diapositiva {position} de {total}',
+  },
+  toasts: {
+    dismiss: 'Cerrar el aviso',
+  },
+};

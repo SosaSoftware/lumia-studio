@@ -3,6 +3,7 @@ import App from './App.vue';
 import { loadConfig } from './config/app-config.ts';
 import { AppContext, setApp } from './composables/app-context.ts';
 import { applyTheme, readTheme } from './composables/theme.ts';
+import { applyLang, readLang, t } from './i18n/index.ts';
 import { createAppRouter } from './router/index.ts';
 import './styles/theme.css';
 import './styles/slide.css';
@@ -12,6 +13,7 @@ import './styles/base.css';
 
 async function start(): Promise<void> {
   applyTheme(readTheme());
+  applyLang(readLang());
   const config = await loadConfig();
   const app = new AppContext(config);
   setApp(app);
@@ -21,5 +23,5 @@ async function start(): Promise<void> {
 
 start().catch((error: unknown) => {
   const root = document.getElementById('app');
-  if (root !== null) root.textContent = error instanceof Error ? error.message : 'No se pudo iniciar Lumia Studio.';
+  if (root !== null) root.textContent = error instanceof Error ? error.message : t('app.startFailed');
 });

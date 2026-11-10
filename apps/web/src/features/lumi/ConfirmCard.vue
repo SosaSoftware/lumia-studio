@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
+import { t } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import type { ChatItem, ConfirmState, ConfirmTarget, TargetKind } from './lumi-session.ts';
 
@@ -7,7 +8,6 @@ const props = defineProps<{ item: ChatItem }>();
 const emit = defineEmits<{ answer: [confirmed: boolean]; show: [target: ConfirmTarget] }>();
 
 const ICONS: Readonly<Record<TargetKind, string>> = { slide: 'panel-slides', element: 'group-shapes', narration: 'mic', audio_clip: 'music', pause: 'hourglass' };
-const KIND_NAMES: Readonly<Record<TargetKind, string>> = { slide: 'la diapositiva', element: 'el componente', narration: 'la narración', audio_clip: 'el audio', pause: 'la pausa' };
 
 const card = ref<HTMLElement | null>(null);
 const pending = computed(() => props.item.confirmState === 'pending');
@@ -15,9 +15,9 @@ const pending = computed(() => props.item.confirmState === 'pending');
 const destructive = computed(() => (props.item.action ?? '').includes('___delete_'));
 
 function resultLabel(state: ConfirmState | undefined): string {
-  if (state === 'yes') return 'Confirmado';
-  if (state === 'no') return 'Cancelado';
-  return 'Venció';
+  if (state === 'yes') return t('lumi.confirm.confirmed');
+  if (state === 'no') return t('lumi.confirm.cancelled');
+  return t('lumi.confirm.expired');
 }
 
 function onKeydown(event: KeyboardEvent): void {
@@ -37,28 +37,28 @@ onMounted(() => {
     ref="card"
     class="card"
     role="group"
-    aria-label="Confirmación que pide Lumi"
+    :aria-label="t('lumi.confirm.label')"
     :tabindex="pending ? -1 : undefined"
     data-testid="lumi-confirm"
     :data-state="item.confirmState"
     @keydown="onKeydown"
   >
-    <span class="card-title">¿Continúo?</span>
+    <span class="card-title">{{ t('lumi.confirm.title') }}</span>
     <span class="card-text">{{ item.content }}</span>
-    <ul v-if="item.summaries && item.summaries.length > 0" class="summaries" aria-label="Cambios que se van a aplicar" data-testid="confirm-summaries">
+    <ul v-if="item.summaries && item.summaries.length > 0" class="summaries" :aria-label="t('lumi.confirm.summaries')" data-testid="confirm-summaries">
       <li v-for="(summary, index) in item.summaries" :key="index">{{ summary }}</li>
     </ul>
-    <ul v-if="item.targets && item.targets.length > 0" class="targets" aria-label="Lo que se va a afectar">
+    <ul v-if="item.targets && item.targets.length > 0" class="targets" :aria-label="t('lumi.confirm.targets')">
       <li v-for="target in item.targets" :key="`${target.kind}:${target.id}`">
-        <button type="button" class="target" :title="`Ver ${KIND_NAMES[target.kind]} en el editor`" :data-testid="`confirm-target-${target.id}`" @click="emit('show', target)">
+        <button type="button" class="target" :title="t('lumi.confirm.show', { kind: t(`lumi.confirm.kinds.${target.kind}`) })" :data-testid="`confirm-target-${target.id}`" @click="emit('show', target)">
           <StudioIcon :name="ICONS[target.kind]" :size="13" />
           <span class="target-label">{{ target.label }}</span>
         </button>
       </li>
     </ul>
     <div v-if="pending" class="card-actions">
-      <button type="button" class="action primary" :class="{ danger: destructive }" data-testid="confirm-yes" @click="emit('answer', true)">Confirmar</button>
-      <button type="button" class="action" data-testid="confirm-no" @click="emit('answer', false)">Cancelar</button>
+      <button type="button" class="action primary" :class="{ danger: destructive }" data-testid="confirm-yes" @click="emit('answer', true)">{{ t('lumi.confirm.yes') }}</button>
+      <button type="button" class="action" data-testid="confirm-no" @click="emit('answer', false)">{{ t('lumi.confirm.no') }}</button>
     </div>
     <span v-else class="card-result" data-testid="confirm-result">{{ resultLabel(item.confirmState) }}</span>
   </div>

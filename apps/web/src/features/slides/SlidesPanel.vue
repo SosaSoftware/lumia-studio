@@ -5,7 +5,9 @@ import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange } from '../../composables/edit-lock.ts';
 import { useDismiss } from '../../composables/dismiss.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
+import { slideTypeName } from '../editor/catalog-labels.ts';
 import { slideFooter } from './slide-style.ts';
 import SlideThumbnail from './SlideThumbnail.vue';
 import { REORDER_THRESHOLD_PX, SlideReorderSession } from './slide-reorder-session.ts';
@@ -15,7 +17,7 @@ const session = workspace.session;
 const slides = computed(() => session.state.slides);
 const currentIndex = computed(() => slides.value.findIndex((slide) => slide.id === session.state.selectedSlideId));
 const canEdit = computed(() => canChange(ACTIONS.edit) && workspace.activeClass.value !== null);
-const position = computed(() => (slides.value.length > 0 && currentIndex.value >= 0 ? `Diapositiva ${String(currentIndex.value + 1)} de ${String(slides.value.length)}` : ''));
+const position = computed(() => (slides.value.length > 0 && currentIndex.value >= 0 ? t('shell.statusBar.slideOf', { position: currentIndex.value + 1, total: slides.value.length }) : ''));
 
 /** Widths of the menus, as in the design; their place is computed from the button that opens them. */
 const THUMB_MENU_WIDTH = 132;
@@ -78,7 +80,8 @@ async function focusFirstItem(selector: string): Promise<void> {
 }
 
 function typeName(slide: Slide): string {
-  return workspace.catalog.slideType(slide.type)?.name ?? slide.title;
+  const type = workspace.catalog.slideType(slide.type);
+  return type === undefined ? slide.title : slideTypeName(type);
 }
 
 function footer(index: number): ReturnType<typeof slideFooter> {
@@ -268,7 +271,7 @@ function finishReorder(cancel: boolean): void {
     reorder.value = null;
     reorderSession = null;
     if (target === from) return;
-    announcement.value = `Diapositiva movida a la posición ${String(target + 1)} de ${String(slides.value.length)}`;
+    announcement.value = t('slides.moved', { position: target + 1, total: slides.value.length });
     void session.moveSlide(id, target);
   }, SETTLE_MS);
 }
@@ -289,14 +292,14 @@ function placeStyle(view: ReorderView): Record<string, string> {
 </script>
 
 <template>
-  <section class="panel" aria-label="Diapositivas de la clase" data-testid="panel-slides">
+  <section class="panel" :aria-label="t('slides.panel')" data-testid="panel-slides">
     <div class="head">
-      <span class="lbl" data-testid="slides-count">Diapositivas · {{ slides.length }}</span>
+      <span class="lbl" data-testid="slides-count">{{ t('slides.count', { count: slides.length }) }}</span>
       <span class="pos">{{ position }}</span>
     </div>
     <div class="strip-row">
-      <button type="button" class="nav" aria-label="Diapositiva anterior" data-testid="slides-prev" @click="go(currentIndex - 1)"><StudioIcon name="chevron-left" :size="14" :stroke="2" /></button>
-      <div ref="strip" class="strip" role="list" aria-label="Diapositivas" :data-reordering="reorder !== null" @scroll.passive="closeMenus">
+      <button type="button" class="nav" :aria-label="t('slides.previous')" data-testid="slides-prev" @click="go(currentIndex - 1)"><StudioIcon name="chevron-left" :size="14" :stroke="2" /></button>
+      <div ref="strip" class="strip" role="list" :aria-label="t('slides.list')" :data-reordering="reorder !== null" @scroll.passive="closeMenus">
         <!-- Where the dragged slide would land; it moves along the strip with the pointer. -->
         <div v-if="reorder" class="place" :style="placeStyle(reorder)" aria-hidden="true" data-testid="slide-drop-place"></div>
         <div
@@ -319,55 +322,55 @@ function placeStyle(view: ReorderView): Record<string, string> {
             <button
               type="button"
               class="thb"
-              :aria-label="`Diapositiva ${index + 1}: ${slide.title}`"
+              :aria-label="t('slides.slideLabel', { number: index + 1, title: slide.title })"
               :aria-current="slide.id === session.state.selectedSlideId"
               :title="slide.title"
               :data-testid="`slide-thumb-${slide.id}`"
               @click="onSelect(slide.id)"
               @keydown="onThumbKey($event, index)"
             ></button>
-            <div v-if="canEdit" class="ov" role="group" :aria-label="`Acciones de la diapositiva ${index + 1}`" style="top: 4px; right: 4px">
+            <div v-if="canEdit" class="ov" role="group" :aria-label="t('slides.actions', { number: index + 1 })" style="top: 4px; right: 4px">
               <div :ref="(el) => setMenuEl(el, slide.id)" class="menu-anchor">
                 <button
                   type="button"
                   class="ovb"
-                  :aria-label="`Más acciones de la diapositiva ${index + 1}`"
-                  title="Más acciones"
+                  :aria-label="t('slides.moreActions', { number: index + 1 })"
+                  :title="t('slides.moreActionsShort')"
                   aria-haspopup="menu"
                   :aria-expanded="menu === slide.id"
                   :data-testid="`slide-menu-${slide.id}`"
                   @click="toggleMenu($event, slide.id)"
                 ><StudioIcon name="more" :size="13" :stroke="2.6" /></button>
-                <div v-if="menu === slide.id" class="s-menu thumb-menu" role="menu" :aria-label="`Acciones de la diapositiva ${index + 1}`" :style="menuPlace" @keydown.esc="escapeMenu">
-                  <button type="button" role="menuitem" class="mi small" :data-testid="`slide-duplicate-${slide.id}`" @click="duplicate(slide.id)"><StudioIcon name="copy" :size="13" :stroke="2" />Duplicar</button>
+                <div v-if="menu === slide.id" class="s-menu thumb-menu" role="menu" :aria-label="t('slides.actions', { number: index + 1 })" :style="menuPlace" @keydown.esc="escapeMenu">
+                  <button type="button" role="menuitem" class="mi small" :data-testid="`slide-duplicate-${slide.id}`" @click="duplicate(slide.id)"><StudioIcon name="copy" :size="13" :stroke="2" />{{ t('slides.duplicate') }}</button>
                   <button
                     type="button"
                     role="menuitem"
                     class="mi small danger"
                     :aria-disabled="slides.length <= 1"
-                    :title="slides.length <= 1 ? 'La clase necesita al menos una diapositiva' : `Eliminar la diapositiva ${index + 1}`"
+                    :title="slides.length <= 1 ? t('slides.needOne') : t('slides.deleteSlide', { number: index + 1 })"
                     :style="{ opacity: slides.length <= 1 ? 0.45 : 1 }"
                     :data-testid="`slide-delete-${slide.id}`"
                     @click="remove(slide.id)"
-                  ><StudioIcon name="trash" :size="13" :stroke="2" />Eliminar</button>
+                  ><StudioIcon name="trash" :size="13" :stroke="2" />{{ t('slides.delete') }}</button>
                 </div>
               </div>
             </div>
-            <div v-if="canEdit" class="ov mv" role="group" :aria-label="`Mover la diapositiva ${index + 1}`" style="left: 4px; bottom: 4px">
-              <button type="button" class="ovb" :aria-label="`Mover la diapositiva ${index + 1} a la izquierda`" title="Mover a la izquierda" :aria-disabled="index === 0" :data-testid="`slide-move-left-${slide.id}`" @click="move(slide.id, index - 1)"><StudioIcon name="chevron-left" :size="12" :stroke="2.4" /></button>
-              <button type="button" class="ovb" :aria-label="`Mover la diapositiva ${index + 1} a la derecha`" title="Mover a la derecha" :aria-disabled="index === slides.length - 1" :data-testid="`slide-move-right-${slide.id}`" @click="move(slide.id, index + 1)"><StudioIcon name="chevron-right" :size="12" :stroke="2.4" /></button>
+            <div v-if="canEdit" class="ov mv" role="group" :aria-label="t('slides.move', { number: index + 1 })" style="left: 4px; bottom: 4px">
+              <button type="button" class="ovb" :aria-label="t('slides.moveLeft', { number: index + 1 })" :title="t('slides.moveLeftShort')" :aria-disabled="index === 0" :data-testid="`slide-move-left-${slide.id}`" @click="move(slide.id, index - 1)"><StudioIcon name="chevron-left" :size="12" :stroke="2.4" /></button>
+              <button type="button" class="ovb" :aria-label="t('slides.moveRight', { number: index + 1 })" :title="t('slides.moveRightShort')" :aria-disabled="index === slides.length - 1" :data-testid="`slide-move-right-${slide.id}`" @click="move(slide.id, index + 1)"><StudioIcon name="chevron-right" :size="12" :stroke="2.4" /></button>
             </div>
           </div>
           <span class="cap" :style="{ color: slide.id === session.state.selectedSlideId ? 'var(--s-text)' : 'var(--s-text-2)' }"><span class="n">{{ index + 1 }}</span><span class="t">{{ typeName(slide) }}</span></span>
         </div>
 
         <div v-if="canEdit" class="add-anchor">
-          <button type="button" class="add" aria-label="Nueva diapositiva en blanco" title="Nueva diapositiva en blanco" data-testid="slides-add" @click="add">
+          <button type="button" class="add" :aria-label="t('slides.newBlank')" :title="t('slides.newBlank')" data-testid="slides-add" @click="add">
             <StudioIcon name="plus" :size="15" />
           </button>
         </div>
       </div>
-      <button type="button" class="nav" aria-label="Diapositiva siguiente" data-testid="slides-next" @click="go(currentIndex + 1)"><StudioIcon name="chevron-right" :size="14" :stroke="2" /></button>
+      <button type="button" class="nav" :aria-label="t('slides.next')" data-testid="slides-next" @click="go(currentIndex + 1)"><StudioIcon name="chevron-right" :size="14" :stroke="2" /></button>
     </div>
     <div class="sr-only" role="status" aria-live="polite">{{ announcement }}</div>
   </section>

@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { AuthProvider, AuthUser } from './auth-provider.ts';
 import { AuthError } from './auth-provider.ts';
 
@@ -35,18 +36,18 @@ function toAuthError(error: unknown): AuthError {
   switch (errorName(error)) {
     case 'NotAuthorizedException':
     case 'UserNotFoundException':
-      return new AuthError('El correo o la contraseña no son correctos.');
+      return new AuthError(t('auth.errors.badCredentials'));
     case 'InvalidPasswordException':
-      return new AuthError('La contraseña nueva no cumple los requisitos: al menos 12 caracteres, con mayúsculas, minúsculas, números y símbolos.');
+      return new AuthError(t('auth.errors.invalidNewPassword'));
     case 'PasswordResetRequiredException':
-      return new AuthError('Tu contraseña se restableció. Pide a un administrador una contraseña temporal nueva.');
+      return new AuthError(t('auth.errors.passwordReset'));
     case 'LimitExceededException':
     case 'TooManyRequestsException':
-      return new AuthError('Hubo demasiados intentos. Espera unos minutos e inténtalo de nuevo.');
+      return new AuthError(t('auth.errors.tooManyAttempts'));
     case 'NetworkError':
-      return new AuthError('No se pudo conectar con el servidor. Inténtalo de nuevo.', 'network');
+      return new AuthError(t('auth.errors.network'), 'network');
     default:
-      return error instanceof TypeError ? new AuthError('No se pudo conectar con el servidor. Inténtalo de nuevo.', 'network') : new AuthError('No se pudo iniciar sesión.');
+      return error instanceof TypeError ? new AuthError(t('auth.errors.network'), 'network') : new AuthError(t('auth.errors.signInFailed'));
   }
 }
 
@@ -120,13 +121,13 @@ export class CognitoAuthProvider implements AuthProvider {
 
   private async finish(client: CognitoClient, step: CognitoStep): Promise<AuthUser> {
     if (step.step === NEW_PASSWORD_STEP) {
-      throw new AuthError('Es tu primer inicio de sesión: elige una contraseña nueva.', 'new_password');
+      throw new AuthError(t('auth.errors.newPasswordRequired'), 'new_password');
     }
     if (!step.done) {
-      throw new AuthError('Tu cuenta pide un paso de inicio de sesión que Lumia Studio todavía no tiene. Pide ayuda a un administrador.');
+      throw new AuthError(t('auth.errors.unsupportedStep'));
     }
     const tokens = await client.tokens();
-    if (tokens === null) throw new AuthError('No se pudo iniciar sesión.');
+    if (tokens === null) throw new AuthError(t('auth.errors.signInFailed'));
     return userFrom(tokens);
   }
 }

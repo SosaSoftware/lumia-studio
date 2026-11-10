@@ -1,24 +1,16 @@
 import type { PaletteGroup } from '../../composables/panels.ts';
 import type { CatalogComponentInfo } from '../../api/types.ts';
+import { t, translateOr } from '../../i18n/index.ts';
 
-export const PALETTE_GROUP_NAMES: Readonly<Record<PaletteGroup, string>> = {
-  slides: 'Diapositivas',
-  text: 'Texto',
-  media: 'Multimedia',
-  shapes: 'Formas y diagramas',
-  interactive: 'Interactivos',
-  questions: 'Preguntas',
-};
+/** Name of a palette group in the current language. */
+export function paletteGroupName(group: PaletteGroup): string {
+  return t(`palette.groups.${group}`);
+}
 
 /** Hint above each group of the palette, as in the design. */
-export const PALETTE_HINTS: Readonly<Record<PaletteGroup, string>> = {
-  slides: 'Agrega una diapositiva en blanco al final de la clase.',
-  text: 'Arrastra un componente a la diapositiva.',
-  media: 'Arrastra un componente a la diapositiva.',
-  shapes: 'Arrastra un componente a la diapositiva.',
-  interactive: 'Elementos que el estudiante explora con un clic.',
-  questions: 'Arrastra una pregunta a la diapositiva.',
-};
+export function paletteHint(group: PaletteGroup): string {
+  return t(`palette.hints.${group}`);
+}
 
 /** Order of the components inside each group, as in the design. */
 const ORDER: Readonly<Record<Exclude<PaletteGroup, 'slides'>, readonly string[]>> = {
@@ -40,16 +32,8 @@ export function componentsOf(group: Exclude<PaletteGroup, 'slides'>, components:
 }
 
 /** Short group name of the canvas tags and the timeline ("Texto · Título", "Formas · Flecha"). */
-const TAG_GROUPS: Readonly<Record<string, string>> = {
-  text: 'Texto',
-  media: 'Multimedia',
-  shapes: 'Formas',
-  interactive: 'Interactivos',
-  questions: 'Preguntas',
-};
-
 export function tagGroup(group: string): string {
-  return TAG_GROUPS[group] ?? group;
+  return translateOr(`palette.tags.${group}`, group);
 }
 
 /** Color of each group in the timeline. */

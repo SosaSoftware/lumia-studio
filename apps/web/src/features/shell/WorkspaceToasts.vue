@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 
 const workspace = useWorkspace();
@@ -11,12 +12,12 @@ const state = workspace.session.state;
     <div v-if="state.saveError" class="toast error" role="alert" data-testid="toast-error">
       <span class="icon"><StudioIcon name="alert-circle" :size="15" /></span>
       <span class="text">{{ state.saveError }}</span>
-      <button type="button" class="ib" aria-label="Cerrar el aviso" title="Cerrar" @click="state.saveError = null"><StudioIcon name="close" :size="13" :stroke="2" /></button>
+      <button type="button" class="ib" :aria-label="t('shell.toasts.dismiss')" :title="t('common.close')" @click="state.saveError = null"><StudioIcon name="close" :size="13" :stroke="2" /></button>
     </div>
     <div v-if="state.notice" class="toast" role="status" data-testid="toast-notice">
       <span class="icon ok"><StudioIcon name="check-circle" :size="15" /></span>
       <span class="text">{{ state.notice }}</span>
-      <button type="button" class="ib" aria-label="Cerrar el aviso" title="Cerrar" @click="state.notice = null"><StudioIcon name="close" :size="13" :stroke="2" /></button>
+      <button type="button" class="ib" :aria-label="t('shell.toasts.dismiss')" :title="t('common.close')" @click="state.notice = null"><StudioIcon name="close" :size="13" :stroke="2" /></button>
     </div>
   </div>
 </template>

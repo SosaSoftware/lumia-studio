@@ -6,10 +6,12 @@ import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange } from '../../composables/edit-lock.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t, tn } from '../../i18n/index.ts';
+import { componentName, slideTypeName } from '../editor/catalog-labels.ts';
 import MediaLibraryDialog from '../media/MediaLibraryDialog.vue';
 import { groupColor } from '../palette/palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
-import { AUDIO_KIND_LABELS, ENTRANCE_LABELS, TRANSITION_LABELS, elementSpan, formatTime, narrationDuration, seekTarget, slideDuration, ticks, timeAtOffset, timerSeconds } from './timeline-model.ts';
+import { audioKindLabel, elementSpan, entranceLabel, formatTime, narrationDuration, seekTarget, slideDuration, ticks, timeAtOffset, timerSeconds, transitionLabel } from './timeline-model.ts';
 
 type ClipKind = 'transition' | 'element' | 'narration' | 'audio' | 'pause';
 
@@ -40,7 +42,11 @@ const canEdit = computed(() => canChange(ACTIONS.edit));
 const duration = computed(() => (slide.value === null ? 20 : slideDuration(slide.value)));
 const marks = computed(() => ticks(duration.value));
 const position = computed(() => session.state.slides.findIndex((candidate) => candidate.id === slide.value?.id) + 1);
-const typeName = computed(() => (slide.value === null ? '' : (workspace.catalog.slideType(slide.value.type)?.name ?? slide.value.type)));
+const typeName = computed(() => {
+  if (slide.value === null) return '';
+  const type = workspace.catalog.slideType(slide.value.type);
+  return type === undefined ? slide.value.type : slideTypeName(type);
+});
 const libraryOpen = ref(false);
 
 /** First text of a list prop: a string item or an item with a text-like field. */
@@ -68,8 +74,8 @@ function selected(clip: Clip): boolean {
 const topRows = computed<Row[]>(() => {
   const current = slide.value;
   if (current === null) return [];
-  const label = TRANSITION_LABELS[current.transition];
-  return [{ key: 'transition', name: 'Transición', sub: label, dot: 'var(--tl-trans)', clips: [{ kind: 'transition', id: 'transition', start: 0, end: Math.min(1, duration.value), label, title: `Transición de entrada: ${label}`, resizable: false }] }];
+  const label = transitionLabel(current.transition);
+  return [{ key: 'transition', name: t('timeline.rows.transition'), sub: label, dot: 'var(--tl-trans)', clips: [{ kind: 'transition', id: 'transition', start: 0, end: Math.min(1, duration.value), label, title: t('timeline.transitionTitle', { label }), resizable: false }] }];
 });
 
 const componentRows = computed<Row[]>(() => {
@@ -80,11 +86,11 @@ const componentRows = computed<Row[]>(() => {
     .sort((a, b) => a.element.appearsAtS - b.element.appearsAtS || a.index - b.index)
     .map(({ element }) => {
       const info = workspace.catalog.component(element.component);
-      const name = info?.name ?? element.component;
-      const entrance = ENTRANCE_LABELS[element.entrance];
+      const name = info === undefined ? element.component : componentName(info);
+      const entrance = entranceLabel(element.entrance);
       const span = elementSpan(element, duration.value);
       const seconds = timerSeconds(element);
-      const countdown = seconds === null ? '' : ` · cuenta ${formatTime(seconds)}${element.props.autoStart === true ? '' : ' cuando el estudiante lo inicia'}`;
+      const countdown = seconds === null ? '' : `${t('timeline.countdown', { time: formatTime(seconds) })}${element.props.autoStart === true ? '' : t('timeline.countdownStudent')}`;
       return {
         key: `element-${element.id}`,
         name,
@@ -96,7 +102,7 @@ const componentRows = computed<Row[]>(() => {
           start: span.start,
           end: span.end,
           label: seconds === null ? entrance : `${entrance} · ${formatTime(seconds)}`,
-          title: `${name} · aparece en ${formatTime(element.appearsAtS)} · ${entrance}${countdown}`,
+          title: t('timeline.componentTitle', { name, time: formatTime(element.appearsAtS), entrance, countdown }),
           resizable: false,
         }],
       };
@@ -116,56 +122,56 @@ const audioRows = computed<Row[]>(() => {
   return [
     {
       key: 'narration',
-      name: 'Narración',
-      sub: narration.length === 0 ? 'Sin clips' : `${String(narration.length)} ${narration.length === 1 ? 'clip de voz' : 'clips de voz'}`,
+      name: t('timeline.rows.narration'),
+      sub: narration.length === 0 ? t('timeline.rows.noClips') : tn('timeline.rows.voiceClips', narration.length),
       dot: 'var(--tl-narr)',
       clips: narration.map((clip) => {
         const length = narrationDuration(clip);
-        const text = clip.script.trim() === '' ? 'Nuevo clip (sin guion)' : clip.script;
-        return { kind: 'narration', id: clip.id, start: clip.startsAtS, end: clip.startsAtS + length, label: text, title: `Narración ${formatTime(clip.startsAtS)}–${formatTime(clip.startsAtS + length)}: ${text}`, resizable: false };
+        const text = clip.script.trim() === '' ? t('timeline.newClip') : clip.script;
+        return { kind: 'narration', id: clip.id, start: clip.startsAtS, end: clip.startsAtS + length, label: text, title: t('timeline.narrationTitle', { from: formatTime(clip.startsAtS), to: formatTime(clip.startsAtS + length), text }), resizable: false };
       }),
       add: () => {
         void session.addNarration().then(openProperties);
       },
-      addLabel: 'Agregar clip de narración',
+      addLabel: t('timeline.addNarration'),
     },
     {
       key: 'audio',
-      name: 'Audio',
-      sub: audio.length === 0 ? 'Sin audio' : 'Música y efectos',
+      name: t('timeline.rows.audio'),
+      sub: audio.length === 0 ? t('timeline.rows.noAudio') : t('timeline.rows.musicEffects'),
       dot: 'var(--tl-audio)',
       clips: audio.map((clip) => ({
         kind: 'audio',
         id: clip.id,
         start: clip.startsAtS,
         end: clip.startsAtS + clip.durationS,
-        label: `${AUDIO_KIND_LABELS[clip.kind]} · ${clip.name}`,
-        title: `${AUDIO_KIND_LABELS[clip.kind]} ${formatTime(clip.startsAtS)}–${formatTime(clip.startsAtS + clip.durationS)}: ${clip.name}`,
+        label: `${audioKindLabel(clip.kind)} · ${clip.name}`,
+        title: t('timeline.audioTitle', { kind: audioKindLabel(clip.kind), from: formatTime(clip.startsAtS), to: formatTime(clip.startsAtS + clip.durationS), name: clip.name }),
         resizable: true,
       })),
       add: () => {
         libraryOpen.value = true;
       },
-      addLabel: 'Agregar audio',
+      addLabel: t('timeline.addAudio'),
     },
     {
       key: 'pause',
-      name: 'Pausas',
-      sub: pauses.length === 0 ? 'Sin pausas' : 'Tiempo muerto',
+      name: t('timeline.rows.pauses'),
+      sub: pauses.length === 0 ? t('timeline.rows.noPauses') : t('timeline.rows.timeout'),
       dot: 'var(--tl-pause)',
       clips: pauses.map((pause) => ({
         kind: 'pause',
         id: pause.id,
         start: pause.startsAtS,
         end: pause.startsAtS + pause.durationS,
-        label: `Pausa ${String(pause.durationS)} s · ${pause.message}`,
-        title: `Pausa ${formatTime(pause.startsAtS)}–${formatTime(pause.startsAtS + pause.durationS)}: ${pause.message}`,
+        label: t('timeline.pauseLabel', { seconds: pause.durationS, message: pause.message }),
+        title: t('timeline.pauseTitle', { from: formatTime(pause.startsAtS), to: formatTime(pause.startsAtS + pause.durationS), message: pause.message }),
         resizable: true,
       })),
       add: () => {
         void session.addPause().then(openProperties);
       },
-      addLabel: 'Agregar pausa',
+      addLabel: t('timeline.addPause'),
     },
   ];
 });
@@ -404,20 +410,20 @@ onBeforeUnmount(stop);
 </script>
 
 <template>
-  <section class="timeline" :aria-label="`Línea de tiempo de la diapositiva ${position}`" data-testid="panel-timeline">
+  <section class="timeline" :aria-label="t('timeline.panelLabel', { position })" data-testid="panel-timeline">
     <div class="head">
-      <span class="lbl">Línea de tiempo</span>
-      <span v-if="slide" class="pill"><b>Diapositiva {{ position }}</b><span class="muted">{{ typeName }}</span></span>
+      <span class="lbl">{{ t('timeline.title') }}</span>
+      <span v-if="slide" class="pill"><b>{{ t('timeline.slideTag', { position }) }}</b><span class="muted">{{ typeName }}</span></span>
       <span class="spacer"></span>
-      <button type="button" class="nav play" aria-label="Volver al inicio" title="Volver al inicio" :disabled="time === 0" data-testid="timeline-restart" @click="seek(0)">
+      <button type="button" class="nav play" :aria-label="t('timeline.restart')" :title="t('timeline.restart')" :disabled="time === 0" data-testid="timeline-restart" @click="seek(0)">
         <StudioIcon name="skip-back" :size="12" />
       </button>
-      <button type="button" class="nav play" :aria-label="playing ? 'Pausar' : `Reproducir la diapositiva ${position}`" :title="playing ? 'Pausar' : 'Reproducir'" data-testid="timeline-play" @click="play">
+      <button type="button" class="nav play" :aria-label="playing ? t('timeline.pause') : t('timeline.playSlide', { position })" :title="playing ? t('timeline.pause') : t('timeline.play')" data-testid="timeline-play" @click="play">
         <StudioIcon :name="playing ? 'pause' : 'play'" :size="12" />
       </button>
       <span class="clock" data-testid="timeline-time">{{ formatTime(time) }} / {{ formatTime(duration) }}</span>
     </div>
-    <p v-if="!slide" class="empty">Elige una diapositiva para ver su línea de tiempo.</p>
+    <p v-if="!slide" class="empty">{{ t('timeline.empty') }}</p>
     <div v-else class="scroll">
       <div class="inner">
         <div class="ruler">
@@ -425,7 +431,7 @@ onBeforeUnmount(stop);
           <div
             ref="ruler"
             class="ticks"
-            title="Haz clic o arrastra para mover la reproducción"
+            :title="t('timeline.scrub')"
             data-testid="timeline-ruler"
             @pointerdown="onScrubStart"
             @pointermove="onScrubMove"
@@ -441,7 +447,7 @@ onBeforeUnmount(stop);
               class="knob"
               role="slider"
               tabindex="0"
-              aria-label="Posición de la reproducción"
+              :aria-label="t('timeline.knob')"
               :aria-valuemin="0"
               :aria-valuemax="duration"
               :aria-valuenow="Math.round(time * 10) / 10"
@@ -479,7 +485,7 @@ onBeforeUnmount(stop);
               class="tlc clip element"
               :title="clip.title"
               :aria-pressed="selected(clip)"
-              :aria-label="`${clip.title}. Flechas para moverlo.`"
+              :aria-label="t('timeline.clipHint', { title: clip.title })"
               :style="{ ...clipStyle(clip), boxShadow: selected(clip) ? '0 0 0 2px var(--s-text)' : 'none' }"
               :data-testid="`timeline-clip-element-${clip.id}`"
               @pointerdown="onPointerDown($event, clip)"
@@ -490,8 +496,8 @@ onBeforeUnmount(stop);
           </div>
         </div>
 
-        <div role="group" aria-label="Audio y narración" class="audio-group">
-          <div class="section-row"><span class="lbl section">Audio y narración</span><span class="line"></span></div>
+        <div role="group" :aria-label="t('timeline.audioGroup')" class="audio-group">
+          <div class="section-row"><span class="lbl section">{{ t('timeline.audioGroup') }}</span><span class="line"></span></div>
           <div v-for="row in audioRows" :key="row.key" class="track-row" :data-testid="`timeline-row-${row.key}`">
             <div class="label-cell">
               <button type="button" class="tll" :aria-pressed="row.clips.some(selected)" :style="{ background: row.clips.some(selected) ? 'var(--s-sel)' : undefined }" @click="selectRow(row)">
@@ -508,7 +514,7 @@ onBeforeUnmount(stop);
                 :class="[clip.kind, { resizable: clip.resizable }]"
                 :title="clip.title"
                 :aria-pressed="selected(clip)"
-                :aria-label="`${clip.title}. Flechas para moverlo${clip.resizable ? '; Alt y flechas para cambiar la duración' : ''}.`"
+                :aria-label="clip.resizable ? t('timeline.clipHintResizable', { title: clip.title }) : t('timeline.clipHint', { title: clip.title })"
                 :style="{ ...clipStyle(clip), boxShadow: selected(clip) ? '0 0 0 2px var(--s-text)' : 'none' }"
                 :data-testid="`timeline-clip-${clip.kind}-${clip.id}`"
                 @pointerdown="onPointerDown($event, clip)"

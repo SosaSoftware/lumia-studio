@@ -1,3 +1,4 @@
+import { t } from '../i18n/index.ts';
 import type { AuthProvider, AuthUser } from './auth-provider.ts';
 import { AuthError } from './auth-provider.ts';
 
@@ -59,16 +60,16 @@ export class DevAuthProvider implements AuthProvider {
         body: JSON.stringify({ email }),
       });
     } catch {
-      throw new AuthError('No se pudo conectar con el servidor. Inténtalo de nuevo.', 'network');
+      throw new AuthError(t('auth.errors.network'), 'network');
     }
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) {
-      const message = isRecord(body) && typeof body.message === 'string' ? body.message : 'No se pudo iniciar sesión.';
+      const message = isRecord(body) && typeof body.message === 'string' ? body.message : t('auth.errors.signInFailed');
       throw new AuthError(message, response.status === 403 ? 'no_access' : 'credentials');
     }
     const token = isRecord(body) ? body.token : undefined;
     const user = isRecord(body) ? userFromClaims(body.claims) : null;
-    if (typeof token !== 'string' || user === null) throw new AuthError('La respuesta del inicio de sesión no es válida.');
+    if (typeof token !== 'string' || user === null) throw new AuthError(t('auth.errors.invalidResponse'));
     this.session = { token, user };
     this.storage.setItem(STORAGE_KEY, JSON.stringify(this.session));
     return user;
@@ -82,7 +83,7 @@ export class DevAuthProvider implements AuthProvider {
 
   /** The sandbox has no temporary passwords. */
   public confirmNewPassword(): Promise<AuthUser> {
-    return Promise.reject(new AuthError('El sandbox no usa contraseñas temporales.'));
+    return Promise.reject(new AuthError(t('auth.errors.noTemporaryPasswords')));
   }
 
   public getToken(): Promise<string | null> {

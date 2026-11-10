@@ -4,6 +4,8 @@ import { EventType, HttpAgent } from '@ag-ui/client';
 import type { BaseEvent } from '@ag-ui/client';
 import { list, num, rec, str } from '../../api/decode.ts';
 import { LUMI_WORKING, lockEditing, unlockEditing } from '../../composables/edit-lock.ts';
+import { t } from '../../i18n/index.ts';
+import type { MessageKey } from '../../i18n/index.ts';
 import type { WorkspaceStore } from '../workspace/workspace-store.ts';
 import { TOOL_DECLARATIONS, activityLabel, buildContext, changesClass, executeSimpleTool, isFrontendTool } from './frontend-tools.ts';
 import type { ContextEntry, ContextUser, ToolArgs } from './frontend-tools.ts';
@@ -26,6 +28,8 @@ export interface ChatItem {
   id: string;
   type: 'user' | 'text' | 'confirm' | 'error';
   content: string;
+  /** Message key of an error the interface wrote itself, so it follows the interface language. */
+  key?: MessageKey;
   /** Second line of an error: the technical reason, when there is one. */
   detail?: string;
   confirmState?: ConfirmState;
@@ -85,12 +89,9 @@ const THREAD_ID_PATTERN = /^[A-Za-z0-9_-]{33,128}$/;
 const CONFLICT_RETRY_MS: readonly number[] = [500, 1000, 2000];
 const MAX_CONVERSATIONS = 30;
 const MAX_TRANSCRIPT_ITEMS = 80;
-const THINKING = 'Lumi está pensando…';
-const NOT_CONNECTED = 'No se pudo conectar con Lumi. Revisa que el servicio esté disponible e intenta de nuevo.';
 const MAX_TARGETS = 20;
 /** Same limit as `maxChangesPerConfirmation` in the confirmation policy of the agent. */
 const MAX_CHANGES = 20;
-const UNAVAILABLE = 'Lumi no pudo responder en este momento. Intenta de nuevo.';
 
 function uuid(): string {
   return crypto.randomUUID();
@@ -130,16 +131,17 @@ export function httpStatus(error: unknown): number | null {
 }
 
 /** Message for a failed run; network and HTTP failures read better than the raw error. */
-export function failureMessage(error: unknown): { content: string; detail?: string } {
+export function failureMessage(error: unknown): { key: MessageKey; content: string; detail?: string } {
   const message = error instanceof Error ? error.message : '';
   const status = httpStatus(error);
-  if (status === 403) return { content: 'Esta conversación pertenece a otra persona. Empieza una conversación nueva.' };
-  if (status === 401) return { content: 'Tu sesión venció. Vuelve a iniciar sesión para hablar con Lumi.' };
-  if (status === 409) return { content: 'Lumi todavía está preparando la conversación. Intenta de nuevo en unos segundos.' };
+  if (status === 403) return { key: 'lumi.errors.otherOwner', content: t('lumi.errors.otherOwner') };
+  if (status === 401) return { key: 'lumi.errors.sessionExpired', content: t('lumi.errors.sessionExpired') };
+  if (status === 409) return { key: 'lumi.errors.preparing', content: t('lumi.errors.preparing') };
   if (/Failed to fetch|NetworkError|ECONNREFUSED/.test(message) || (status !== null && status >= 502)) {
-    return { content: NOT_CONNECTED };
+    return { key: 'lumi.errors.notConnected', content: t('lumi.errors.notConnected') };
   }
-  return message === '' ? { content: UNAVAILABLE } : { content: UNAVAILABLE, detail: message };
+  const unavailable = { key: 'lumi.errors.unavailable' as const, content: t('lumi.errors.unavailable') };
+  return message === '' ? unavailable : { ...unavailable, detail: message };
 }
 
 interface SlideLike {
@@ -244,7 +246,7 @@ export class LumiSession {
     this.getToken = options.getToken;
     this.getUser = options.getUser ?? ((): null => null);
     this.retryDelaysMs = options.retryDelaysMs ?? CONFLICT_RETRY_MS;
-    this.state = reactive<LumiState>({ items: [], running: false, streamingText: '', activity: THINKING, threadId: uuid(), showHistory: false, awaitingConfirmation: false });
+    this.state = reactive<LumiState>({ items: [], running: false, streamingText: '', activity: t('lumi.thinking'), threadId: uuid(), showHistory: false, awaitingConfirmation: false });
   }
 
   /** Whether Lumi is connected to this Studio; without it the panel says so and the editor works on its own. */
@@ -303,7 +305,7 @@ export class LumiSession {
       this.conversations.value = list(parsed).flatMap((item) => {
         const value = rec(item);
         return typeof value.threadId === 'string' && THREAD_ID_PATTERN.test(value.threadId)
-          ? [{ threadId: value.threadId, title: str(value.title, 'Conversación'), createdAt: num(value.createdAt), lastMessageAt: num(value.lastMessageAt) }]
+          ? [{ threadId: value.threadId, title: str(value.title, t('lumi.conversationTitle')), createdAt: num(value.createdAt), lastMessageAt: num(value.lastMessageAt) }]
           : [];
       });
     } catch {
@@ -388,12 +390,12 @@ export class LumiSession {
     this.state.items.push({ id: uuid(), type: 'user', content: text });
     this.recordConversation(text);
     if (!this.connected) {
-      this.state.items.push({ id: uuid(), type: 'error', content: NOT_CONNECTED });
+      this.state.items.push({ id: uuid(), type: 'error', key: 'lumi.errors.notConnected', content: t('lumi.errors.notConnected') });
       this.saveTranscript();
       return;
     }
     this.state.running = true;
-    this.state.activity = THINKING;
+    this.state.activity = t('lumi.thinking');
     this.saveTranscript();
     const calls: ToolCall[] = [];
     try {
@@ -458,7 +460,7 @@ export class LumiSession {
 
   private ensureAgent(): HttpAgent {
     if (this.agent !== null && this.agent.threadId === this.state.threadId) return this.agent;
-    if (this.url === null) throw new Error('Lumi no está conectado.');
+    if (this.url === null) throw new Error(t('lumi.errors.notConnectedDetail'));
     if (!THREAD_ID_PATTERN.test(this.state.threadId)) this.state.threadId = uuid();
     // The headers are set before each run, with the token of that moment.
     this.agent = new HttpAgent({ url: this.url, threadId: this.state.threadId, headers: {} });
@@ -468,7 +470,7 @@ export class LumiSession {
   /** Headers of one run, with the token as it is now: tokens are refreshed while a conversation goes on. */
   private async requestHeaders(): Promise<Record<string, string>> {
     const token = await this.getToken();
-    if (token === null) throw new Error('HTTP 401: no hay una sesión activa.');
+    if (token === null) throw new Error(`HTTP 401: ${t('lumi.errors.noSession')}`);
     return { Authorization: `Bearer ${token}`, [SESSION_HEADER]: this.state.threadId };
   }
 
@@ -483,7 +485,7 @@ export class LumiSession {
         call.result = JSON.stringify(result);
         agent.addMessage({ id: uuid(), role: 'tool', toolCallId: call.id, content: call.result });
       }
-      this.state.activity = THINKING;
+      this.state.activity = t('lumi.thinking');
     }
   }
 
@@ -521,7 +523,7 @@ export class LumiSession {
       },
     );
     this.finalizeStreaming();
-    if (outcome.error !== null) this.state.items.push({ id: uuid(), type: 'error', content: UNAVAILABLE, detail: outcome.error });
+    if (outcome.error !== null) this.state.items.push({ id: uuid(), type: 'error', key: 'lumi.errors.unavailable', content: t('lumi.errors.unavailable'), detail: outcome.error });
     return calls;
   }
 
@@ -563,7 +565,7 @@ export class LumiSession {
         break;
       }
       case EventType.RUN_ERROR:
-        return str(eventField(event, 'message'), 'Error desconocido.');
+        return str(eventField(event, 'message'), t('lumi.errors.unknown'));
       default:
         break;
     }
@@ -601,7 +603,7 @@ export class LumiSession {
     const request = this.confirmRequest(args);
     if ('error' in request) return Promise.resolve({ confirmed: false, error: request.error });
     this.state.items.push({ id: uuid(), type: 'confirm', content: request.message, confirmState: 'pending', action: request.action, summaries: request.summaries, targets: request.targets });
-    this.state.activity = 'Esperando tu confirmación…';
+    this.state.activity = t('lumi.activity.confirm_change');
     this.state.awaitingConfirmation = true;
     this.saveTranscript();
     return new Promise<{ confirmed: boolean }>((resolve) => {

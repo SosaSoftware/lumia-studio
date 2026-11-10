@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TreeNode } from '../../api/types.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 
 const workspace = useWorkspace();
@@ -25,7 +26,7 @@ function onKeydown(event: KeyboardEvent, nodeId: string): void {
 </script>
 
 <template>
-  <div role="tablist" aria-label="Clases abiertas" class="tabs" data-testid="class-tabs">
+  <div role="tablist" :aria-label="t('workspace.tabs.label')" class="tabs" data-testid="class-tabs">
     <div
       v-for="node in workspace.openClasses.value"
       :key="node.id"
@@ -46,8 +47,8 @@ function onKeydown(event: KeyboardEvent, nodeId: string): void {
       <span class="ico"><StudioIcon name="class" :size="14" /></span>
       <span class="name">{{ node.displayName }}</span>
       <span v-if="folderOf(node)" class="sub">{{ folderOf(node) }}</span>
-      <span v-if="node.documentStatus === 'draft'" class="draft" role="img" aria-label="Borrador sin publicar" title="Borrador sin publicar"></span>
-      <button type="button" class="x" :aria-label="`Cerrar ${node.displayName}`" title="Cerrar" :data-testid="`tab-close-${node.id}`" @click.stop="workspace.closeTab(node.id)">
+      <span v-if="node.documentStatus === 'draft'" class="draft" role="img" :aria-label="t('workspace.tabs.unpublishedDraft')" :title="t('workspace.tabs.unpublishedDraft')"></span>
+      <button type="button" class="x" :aria-label="t('workspace.tabs.closeTab', { name: node.displayName })" :title="t('common.close')" :data-testid="`tab-close-${node.id}`" @click.stop="workspace.closeTab(node.id)">
         <StudioIcon name="close" :size="12" :stroke="2" />
       </button>
     </div>

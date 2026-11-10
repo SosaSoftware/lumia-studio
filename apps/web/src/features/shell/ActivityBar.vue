@@ -3,14 +3,15 @@ import { computed } from 'vue';
 import { PALETTE_GROUPS, panels, toggleLeft } from '../../composables/panels.ts';
 import type { PaletteGroup } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
-import { PALETTE_GROUP_NAMES } from '../palette/palette.ts';
+import { t } from '../../i18n/index.ts';
+import { paletteGroupName } from '../palette/palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 
 const workspace = useWorkspace();
 const hasClass = computed(() => workspace.activeClass.value !== null);
 
 function tip(group: PaletteGroup): string {
-  return hasClass.value ? PALETTE_GROUP_NAMES[group] : `${PALETTE_GROUP_NAMES[group]} · Abre una clase para usarlo`;
+  return hasClass.value ? paletteGroupName(group) : t('common.needClass', { name: paletteGroupName(group) });
 }
 
 function pickGroup(group: PaletteGroup): void {
@@ -23,12 +24,12 @@ function isOpen(group: PaletteGroup): boolean {
 </script>
 
 <template>
-  <nav class="activity" aria-label="Herramientas">
+  <nav class="activity" :aria-label="t('shell.activity.label')">
     <div class="column">
       <button
         type="button"
         class="ab"
-        aria-label="Explorador"
+        :aria-label="t('shell.activity.explorer')"
         :aria-pressed="panels.left === 'explorer'"
         :style="{ color: panels.left === 'explorer' ? 'var(--s-text)' : undefined }"
         data-testid="activity-explorer"
@@ -36,16 +37,16 @@ function isOpen(group: PaletteGroup): boolean {
       >
         <span v-if="panels.left === 'explorer'" class="ind l" aria-hidden="true"></span>
         <StudioIcon name="explorer" :size="20" :stroke="1.6" />
-        <span class="tip l" aria-hidden="true">Explorador</span>
+        <span class="tip l" aria-hidden="true">{{ t('shell.activity.explorer') }}</span>
       </button>
       <div role="separator" class="separator"></div>
-      <div role="group" aria-label="Grupos de componentes" class="column" data-testid="activity-components">
+      <div role="group" :aria-label="t('shell.activity.groups')" class="column" data-testid="activity-components">
         <button
           v-for="group in PALETTE_GROUPS"
           :key="group"
           type="button"
           class="ab"
-          :aria-label="PALETTE_GROUP_NAMES[group]"
+          :aria-label="paletteGroupName(group)"
           :aria-pressed="isOpen(group)"
           :aria-disabled="!hasClass"
           :aria-describedby="`tip-group-${group}`"
@@ -60,9 +61,9 @@ function isOpen(group: PaletteGroup): boolean {
       </div>
     </div>
     <div class="column bottom">
-      <button type="button" class="ab" aria-label="Configuración" aria-disabled="true" aria-describedby="tip-settings" data-testid="activity-settings">
+      <button type="button" class="ab" :aria-label="t('shell.activity.settings')" aria-disabled="true" aria-describedby="tip-settings" data-testid="activity-settings">
         <StudioIcon name="settings" :size="20" :stroke="1.6" />
-        <span id="tip-settings" class="tip l" role="tooltip">Configuración · Próximamente</span>
+        <span id="tip-settings" class="tip l" role="tooltip">{{ t('shell.activity.settingsSoon') }}</span>
       </button>
     </div>
   </nav>

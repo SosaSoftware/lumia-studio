@@ -3,10 +3,11 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { NarrationClip } from '../../api/types.ts';
 import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange, changeDenial } from '../../composables/edit-lock.ts';
+import { t } from '../../i18n/index.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import {
   MAX_SCRIPT_LENGTH,
-  NARRATION_STATUS_LABELS,
+  narrationStatusLabel,
   formatSpeed,
   narrationDuration,
   sliderFromSpeed,
@@ -26,9 +27,9 @@ void voices.load();
 const listed = computed(() => voices.choices.value.some((voice) => voice.id === props.clip.voice));
 const missingVoice = computed(() => props.clip.voice !== null && voices.choices.value.length > 0 && !listed.value);
 const voicePlaceholder = computed(() => {
-  if (voices.loading.value) return 'Cargando voces de Polly…';
-  if (voices.choices.value.length === 0) return 'Sin voces disponibles';
-  return 'Elige una voz';
+  if (voices.loading.value) return t('properties.narration.loadingVoices');
+  if (voices.choices.value.length === 0) return t('properties.narration.noVoices');
+  return t('properties.narration.chooseVoice');
 });
 const canEdit = computed(() => canChange(ACTIONS.edit));
 const canGenerate = computed(() => canChange(ACTIONS.narration));
@@ -37,13 +38,13 @@ let audio: HTMLAudioElement | null = null;
 
 const duration = computed(() => narrationDuration(props.clip));
 const hasVoice = computed(() => props.clip.status === 'ready' && props.clip.audioUrl !== null);
-const generateLabel = computed(() => (props.clip.status === 'ready' ? 'Regenerar con IA' : 'Generar con IA'));
+const generateLabel = computed(() => (props.clip.status === 'ready' ? t('properties.narration.regenerate') : t('properties.narration.generate')));
 const canRunGeneration = computed(() => canGenerate.value && props.clip.script.trim() !== '' && listed.value && props.clip.status !== 'generating');
 const generateTip = computed(() => {
-  if (!canGenerate.value) return changeDenial('No tienes permiso para generar la narración');
-  if (props.clip.script.trim() === '') return 'Escribe primero lo que dirá la voz';
-  if (!listed.value) return 'Elige primero una voz de Polly';
-  return 'Genera la voz con Amazon Polly a partir del guion';
+  if (!canGenerate.value) return changeDenial('properties.narration.noPermission');
+  if (props.clip.script.trim() === '') return t('properties.narration.writeFirst');
+  if (!listed.value) return t('properties.narration.chooseFirst');
+  return t('properties.narration.generateTip');
 });
 const STATUS_COLORS: Record<NarrationClip['status'], string> = { pending: 'var(--s-text-2)', generating: 'var(--s-accent-fg)', ready: 'var(--s-ok)', failed: 'var(--s-danger)' };
 
@@ -86,10 +87,10 @@ onBeforeUnmount(stop);
 <template>
   <div class="prop-body">
     <section class="prop-sec">
-      <h3 class="lbl">Guion</h3>
+      <h3 class="lbl">{{ t('properties.narration.script') }}</h3>
       <div class="prop-field">
         <span class="prop-label-row">
-          <label class="prop-label" for="narration-script">Lo que dice la voz</label>
+          <label class="prop-label" for="narration-script">{{ t('properties.narration.whatVoiceSays') }}</label>
           <span class="prop-hint">{{ clip.script.length }}/{{ MAX_SCRIPT_LENGTH }}</span>
         </span>
         <textarea
@@ -97,7 +98,7 @@ onBeforeUnmount(stop);
           class="pa"
           rows="6"
           :maxlength="MAX_SCRIPT_LENGTH"
-          placeholder="Escribe lo que dirá la voz…"
+          :placeholder="t('properties.narration.placeholder')"
           :value="clip.script"
           :disabled="!canEdit"
           data-testid="narration-script"
@@ -106,23 +107,23 @@ onBeforeUnmount(stop);
       </div>
       <div class="status" data-testid="narration-status" :data-status="clip.status">
         <span class="dot" :style="{ background: STATUS_COLORS[clip.status] }"></span>
-        <span>{{ NARRATION_STATUS_LABELS[clip.status] }}</span>
+        <span>{{ narrationStatusLabel(clip.status) }}</span>
       </div>
       <p v-if="clip.status === 'failed' && clip.errorMessage" class="prop-error" role="alert" data-testid="narration-error">{{ clip.errorMessage }}</p>
       <div class="prop-buttons">
-        <button type="button" class="prv" :aria-disabled="!hasVoice" :title="hasVoice ? 'Escuchar la voz generada' : 'Todavía no hay voz generada'" data-testid="narration-listen" @click="hasVoice && listen()">
-          <StudioIcon :name="playing ? 'pause' : 'play'" :size="12" />{{ playing ? 'Detener' : 'Escuchar' }}
+        <button type="button" class="prv" :aria-disabled="!hasVoice" :title="hasVoice ? t('properties.narration.listenTip') : t('properties.narration.noVoiceYet')" data-testid="narration-listen" @click="hasVoice && listen()">
+          <StudioIcon :name="playing ? 'pause' : 'play'" :size="12" />{{ playing ? t('properties.narration.stop') : t('properties.narration.listen') }}
         </button>
         <button type="button" class="pub" :aria-disabled="!canRunGeneration" :title="generateTip" data-testid="narration-generate" @click="generate">
-          {{ clip.status === 'generating' ? 'Generando…' : generateLabel }}
+          {{ clip.status === 'generating' ? t('properties.narration.generating') : generateLabel }}
         </button>
       </div>
     </section>
 
     <section class="prop-sec">
-      <h3 class="lbl">Voz</h3>
+      <h3 class="lbl">{{ t('properties.narration.voiceSection') }}</h3>
       <div class="prop-field">
-        <label class="prop-label" for="narration-voice">Voz</label>
+        <label class="prop-label" for="narration-voice">{{ t('properties.narration.voiceSection') }}</label>
         <select
           id="narration-voice"
           class="pv prop-control"
@@ -135,10 +136,10 @@ onBeforeUnmount(stop);
           <option v-for="voice in voices.choices.value" :key="voice.id" :value="voice.id">{{ voice.label }}</option>
         </select>
         <span v-if="voices.error.value" class="prop-hint error" role="alert" data-testid="narration-voices-error">{{ voices.error.value }}</span>
-        <span v-else-if="missingVoice" class="prop-hint error" role="alert" data-testid="narration-voice-missing">La voz «{{ clip.voice }}» ya no está en Polly. Elige otra.</span>
+        <span v-else-if="missingVoice" class="prop-hint error" role="alert" data-testid="narration-voice-missing">{{ t('properties.narration.voiceMissing', { voice: clip.voice ?? '' }) }}</span>
       </div>
       <div class="prop-field">
-        <span class="prop-label">Velocidad</span>
+        <span class="prop-label">{{ t('properties.narration.speed') }}</span>
         <div class="speed">
           <input
             type="range"
@@ -147,7 +148,7 @@ onBeforeUnmount(stop);
             max="100"
             step="1"
             :value="sliderFromSpeed(clip.speed)"
-            aria-label="Velocidad"
+            :aria-label="t('properties.narration.speed')"
             :aria-valuetext="formatSpeed(clip.speed)"
             :disabled="!canEdit"
             data-testid="narration-speed"
@@ -160,22 +161,22 @@ onBeforeUnmount(stop);
     </section>
 
     <section class="prop-sec">
-      <h3 class="lbl">Tiempo</h3>
+      <h3 class="lbl">{{ t('common.time') }}</h3>
       <div class="prop-field">
-        <span class="prop-label">Empieza en</span>
-        <NumberField :model-value="clip.startsAtS" label="Empieza en el segundo" unit="s" :min="0" :step="0.5" :disabled="!canEdit" testid="narration-start" @update:model-value="session.updateNarration(clip.id, { startsAtS: $event })" />
+        <span class="prop-label">{{ t('common.startsAt') }}</span>
+        <NumberField :model-value="clip.startsAtS" :label="t('common.startsAtSecond')" unit="s" :min="0" :step="0.5" :disabled="!canEdit" testid="narration-start" @update:model-value="session.updateNarration(clip.id, { startsAtS: $event })" />
       </div>
       <div class="prop-field">
-        <span class="prop-label">Duración</span>
+        <span class="prop-label">{{ t('common.duration') }}</span>
         <div class="pv" aria-readonly="true" data-testid="narration-duration">
-          <span role="img" aria-label="Solo lectura" title="Solo lectura" class="lock"><StudioIcon name="lock" :size="13" :stroke="2" /></span>
+          <span role="img" :aria-label="t('properties.narration.readOnly')" :title="t('properties.narration.readOnly')" class="lock"><StudioIcon name="lock" :size="13" :stroke="2" /></span>
           <span>{{ duration }} s</span>
         </div>
-        <span class="prop-hint">{{ clip.generatedDurationS && clip.generatedDurationS > 0 ? 'La define la voz generada; cambia solo con la velocidad.' : 'Duración estimada; la define la voz cuando se genera.' }}</span>
+        <span class="prop-hint">{{ clip.generatedDurationS && clip.generatedDurationS > 0 ? t('properties.narration.durationGenerated') : t('properties.narration.durationEstimated') }}</span>
       </div>
     </section>
 
-    <button v-if="canEdit" type="button" class="prop-danger" data-testid="narration-delete" @click="session.deleteNarration(clip.id)">Eliminar el clip de narración</button>
+    <button v-if="canEdit" type="button" class="prop-danger" data-testid="narration-delete" @click="session.deleteNarration(clip.id)">{{ t('properties.narration.delete') }}</button>
   </div>
 </template>
 

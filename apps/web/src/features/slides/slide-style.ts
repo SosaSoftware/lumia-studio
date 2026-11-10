@@ -1,5 +1,6 @@
 import type { StyleValue } from 'vue';
 import type { SlideTypeKey, ThemeColorKey } from '@lumia/packages/catalog';
+import { t } from '../../i18n/index.ts';
 
 /**
  * Background and text colors of a slide for a theme color key.
@@ -32,15 +33,7 @@ export function hasFooter(type: SlideTypeKey): boolean {
   return type !== 'cover';
 }
 
-/** Spanish names of the theme color keys, for backgrounds and component colors. */
-export const COLOR_LABELS: Readonly<Record<ThemeColorKey, string>> = {
-  surface: 'Claro',
-  'surface-alt': 'Blanco',
-  primary: 'Azul',
-  accent: 'Celeste',
-  success: 'Verde',
-  warning: 'Amarillo',
-  danger: 'Rojo',
-  text: 'Oscuro',
-  muted: 'Gris',
-};
+/** Name of a theme color key in the current language, for backgrounds and component colors. */
+export function colorLabel(key: ThemeColorKey): string {
+  return t(`colors.${key}`);
+}

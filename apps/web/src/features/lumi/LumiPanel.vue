@@ -2,6 +2,8 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { panels } from '../../composables/panels.ts';
 import { useLumi, useWorkspace } from '../../composables/workspace.ts';
+import { formatDateTime, t } from '../../i18n/index.ts';
+import { componentName } from '../editor/catalog-labels.ts';
 import { tagGroup } from '../palette/palette.ts';
 import LumiStar from '../../ui/LumiStar.vue';
 import StudioIcon from '../../ui/StudioIcon.vue';
@@ -25,17 +27,17 @@ const slidePosition = computed(() => session.state.slides.findIndex((slide) => s
 const context = computed(() => {
   if (node.value === null) {
     const path = workspace.selectedPath.value;
-    return path[path.length - 1] ?? workspace.subcategory.value?.displayName ?? 'Explorador';
+    return path[path.length - 1] ?? workspace.subcategory.value?.displayName ?? t('lumi.context.explorer');
   }
   const parts = [node.value.displayName];
-  if (slidePosition.value > 0) parts.push(`Diapositiva ${String(slidePosition.value)}`);
+  if (slidePosition.value > 0) parts.push(t('lumi.context.slide', { position: slidePosition.value }));
   const element = session.selectedElement;
   if (element !== null) {
     const info = workspace.catalog.component(element.component);
-    parts.push(info === undefined ? element.name : `${tagGroup(info.group)} · ${info.name}`);
-  } else if (session.selectedNarration !== null) parts.push('Narración');
-  else if (session.selectedAudio !== null) parts.push('Audio');
-  else if (session.selectedPause !== null) parts.push('Pausa');
+    parts.push(info === undefined ? element.name : `${tagGroup(info.group)} · ${componentName(info)}`);
+  } else if (session.selectedNarration !== null) parts.push(t('lumi.context.narration'));
+  else if (session.selectedAudio !== null) parts.push(t('lumi.context.audio'));
+  else if (session.selectedPause !== null) parts.push(t('lumi.context.pause'));
   return parts.join(' · ');
 });
 
@@ -68,7 +70,7 @@ function newConversation(): void {
 }
 
 function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return formatDateTime(timestamp);
 }
 
 onMounted(() => {
@@ -82,25 +84,25 @@ onMounted(() => {
     <div class="s-panel-head">
       <h2 id="h-lumi" class="lbl">Lumi</h2>
       <div class="tools">
-        <button type="button" class="ib" aria-label="Nueva conversación" title="Nueva conversación" data-testid="lumi-new" @click="newConversation"><StudioIcon name="plus" :size="15" /></button>
-        <button type="button" class="ib" aria-label="Historial de conversaciones" title="Historial" :aria-expanded="lumi.state.showHistory" data-testid="lumi-history" @click="lumi.state.showHistory = !lumi.state.showHistory"><StudioIcon name="history" :size="15" /></button>
-        <button type="button" class="ib" aria-label="Ocultar Lumi" title="Ocultar" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>
+        <button type="button" class="ib" :aria-label="t('lumi.newConversation')" :title="t('lumi.newConversation')" data-testid="lumi-new" @click="newConversation"><StudioIcon name="plus" :size="15" /></button>
+        <button type="button" class="ib" :aria-label="t('lumi.history')" :title="t('lumi.historyShort')" :aria-expanded="lumi.state.showHistory" data-testid="lumi-history" @click="lumi.state.showHistory = !lumi.state.showHistory"><StudioIcon name="history" :size="15" /></button>
+        <button type="button" class="ib" :aria-label="t('lumi.hide')" :title="t('common.hide')" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>
       </div>
     </div>
 
     <div v-if="lumi.state.showHistory" class="history" data-testid="lumi-history-list">
-      <span class="lbl history-title">Conversaciones</span>
-      <p v-if="lumi.conversations.value.length === 0" class="history-empty">Todavía no tienes conversaciones con Lumi.</p>
+      <span class="lbl history-title">{{ t('lumi.conversations') }}</span>
+      <p v-if="lumi.conversations.value.length === 0" class="history-empty">{{ t('lumi.noConversations') }}</p>
       <div v-for="conversation in lumi.conversations.value" :key="conversation.threadId" class="history-item" :data-current="conversation.threadId === lumi.state.threadId">
         <button type="button" class="mi history-open" :title="conversation.title" :data-testid="`lumi-conv-${conversation.threadId}`" @click="lumi.switchConversation(conversation.threadId)">
           <span class="history-name">{{ conversation.title }}</span>
           <span class="history-date">{{ formatDate(conversation.lastMessageAt) }}</span>
         </button>
-        <button type="button" class="ib" aria-label="Eliminar la conversación" title="Eliminar" @click="lumi.deleteConversation(conversation.threadId)"><StudioIcon name="trash" :size="13" /></button>
+        <button type="button" class="ib" :aria-label="t('lumi.deleteConversation')" :title="t('comments.delete')" @click="lumi.deleteConversation(conversation.threadId)"><StudioIcon name="trash" :size="13" /></button>
       </div>
     </div>
 
-    <div v-else ref="messagesEl" class="messages" role="log" aria-live="polite" aria-label="Conversación con Lumi" data-testid="lumi-messages">
+    <div v-else ref="messagesEl" class="messages" role="log" aria-live="polite" :aria-label="t('lumi.messages')" data-testid="lumi-messages">
       <template v-for="item in items" :key="item.id">
         <div v-if="item.type === 'user'" class="user" data-testid="lumi-msg-user">{{ item.content }}</div>
         <div v-else-if="item.type === 'text'" class="lumi-line" data-testid="lumi-msg-text">
@@ -110,7 +112,7 @@ onMounted(() => {
         <ConfirmCard v-else-if="item.type === 'confirm'" :item="item" @answer="lumi.answerConfirm($event)" @show="lumi.showTarget($event)" />
         <div v-else-if="item.type === 'error'" class="error" role="alert" data-testid="lumi-msg-error">
           <StudioIcon name="alert-circle" :size="15" class="error-icon" />
-          <span class="error-text">{{ item.content }}<small v-if="item.detail">{{ item.detail }}</small></span>
+          <span class="error-text">{{ item.key ? t(item.key) : item.content }}<small v-if="item.detail">{{ item.detail }}</small></span>
         </div>
       </template>
 
@@ -122,7 +124,7 @@ onMounted(() => {
 
     <div class="footer">
       <div v-if="running && lumi.state.streamingText === ''" class="thinking" data-testid="lumi-thinking">
-        <svg viewBox="0 0 120 120" width="22" height="22" role="img" aria-label="Lumi está pensando" class="pulso">
+        <svg viewBox="0 0 120 120" width="22" height="22" role="img" :aria-label="t('lumi.thinkingLabel')" class="pulso">
           <rect width="120" height="120" rx="22" :style="{ fill: 'var(--s-lumi)' }" />
           <g transform="translate(60 60) scale(0.37)">
             <path class="lumi-c lumi-pulso-star" :style="{ fill: 'var(--s-on-active)' }" d="M0,-100 C4,-6.9 4,-6.9 86.6,-50 C8,0 8,0 86.6,50 C4,6.9 4,6.9 0,100 C-4,6.9 -4,6.9 -86.6,50 C-8,0 -8,0 -86.6,-50 C-4,-6.9 -4,-6.9 0,-100Z" />
@@ -133,32 +135,32 @@ onMounted(() => {
           </g>
         </svg>
         <span class="activity">{{ lumi.state.activity }}</span>
-        <button type="button" class="stop" data-testid="lumi-stop" @click="lumi.abortRun()">Detener</button>
+        <button type="button" class="stop" data-testid="lumi-stop" @click="lumi.abortRun()">{{ t('lumi.stop') }}</button>
       </div>
       <div class="composer-wrap">
         <label class="composer">
-          <span class="sr-only">Pregúntale a Lumi</span>
+          <span class="sr-only">{{ t('lumi.askLumi') }}</span>
           <textarea
             ref="inputEl"
             v-model="input"
             rows="2"
-            :placeholder="lumi.state.awaitingConfirmation ? 'Lumi espera tu confirmación' : 'Pregúntale a Lumi o pídele un cambio…'"
-            aria-label="Mensaje para Lumi"
+            :placeholder="lumi.state.awaitingConfirmation ? t('lumi.awaiting') : t('lumi.placeholder')"
+            :aria-label="t('lumi.messageLabel')"
             :disabled="lumi.state.awaitingConfirmation"
             data-testid="lumi-input"
             @keydown="onKeydown"
           ></textarea>
           <span class="composer-row">
-            <span class="viewing" :title="`Viendo: ${context}`" data-testid="lumi-context">
+            <span class="viewing" :title="t('lumi.viewing', { context })" data-testid="lumi-context">
               <StudioIcon name="eye" :size="12" :stroke="2" />
-              <span class="viewing-text">Viendo: <span class="viewing-value">{{ context }}</span></span>
+              <span class="viewing-text">{{ t('lumi.viewing', { context: '' }) }}<span class="viewing-value">{{ context }}</span></span>
             </span>
-            <button type="button" class="send" aria-label="Enviar" title="Enviar" :aria-disabled="!lumi.connected || running || input.trim() === ''" data-testid="lumi-send" @click="send()">
+            <button type="button" class="send" :aria-label="t('lumi.send')" :title="t('lumi.send')" :aria-disabled="!lumi.connected || running || input.trim() === ''" data-testid="lumi-send" @click="send()">
               <StudioIcon name="send" :size="15" :stroke="2" />
             </button>
           </span>
         </label>
-        <span class="disclaimer">Lumi es una IA y puede cometer errores.</span>
+        <span class="disclaimer">{{ t('lumi.disclaimer') }}</span>
       </div>
     </div>
   </aside>

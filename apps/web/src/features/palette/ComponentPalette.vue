@@ -5,15 +5,17 @@ import { canChange, changeDenial } from '../../composables/edit-lock.ts';
 import { panels } from '../../composables/panels.ts';
 import type { PaletteGroup } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
-import { COMPONENT_MIME, PALETTE_GROUP_NAMES, PALETTE_HINTS, componentsOf } from './palette.ts';
+import { t } from '../../i18n/index.ts';
+import { componentName, componentUsage } from '../editor/catalog-labels.ts';
+import { COMPONENT_MIME, componentsOf, paletteGroupName, paletteHint } from './palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 
 const props = defineProps<{ group: PaletteGroup }>();
 
 const workspace = useWorkspace();
 const canEdit = computed(() => canChange(ACTIONS.edit));
-const denied = computed(() => changeDenial('No tienes permiso para editar'));
-const name = computed(() => PALETTE_GROUP_NAMES[props.group]);
+const denied = computed(() => changeDenial('palette.noPermission'));
+const name = computed(() => paletteGroupName(props.group));
 const components = computed(() => (props.group === 'slides' ? [] : componentsOf(props.group, workspace.catalog.info.value.components)));
 
 function addSlide(): void {
@@ -38,22 +40,22 @@ function dragStart(event: DragEvent, key: string): void {
   <section class="panel" aria-labelledby="h-cat" data-testid="panel-components">
     <div class="s-panel-head">
       <h2 id="h-cat" class="lbl">{{ name }}</h2>
-      <button type="button" class="ib" :aria-label="`Ocultar ${name}`" title="Ocultar" @click="panels.left = null"><StudioIcon name="minus" :size="15" /></button>
+      <button type="button" class="ib" :aria-label="t('palette.hide', { name })" :title="t('palette.hideShort')" @click="panels.left = null"><StudioIcon name="minus" :size="15" /></button>
     </div>
     <div class="body" :data-testid="`palette-group-${group}`">
-      <p class="hint">{{ PALETTE_HINTS[group] }}</p>
-      <p v-if="!canEdit" class="hint denied" role="note">{{ changeDenial('No tienes permiso para editar esta clase.') }}</p>
+      <p class="hint">{{ paletteHint(group) }}</p>
+      <p v-if="!canEdit" class="hint denied" role="note">{{ changeDenial('palette.noPermissionClass') }}</p>
       <div v-if="group === 'slides'" class="grid">
         <button
           type="button"
           class="ct"
           :aria-disabled="!canEdit"
-          :title="canEdit ? 'Agregar una diapositiva en blanco al final' : denied"
+          :title="canEdit ? t('palette.addBlankAtEnd') : denied"
           data-testid="palette-item-slide-blank"
           @click="addSlide"
         >
           <span class="ico"><StudioIcon name="plus" :size="22" :stroke="1.6" /></span>
-          <span>En blanco</span>
+          <span>{{ t('palette.blank') }}</span>
         </button>
       </div>
       <div v-else class="grid">
@@ -64,14 +66,14 @@ function dragStart(event: DragEvent, key: string): void {
           class="ct"
           :aria-disabled="!canEdit"
           :draggable="canEdit"
-          :title="canEdit ? 'Arrastra a la diapositiva' : denied"
-          :aria-description="component.usage"
+          :title="canEdit ? t('palette.dragToSlide') : denied"
+          :aria-description="componentUsage(component)"
           :data-testid="`palette-item-${component.key}`"
           @click="addComponent(component.key)"
           @dragstart="dragStart($event, component.key)"
         >
           <span class="ico"><StudioIcon :name="`cmp-${component.key}`" :size="22" :stroke="1.6" /></span>
-          <span>{{ component.name }}</span>
+          <span>{{ componentName(component) }}</span>
         </button>
       </div>
     </div>

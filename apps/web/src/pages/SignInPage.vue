@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { AuthError } from '../auth/auth-provider.ts';
 import { ACTIONS, useApp } from '../composables/app-context.ts';
 import { theme } from '../composables/theme.ts';
+import { t } from '../i18n/index.ts';
 
 const app = useApp();
 const router = useRouter();
@@ -81,7 +82,7 @@ async function enter(): Promise<void> {
 async function submit(): Promise<void> {
   if (busy.value) return;
   if (step.value === 'new_password' && newPassword.value !== repeatPassword.value) {
-    error.value = 'Las contraseñas no coinciden.';
+    error.value = t('auth.signIn.mismatch');
     return;
   }
   busy.value = true;
@@ -96,7 +97,7 @@ async function submit(): Promise<void> {
       await nextTick();
       newPasswordInput.value?.focus();
     } else if (cause instanceof AuthError && cause.reason === 'no_access') showNoAccess();
-    else error.value = cause instanceof AuthError ? cause.message : 'No se pudo iniciar sesión.';
+    else error.value = cause instanceof AuthError ? cause.message : t('auth.errors.signInFailed');
   } finally {
     busy.value = false;
   }
@@ -115,24 +116,24 @@ async function submit(): Promise<void> {
         </g>
       </svg>
       <div class="pitch">
-        <span class="kicker">Plataforma de contenido</span>
-        <h1>Crea el contenido de tus clases</h1>
-        <p>El entorno de trabajo donde cada clase se convierte en contenido interactivo, con Lumi a tu lado.</p>
+        <span class="kicker">{{ t('auth.signIn.kicker') }}</span>
+        <h1>{{ t('auth.signIn.headline') }}</h1>
+        <p>{{ t('auth.signIn.pitch') }}</p>
       </div>
       <div class="points">
-        <div class="point"><span class="point-title">Todo en un árbol</span><span class="point-text">Cada clase en su carpeta, lista para crear su contenido</span></div>
-        <div class="point"><span class="point-title">Lumi a tu lado</span><span class="point-text">Te ayuda a crear y revisar el contenido</span></div>
-        <div class="point"><span class="point-title">Contenido dinámico</span><span class="point-text">Crea clases dinámicas para los estudiantes</span></div>
+        <div class="point"><span class="point-title">{{ t('auth.signIn.points.tree.title') }}</span><span class="point-text">{{ t('auth.signIn.points.tree.text') }}</span></div>
+        <div class="point"><span class="point-title">{{ t('auth.signIn.points.lumi.title') }}</span><span class="point-text">{{ t('auth.signIn.points.lumi.text') }}</span></div>
+        <div class="point"><span class="point-title">{{ t('auth.signIn.points.dynamic.title') }}</span><span class="point-text">{{ t('auth.signIn.points.dynamic.text') }}</span></div>
       </div>
     </section>
 
     <section class="entry">
       <div class="entry-box">
         <div class="entry-head">
-          <h2>Inicia sesión</h2>
-          <p>Entra con tu cuenta de Lumia Studio.</p>
+          <h2>{{ t('auth.signIn.title') }}</h2>
+          <p>{{ t('auth.signIn.subtitle') }}</p>
         </div>
-        <p v-if="noAccess" class="no-access" role="alert" data-testid="sign-in-no-access">Tu cuenta no tiene acceso a Lumia Studio. Pide a un administrador que habilite tu acceso.</p>
+        <p v-if="noAccess" class="no-access" role="alert" data-testid="sign-in-no-access">{{ t('auth.signIn.noAccess') }}</p>
         <button ref="opener" type="button" class="btn-primary big" aria-haspopup="dialog" data-testid="sign-in-open" @click="open">
           <svg viewBox="-100 -105 200 210" width="18" height="18" aria-hidden="true">
             <path fill="#FFFFFF" d="M0,-100 C4,-6.9 4,-6.9 86.6,-50 C8,0 8,0 86.6,50 C4,6.9 4,6.9 0,100 C-4,6.9 -4,6.9 -86.6,50 C-8,0 -8,0 -86.6,-50 C-4,-6.9 -4,-6.9 0,-100Z" />
@@ -141,9 +142,9 @@ async function submit(): Promise<void> {
               <circle cx="-35" cy="60.6" r="13" /><circle cx="-70" cy="0" r="13" /><circle cx="-35" cy="-60.6" r="13" />
             </g>
           </svg>
-          Iniciar sesión
+          {{ t('auth.signIn.submit') }}
         </button>
-        <span class="foot">Lumia Studio · Plataforma de contenido</span>
+        <span class="foot">{{ t('auth.signIn.footer') }}</span>
       </div>
     </section>
 
@@ -151,41 +152,41 @@ async function submit(): Promise<void> {
       <section ref="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="sign-in-title" data-testid="sign-in-dialog">
         <div class="dialog-head">
           <img :src="studioLogo" alt="Lumia Studio" class="dialog-logo" />
-          <button type="button" class="x" aria-label="Cerrar" title="Cerrar" data-testid="sign-in-close" @click="close">
+          <button type="button" class="x" :aria-label="t('common.close')" :title="t('common.close')" data-testid="sign-in-close" @click="close">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
         </div>
         <div v-if="step === 'credentials'" class="dialog-title">
-          <h2 id="sign-in-title">Inicia sesión</h2>
-          <p v-if="devLogin">Sandbox: escribe el correo de una cuenta activa; la contraseña no se revisa.</p>
-          <p v-else>Usa el correo y la contraseña de tu cuenta de Lumia Studio.</p>
+          <h2 id="sign-in-title">{{ t('auth.signIn.title') }}</h2>
+          <p v-if="devLogin">{{ t('auth.signIn.devHint') }}</p>
+          <p v-else>{{ t('auth.signIn.hint') }}</p>
         </div>
         <div v-else class="dialog-title">
-          <h2 id="sign-in-title">Crea tu contraseña</h2>
-          <p>Es tu primer inicio de sesión. Elige una contraseña de al menos 12 caracteres, con mayúsculas, minúsculas, números y símbolos.</p>
+          <h2 id="sign-in-title">{{ t('auth.signIn.newPasswordTitle') }}</h2>
+          <p>{{ t('auth.signIn.newPasswordHint') }}</p>
         </div>
         <form class="form" @submit.prevent="submit">
           <template v-if="step === 'credentials'">
-            <label class="field">Correo
+            <label class="field">{{ t('auth.signIn.email') }}
               <input ref="emailInput" v-model="email" type="email" autocomplete="username" required data-testid="sign-in-email" />
             </label>
-            <label class="field">Contraseña
+            <label class="field">{{ t('auth.signIn.password') }}
               <input v-model="password" type="password" autocomplete="current-password" :required="!devLogin" data-testid="sign-in-password" />
             </label>
           </template>
           <template v-else>
-            <label class="field">Contraseña nueva
+            <label class="field">{{ t('auth.signIn.newPassword') }}
               <input ref="newPasswordInput" v-model="newPassword" type="password" autocomplete="new-password" minlength="12" required data-testid="sign-in-new-password" />
             </label>
-            <label class="field">Repite la contraseña
+            <label class="field">{{ t('auth.signIn.repeatPassword') }}
               <input v-model="repeatPassword" type="password" autocomplete="new-password" minlength="12" required data-testid="sign-in-repeat-password" />
             </label>
           </template>
           <p v-if="error" class="error" role="alert" data-testid="sign-in-error">{{ error }}</p>
-          <button v-if="step === 'credentials'" type="button" class="lnk" title="Próximamente" @click.prevent>¿Olvidaste tu contraseña?</button>
+          <button v-if="step === 'credentials'" type="button" class="lnk" :title="t('auth.signIn.soon')" @click.prevent>{{ t('auth.signIn.forgot') }}</button>
           <div class="actions">
-            <button type="button" class="btn-2" data-testid="sign-in-cancel" @click="close">Cancelar</button>
-            <button type="submit" class="btn-primary" :disabled="busy" data-testid="sign-in-submit">{{ step === 'credentials' ? 'Iniciar sesión' : 'Guardar y entrar' }}</button>
+            <button type="button" class="btn-2" data-testid="sign-in-cancel" @click="close">{{ t('auth.signIn.cancel') }}</button>
+            <button type="submit" class="btn-primary" :disabled="busy" data-testid="sign-in-submit">{{ step === 'credentials' ? t('auth.signIn.submit') : t('auth.signIn.saveAndEnter') }}</button>
           </div>
         </form>
       </section>

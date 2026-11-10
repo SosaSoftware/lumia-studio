@@ -2,8 +2,9 @@
 import { computed } from 'vue';
 import type { TreeNode } from '../../api/types.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t, tn } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
-import { STATUS_LABELS } from '../workspace/class-status.ts';
+import { statusLabel } from '../workspace/class-status.ts';
 
 /** Read-only properties of a folder or class of the tree; the tree is managed in the database. */
 const props = defineProps<{ node: TreeNode }>();
@@ -13,52 +14,53 @@ const isClass = computed(() => props.node.kind === 'class');
 const route = computed(() => workspace.pathOf(props.node.id).slice(0, -1).map((item) => item.displayName));
 const status = computed(() => {
   if (!isClass.value) return '';
-  const label = STATUS_LABELS[props.node.documentStatus ?? 'no_content'];
-  return props.node.currentVersion === null ? label : `${label} · versión ${String(props.node.currentVersion)}`;
+  const label = statusLabel(props.node.documentStatus ?? 'no_content');
+  return props.node.currentVersion === null ? label : t('properties.node.statusVersion', { label, number: props.node.currentVersion });
 });
+const kindLabel = computed(() => (isClass.value ? t('properties.node.class') : t('properties.node.folder')));
 const contents = computed(() => {
   if (isClass.value) return '';
   const children = workspace.nodes.value.filter((node) => node.parentId === props.node.id);
   const folders = children.filter((node) => node.kind === 'folder').length;
   const classes = children.length - folders;
   const parts: string[] = [];
-  if (folders > 0) parts.push(`${String(folders)} ${folders === 1 ? 'carpeta' : 'carpetas'}`);
-  if (classes > 0) parts.push(`${String(classes)} ${classes === 1 ? 'clase' : 'clases'}`);
-  return parts.length === 0 ? 'Vacía' : parts.join(' · ');
+  if (folders > 0) parts.push(tn('properties.node.folders', folders));
+  if (classes > 0) parts.push(tn('properties.node.classes', classes));
+  return parts.length === 0 ? t('properties.node.empty') : parts.join(' · ');
 });
 </script>
 
 <template>
   <div class="prop-body" data-testid="node-properties">
-    <div class="s-identity" :aria-label="`${isClass ? 'Clase' : 'Carpeta'}: ${node.displayName}`">
+    <div class="s-identity" :aria-label="t('properties.node.nodeLabel', { kind: kindLabel, name: node.displayName })">
       <span class="kind" aria-hidden="true"><StudioIcon :name="isClass ? 'class' : 'folder'" :size="16" /></span>
       <span class="s-identity-meta">
         <span class="s-identity-where">{{ route.length > 0 ? route.join(' › ') : (workspace.subcategory.value?.displayName ?? '') }}</span>
         <span class="s-identity-title" data-testid="node-display-name">{{ node.displayName }}</span>
       </span>
-      <span class="s-identity-pill">{{ isClass ? 'Clase' : 'Carpeta' }}</span>
+      <span class="s-identity-pill">{{ kindLabel }}</span>
     </div>
 
     <section class="prop-sec">
-      <h3 class="lbl">General</h3>
+      <h3 class="lbl">{{ t('properties.node.general') }}</h3>
       <div class="prop-field">
-        <span class="prop-label">Nombre</span>
+        <span class="prop-label">{{ t('common.name') }}</span>
         <code class="value mono" data-testid="node-name">{{ node.name }}</code>
       </div>
       <div class="prop-field">
-        <span class="prop-label">Descripción</span>
-        <p class="value" :class="{ muted: node.description === '' }" data-testid="node-description">{{ node.description === '' ? 'Sin descripción' : node.description }}</p>
+        <span class="prop-label">{{ t('properties.node.description') }}</span>
+        <p class="value" :class="{ muted: node.description === '' }" data-testid="node-description">{{ node.description === '' ? t('properties.node.noDescription') : node.description }}</p>
       </div>
       <div v-if="isClass" class="prop-field">
-        <span class="prop-label">Contenido</span>
+        <span class="prop-label">{{ t('properties.node.content') }}</span>
         <p class="value" data-testid="node-status">{{ status }}</p>
       </div>
       <div v-else class="prop-field">
-        <span class="prop-label">Contiene</span>
+        <span class="prop-label">{{ t('properties.node.contains') }}</span>
         <p class="value" data-testid="node-contents">{{ contents }}</p>
       </div>
     </section>
-    <p v-if="isClass" class="prop-hint hint">Haz doble clic en la clase del árbol para abrirla.</p>
+    <p v-if="isClass" class="prop-hint hint">{{ t('properties.node.openHint') }}</p>
   </div>
 </template>
 

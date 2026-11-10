@@ -4,6 +4,7 @@ import type { MediaRef, Pause, Slide } from '../../api/types.ts';
 import CatalogElement from '../slide-components/CatalogElement.vue';
 import type { SlideContext } from '../slide-components/slide-context.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import { hasFooter, slideFooter } from '../slides/slide-style.ts';
 import SlideSurface from '../slides/SlideSurface.vue';
 import { narrationDuration } from '../timeline/timeline-model.ts';
@@ -195,7 +196,7 @@ function resume(): void {
 
 function go(delta: number): void {
   if (delta > 0 && advance.value.blocked) {
-    hint.value = 'Responde las preguntas para continuar.';
+    hint.value = t('preview.blockedHint');
     return;
   }
   const next = stepIndex(index.value, delta, total.value);
@@ -293,14 +294,14 @@ onBeforeUnmount(() => {
     :class="{ embedded: !chrome }"
     :role="chrome ? 'dialog' : 'region'"
     :aria-modal="chrome ? 'true' : undefined"
-    :aria-label="chrome ? 'Vista previa de la clase' : 'Contenido de la clase'"
+    :aria-label="chrome ? t('preview.dialogLabel') : t('preview.embeddedLabel')"
     tabindex="-1"
     :data-reduced-motion="reducedMotion"
     data-testid="preview"
   >
     <div v-if="chrome" class="top">
-      <span class="badge"><StudioIcon name="eye" :size="13" :stroke="2" /> Vista previa · así la verán los estudiantes</span>
-      <button type="button" class="close" aria-label="Cerrar la vista previa (Esc)" title="Cerrar (Esc)" data-testid="preview-close" @click="emit('close')">
+      <span class="badge"><StudioIcon name="eye" :size="13" :stroke="2" /> {{ t('preview.badge') }}</span>
+      <button type="button" class="close" :aria-label="t('preview.closeLabel')" :title="t('preview.closeShort')" data-testid="preview-close" @click="emit('close')">
         <StudioIcon name="close" :size="18" />
       </button>
     </div>
@@ -328,20 +329,20 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <div v-if="chrome" class="controls">
-      <button type="button" class="nav" aria-label="Diapositiva anterior" :disabled="index === 0" data-testid="preview-prev" @click="go(-1)"><StudioIcon name="chevron-left" :size="16" :stroke="2" /></button>
+      <button type="button" class="nav" :aria-label="t('slides.previous')" :disabled="index === 0" data-testid="preview-prev" @click="go(-1)"><StudioIcon name="chevron-left" :size="16" :stroke="2" /></button>
       <span class="count" aria-live="polite" data-testid="preview-count">{{ index + 1 }} / {{ total }}</span>
       <button
         type="button"
         class="nav"
-        aria-label="Diapositiva siguiente"
+        :aria-label="t('slides.next')"
         :aria-disabled="advance.blocked"
-        :title="advance.blocked ? 'Responde las preguntas para continuar' : 'Diapositiva siguiente'"
+        :title="advance.blocked ? t('preview.blocked') : t('slides.next')"
         :disabled="index >= total - 1 && !advance.blocked"
         data-testid="preview-next"
         @click="go(1)"
       ><StudioIcon name="chevron-right" :size="16" :stroke="2" /></button>
       <span v-if="hint" class="hint" role="status" data-testid="preview-hint">{{ hint }}</span>
-      <span v-else-if="ended" class="end" data-testid="preview-end">Fin de la clase</span>
+      <span v-else-if="ended" class="end" data-testid="preview-end">{{ t('preview.end') }}</span>
     </div>
   </div>
 </template>

@@ -1,21 +1,34 @@
 import type { AdvanceMode, AudioKind, Entrance, NarrationClip, NarrationStatus, PauseEnd, Slide, SlideElement, Transition } from '../../api/types.ts';
+import { t } from '../../i18n/index.ts';
 
 export const MAX_SCRIPT_LENGTH = 3000;
 export const MIN_SPEED = 0.1;
 export const MAX_SPEED = 2;
 
-export const ENTRANCE_LABELS: Readonly<Record<Entrance, string>> = { none: 'Ninguna', appear: 'Aparecer', fade: 'Desvanecer', slide: 'Deslizar', draw: 'Dibujar' };
-export const TRANSITION_LABELS: Readonly<Record<Transition, string>> = { none: 'Ninguna', fade: 'Desvanecer', slide: 'Deslizar', zoom: 'Zoom' };
-export const ADVANCE_LABELS: Readonly<Record<AdvanceMode, string>> = { auto: 'Automático', click: 'Con clic', on_complete: 'Al completar' };
-export const AUDIO_KIND_LABELS: Readonly<Record<AudioKind, string>> = { music: 'Música', effect: 'Efecto' };
-export const PAUSE_END_LABELS: Readonly<Record<PauseEnd, string>> = { continue: 'Continuar', wait_click: 'Esperar clic' };
-export const NARRATION_STATUS_LABELS: Readonly<Record<NarrationStatus, string>> = {
-  pending: 'Sin voz',
-  generating: 'Generando…',
-  ready: 'Voz lista',
-  failed: 'No se generó',
-};
+/** Labels of the timeline and properties options in the current language. */
+export function entranceLabel(value: Entrance): string {
+  return t(`timeline.entrance.${value}`);
+}
 
+export function transitionLabel(value: Transition): string {
+  return t(`timeline.transition.${value}`);
+}
+
+export function advanceLabel(value: AdvanceMode): string {
+  return t(`timeline.advance.${value}`);
+}
+
+export function audioKindLabel(value: AudioKind): string {
+  return t(`timeline.audioKind.${value}`);
+}
+
+export function pauseEndLabel(value: PauseEnd): string {
+  return t(`timeline.pauseEnd.${value}`);
+}
+
+export function narrationStatusLabel(value: NarrationStatus): string {
+  return t(`timeline.narrationStatus.${value}`);
+}
 
 /** `m:ss`, as the design writes times. */
 export function formatTime(seconds: number): string {

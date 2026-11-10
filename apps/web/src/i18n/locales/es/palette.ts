@@ -1,0 +1,32 @@
+export const palette = {
+  groups: {
+    slides: 'Diapositivas',
+    text: 'Texto',
+    media: 'Multimedia',
+    shapes: 'Formas y diagramas',
+    interactive: 'Interactivos',
+    questions: 'Preguntas',
+  },
+  hints: {
+    slides: 'Agrega una diapositiva en blanco al final de la clase.',
+    text: 'Arrastra un componente a la diapositiva.',
+    media: 'Arrastra un componente a la diapositiva.',
+    shapes: 'Arrastra un componente a la diapositiva.',
+    interactive: 'Elementos que el estudiante explora con un clic.',
+    questions: 'Arrastra una pregunta a la diapositiva.',
+  },
+  tags: {
+    text: 'Texto',
+    media: 'Multimedia',
+    shapes: 'Formas',
+    interactive: 'Interactivos',
+    questions: 'Preguntas',
+  },
+  hide: 'Ocultar {name}',
+  hideShort: 'Ocultar',
+  noPermission: 'No tienes permiso para editar',
+  noPermissionClass: 'No tienes permiso para editar esta clase.',
+  addBlankAtEnd: 'Agregar una diapositiva en blanco al final',
+  blank: 'En blanco',
+  dragToSlide: 'Arrastra a la diapositiva',
+};

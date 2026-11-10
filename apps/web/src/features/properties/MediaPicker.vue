@@ -4,6 +4,7 @@ import { ApiError } from '../../api/graphql-client.ts';
 import type { MediaAsset, MediaRef } from '../../api/types.ts';
 import { useApp } from '../../composables/app-context.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import MediaLibraryDialog from '../media/MediaLibraryDialog.vue';
 import { UploadError, uploadMedia } from '../media/upload.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
@@ -25,12 +26,12 @@ async function upload(event: Event): Promise<void> {
   error.value = null;
   try {
     const categoryId = workspace.media.category;
-    if (categoryId === null) throw new UploadError('Abre una clase para subir archivos a su biblioteca.');
+    if (categoryId === null) throw new UploadError(t('properties.picker.openClassToUpload'));
     const asset = await uploadMedia(app.studio, categoryId, file);
     workspace.media.add(asset);
     emit('pick', asset);
   } catch (cause) {
-    error.value = cause instanceof ApiError || cause instanceof Error ? cause.message : 'No se pudo subir el archivo.';
+    error.value = cause instanceof ApiError || cause instanceof Error ? cause.message : t('errors.uploadFailed');
   } finally {
     busy.value = false;
     if (input !== null) input.value = '';
@@ -49,20 +50,20 @@ function choose(asset: MediaAsset): void {
       <img v-if="media && media.mimeType.startsWith('image/')" :src="media.url" alt="" class="mini" />
       <StudioIcon v-else :name="media ? 'cmp-video' : 'cmp-image'" :size="14" />
       <span v-if="media" class="name" data-testid="media-current">{{ media.name }}</span>
-      <span v-else-if="mediaId" class="name">Medio asignado</span>
-      <span v-else class="none">Sin medio: se muestra un marcador con la descripción</span>
+      <span v-else-if="mediaId" class="name">{{ t('properties.picker.assigned') }}</span>
+      <span v-else class="none">{{ t('properties.picker.none') }}</span>
     </div>
     <div class="actions">
       <label v-if="canUpload" class="prv" :aria-disabled="busy || disabled">
-        <StudioIcon name="upload" :size="13" :stroke="2" />{{ busy ? 'Subiendo…' : 'Subir archivo' }}
+        <StudioIcon name="upload" :size="13" :stroke="2" />{{ busy ? t('properties.picker.uploading') : t('properties.picker.upload') }}
         <input type="file" class="sr-only" :accept="accept" :disabled="busy || disabled" data-testid="media-upload" @change="upload" />
       </label>
       <button type="button" class="pub" :disabled="disabled" data-testid="media-library-open" @click="libraryOpen = true">
-        <StudioIcon name="library" :size="13" :stroke="2" />Elegir de la biblioteca
+        <StudioIcon name="library" :size="13" :stroke="2" />{{ t('common.chooseFromLibrary') }}
       </button>
     </div>
-    <button v-if="mediaId" type="button" class="remove" :disabled="disabled" data-testid="media-remove" @click="emit('pick', null)">Quitar el medio</button>
-    <span v-if="!canUpload" class="none" data-testid="media-upload-denied">No tienes permiso para subir medios; puedes elegir de la biblioteca.</span>
+    <button v-if="mediaId" type="button" class="remove" :disabled="disabled" data-testid="media-remove" @click="emit('pick', null)">{{ t('properties.picker.remove') }}</button>
+    <span v-if="!canUpload" class="none" data-testid="media-upload-denied">{{ t('properties.picker.uploadDenied') }}</span>
     <span v-if="error" class="err" role="alert">{{ error }}</span>
     <MediaLibraryDialog v-if="libraryOpen" selectable :mime-filter="accept.split(',')[0]?.replace('*', '')" @close="libraryOpen = false" @select="choose" />
   </div>

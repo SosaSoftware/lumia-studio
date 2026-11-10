@@ -3,8 +3,9 @@ import { computed, nextTick, ref } from 'vue';
 import type { DocumentStatus } from '../../api/types.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
-import { STATUS_LABELS } from '../workspace/class-status.ts';
+import { statusLabel as documentStatusLabel } from '../workspace/class-status.ts';
 import { flattenTree } from './tree-model.ts';
 import type { TreeRow } from './tree-model.ts';
 
@@ -12,7 +13,7 @@ const workspace = useWorkspace();
 const treeEl = ref<HTMLElement | null>(null);
 const focusId = ref<string | null>(null);
 
-const rootName = computed(() => workspace.subcategory.value?.displayName ?? 'Explorador');
+const rootName = computed(() => workspace.subcategory.value?.displayName ?? t('tree.title'));
 const rows = computed<TreeRow[]>(() => (workspace.treeRootOpen.value ? flattenTree(workspace.tree.value, workspace.expanded.value, workspace.filtering.value) : []));
 const tabId = computed(() => {
   const ids = rows.value.map((row) => row.item.node.id);
@@ -21,7 +22,7 @@ const tabId = computed(() => {
 });
 const filterSummary = computed(() => {
   const parts: string[] = [];
-  if (workspace.filters.status !== 'all') parts.push(STATUS_LABELS[workspace.filters.status]);
+  if (workspace.filters.status !== 'all') parts.push(documentStatusLabel(workspace.filters.status));
   if (workspace.filters.text.trim() !== '') parts.push(`“${workspace.filters.text.trim()}”`);
   return parts.join(' · ');
 });
@@ -42,7 +43,7 @@ function iconOf(row: TreeRow): string {
 
 function statusLabel(row: TreeRow): string {
   const { node } = row.item;
-  const label = STATUS_LABELS[node.documentStatus ?? 'no_content'];
+  const label = documentStatusLabel(node.documentStatus ?? 'no_content');
   return node.currentVersion === null ? label : `${label} · v${String(node.currentVersion)}`;
 }
 
@@ -110,12 +111,12 @@ function onKeydown(event: KeyboardEvent, row: TreeRow, index: number): void {
 <template>
   <section class="panel" aria-labelledby="h-explorer" data-testid="panel-explorer">
     <div class="s-panel-head">
-      <h2 id="h-explorer" class="lbl">Explorador</h2>
+      <h2 id="h-explorer" class="lbl">{{ t('tree.title') }}</h2>
       <div class="tools">
-        <button type="button" class="ib" aria-label="Contraer todo" title="Contraer todo" data-testid="tree-collapse" @click="workspace.collapseAll()">
+        <button type="button" class="ib" :aria-label="t('tree.collapseAll')" :title="t('tree.collapseAll')" data-testid="tree-collapse" @click="workspace.collapseAll()">
           <StudioIcon name="collapse-all" :size="15" />
         </button>
-        <button type="button" class="ib" aria-label="Ocultar el explorador" title="Ocultar" @click="panels.left = null">
+        <button type="button" class="ib" :aria-label="t('tree.hide')" :title="t('tree.hideShort')" @click="panels.left = null">
           <StudioIcon name="minus" :size="15" />
         </button>
       </div>
@@ -126,11 +127,11 @@ function onKeydown(event: KeyboardEvent, row: TreeRow, index: number): void {
     </button>
     <div v-if="workspace.filtering.value" class="filtered" role="status" data-testid="tree-filtered">
       <StudioIcon name="filter" :size="13" />
-      <span class="ellipsis">Filtrado: {{ filterSummary }}</span>
-      <button type="button" class="lnk" data-testid="tree-filter-clear" @click="workspace.clearFilters()">Limpiar</button>
+      <span class="ellipsis">{{ t('tree.filtered', { summary: filterSummary }) }}</span>
+      <button type="button" class="lnk" data-testid="tree-filter-clear" @click="workspace.clearFilters()">{{ t('tree.clear') }}</button>
     </div>
     <p v-if="workspace.error.value" class="msg error" role="alert">{{ workspace.error.value }}</p>
-    <div ref="treeEl" role="tree" :aria-label="`Contenido de ${rootName}`" class="tree" data-testid="content-tree">
+    <div ref="treeEl" role="tree" :aria-label="t('tree.contentOf', { name: rootName })" class="tree" data-testid="content-tree">
       <div
         v-for="(row, index) in rows"
         :key="row.item.node.id"
@@ -165,10 +166,10 @@ function onKeydown(event: KeyboardEvent, row: TreeRow, index: number): void {
           <span class="dot" :style="{ background: DOT[row.item.node.documentStatus ?? 'no_content'] }"></span>
         </span>
       </div>
-      <p v-if="workspace.loading.value && rows.length === 0" class="msg">Cargando el contenido…</p>
-      <p v-else-if="workspace.loaded.value && workspace.scope.value === null" class="msg">Todavía no tienes acceso a ninguna categoría.</p>
-      <p v-else-if="workspace.loaded.value && workspace.nodes.value.length === 0" class="msg">Esta subcategoría todavía no tiene clases.</p>
-      <p v-else-if="workspace.filtering.value && rows.length === 0" class="msg">No hay clases que coincidan con el filtro.</p>
+      <p v-if="workspace.loading.value && rows.length === 0" class="msg">{{ t('tree.loading') }}</p>
+      <p v-else-if="workspace.loaded.value && workspace.scope.value === null" class="msg">{{ t('tree.noAccess') }}</p>
+      <p v-else-if="workspace.loaded.value && workspace.nodes.value.length === 0" class="msg">{{ t('tree.noClasses') }}</p>
+      <p v-else-if="workspace.filtering.value && rows.length === 0" class="msg">{{ t('tree.noMatches') }}</p>
     </div>
   </section>
 </template>

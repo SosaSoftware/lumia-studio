@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { DEFAULT_MARGIN, canvasMargins } from '../../composables/canvas-margins.ts';
+import { t } from '../../i18n/index.ts';
 import type { MarginSide } from '../../composables/canvas-margins.ts';
 import type { Guides, Segment } from './alignment.ts';
 import { MarginDrag, isSideMargin, marginLine } from './margin-lines.ts';
@@ -12,7 +13,6 @@ import { MarginDrag, isSideMargin, marginLine } from './margin-lines.ts';
 const props = defineProps<{ guides: Guides; slideWidth: () => number }>();
 
 const SIDES: readonly MarginSide[] = ['top', 'right', 'bottom', 'left'];
-const LABELS: Record<MarginSide, string> = { top: 'superior', right: 'derecho', bottom: 'inferior', left: 'izquierdo' };
 /** Difference in `cqw` under which a margin counts as aligned with the element. */
 const MATCH = 0.06;
 
@@ -72,7 +72,7 @@ function reset(side: MarginSide): void {
       :style="styleOf(side)"
       :data-side="side"
       :data-testid="`margin-${side}`"
-      :title="`Margen ${LABELS[side]}: arrastra para moverlo, doble clic para restablecerlo`"
+      :title="t(`editor.margin.${side}`)"
       @pointerdown="onPointerDown($event, side)"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"

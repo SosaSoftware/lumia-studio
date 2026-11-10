@@ -1,3 +1,4 @@
+import { t } from '../../i18n/index.ts';
 import type { Geometry } from './geometry.ts';
 import { clampGeometry } from './geometry.ts';
 
@@ -49,14 +50,14 @@ function fmt(value: number): string {
   return String(Math.round(value * 10) / 10);
 }
 
-/** Spanish text for the `aria-live` region. */
+/** Text for the `aria-live` region, in the current language. */
 export function announce(command: KeyCommand, g: Geometry, name: string): string {
   switch (command.kind) {
     case 'move':
-      return `${name}: posición ${fmt(g.x)}, ${fmt(g.y)}.`;
+      return t('editor.announce.position', { name, x: fmt(g.x), y: fmt(g.y) });
     case 'resize':
-      return `${name}: tamaño ${fmt(g.w)} por ${fmt(g.h)}.`;
+      return t('editor.announce.size', { name, w: fmt(g.w), h: fmt(g.h) });
     case 'delete':
-      return `${name}: eliminado.`;
+      return t('editor.announce.deleted', { name });
   }
 }

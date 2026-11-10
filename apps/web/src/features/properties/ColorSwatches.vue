@@ -2,11 +2,14 @@
 import { computed } from 'vue';
 import { THEME_COLOR_KEYS } from '@lumia/packages/catalog';
 import type { ThemeColorKey } from '@lumia/packages/catalog';
-import { COLOR_LABELS } from '../slides/slide-style.ts';
+import { colorLabel } from '../slides/slide-style.ts';
 
 const props = defineProps<{ modelValue: string; label: string; disabled?: boolean; testid?: string; soft?: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [value: ThemeColorKey] }>();
-const name = computed(() => Object.entries(COLOR_LABELS).find(([key]) => key === props.modelValue)?.[1] ?? props.modelValue);
+const name = computed(() => {
+  const key = THEME_COLOR_KEYS.find((candidate) => candidate === props.modelValue);
+  return key === undefined ? props.modelValue : colorLabel(key);
+});
 
 function pick(key: ThemeColorKey): void {
   if (!props.disabled) emit('update:modelValue', key);
@@ -30,8 +33,8 @@ function onKeydown(event: KeyboardEvent, index: number): void {
       class="swatch"
       role="radio"
       :aria-checked="key === modelValue"
-      :aria-label="COLOR_LABELS[key]"
-      :title="COLOR_LABELS[key]"
+      :aria-label="colorLabel(key)"
+      :title="colorLabel(key)"
       :tabindex="key === modelValue ? 0 : -1"
       :disabled="disabled"
       :style="{ background: soft ? `var(--sl-${key}-soft)` : `var(--sl-${key})` }"

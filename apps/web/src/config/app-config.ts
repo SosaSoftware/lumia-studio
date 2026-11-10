@@ -1,3 +1,5 @@
+import { t } from '../i18n/index.ts';
+
 /** Deployment settings read from `/config.json` at start-up; the sandbox writes it and AWS serves its own. */
 export interface AppConfig {
   /** GraphQL endpoint of the Studio API. */
@@ -19,12 +21,12 @@ export class ConfigError extends Error {
 
 /** Validates the parsed `config.json`. */
 export function parseConfig(raw: unknown): AppConfig {
-  if (typeof raw !== 'object' || raw === null) throw new ConfigError('config.json no es un objeto.');
+  if (typeof raw !== 'object' || raw === null) throw new ConfigError(t('config.notObject'));
   const source: Record<string, unknown> = { ...raw };
   const apiUrl = source.apiUrl;
-  if (typeof apiUrl !== 'string' || apiUrl === '') throw new ConfigError('config.json: falta "apiUrl".');
+  if (typeof apiUrl !== 'string' || apiUrl === '') throw new ConfigError(t('config.missingApiUrl'));
   const mode = source.authMode;
-  if (mode !== 'dev' && mode !== 'cognito') throw new ConfigError('config.json: "authMode" debe ser dev o cognito.');
+  if (mode !== 'dev' && mode !== 'cognito') throw new ConfigError(t('config.badAuthMode'));
   const lumiUrl = typeof source.lumiUrl === 'string' && source.lumiUrl.trim() !== '' ? source.lumiUrl : null;
   if (mode === 'dev') return { apiUrl, authMode: mode, lumiUrl };
   const cognito: unknown = source.cognito;
@@ -32,7 +34,7 @@ export function parseConfig(raw: unknown): AppConfig {
   const userPoolId: unknown = 'userPoolId' in pool ? pool.userPoolId : undefined;
   const userPoolClientId: unknown = 'userPoolClientId' in pool ? pool.userPoolClientId : undefined;
   if (typeof userPoolId !== 'string' || userPoolId === '' || typeof userPoolClientId !== 'string' || userPoolClientId === '') {
-    throw new ConfigError('config.json: con authMode cognito faltan "cognito.userPoolId" y "cognito.userPoolClientId".');
+    throw new ConfigError(t('config.missingCognito'));
   }
   return { apiUrl, authMode: mode, lumiUrl, cognito: { userPoolId, userPoolClientId } };
 }
@@ -40,6 +42,6 @@ export function parseConfig(raw: unknown): AppConfig {
 /** Fetches and validates `/config.json`. */
 export async function loadConfig(fetcher: typeof fetch = fetch): Promise<AppConfig> {
   const response = await fetcher('/config.json', { cache: 'no-store' });
-  if (!response.ok) throw new ConfigError('No se pudo leer config.json.');
+  if (!response.ok) throw new ConfigError(t('config.unreadable'));
   return parseConfig(await response.json());
 }

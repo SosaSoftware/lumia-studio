@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { t } from '../../i18n/index.ts';
 import type { SlideElement } from '../../api/types.ts';
 import { NO_GUIDES } from './alignment.ts';
 import type { Alignment, Guides } from './alignment.ts';
@@ -26,17 +27,6 @@ const emit = defineEmits<{
   /** Sizes and distances that match while the element is resized; empty when the gesture ends. */
   guides: [guides: Guides];
 }>();
-
-const HANDLE_LABELS: Record<ResizeHandle, string> = {
-  nw: 'noroeste',
-  n: 'norte',
-  ne: 'noreste',
-  e: 'este',
-  se: 'sureste',
-  s: 'sur',
-  sw: 'suroeste',
-  w: 'oeste',
-};
 
 let session: DragSession | null = null;
 let origin = { x: 0, y: 0 };
@@ -80,7 +70,7 @@ function onPointerUp(event: PointerEvent): void {
         class="handle"
         :data-handle="handle"
         :data-testid="`handle-${handle}`"
-        :title="`Cambiar el tamaño (${HANDLE_LABELS[handle]})`"
+        :title="t('editor.resize', { handle: t(`editor.handles.${handle}`) })"
         @mousedown.prevent
         @pointerdown="onPointerDown($event, handle)"
         @pointermove="onPointerMove"

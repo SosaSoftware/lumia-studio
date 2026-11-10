@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { t } from '../i18n/index.ts';
 import type { Ref } from 'vue';
 import type { AuthProvider, AuthUser } from '../auth/auth-provider.ts';
 import { CognitoAuthProvider } from '../auth/cognito-auth-provider.ts';
@@ -100,7 +101,7 @@ export function setApp(app: AppContext): void {
 }
 
 export function useApp(): AppContext {
-  if (current === null) throw new Error('La aplicación no está inicializada.');
+  if (current === null) throw new Error(t('errors.appNotInitialized'));
   return current;
 }
 

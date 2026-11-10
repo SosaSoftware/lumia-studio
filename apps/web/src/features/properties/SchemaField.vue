@@ -4,7 +4,8 @@ import { ICON_NAMES, THEME_COLOR_KEYS } from '@lumia/packages/catalog';
 import { list, rec, str } from '../../api/decode.ts';
 import type { MediaAsset, MediaRef, SlideElement } from '../../api/types.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
-import { CONTENT_ICON_LABELS, contentIcon } from '../slide-components/content-icons.ts';
+import { t } from '../../i18n/index.ts';
+import { contentIcon, iconLabel } from '../slide-components/content-icons.ts';
 import ChipGroup from './ChipGroup.vue';
 import ColorSwatches from './ColorSwatches.vue';
 import { inputValue } from './controls.ts';
@@ -62,7 +63,7 @@ const references = computed<{ value: string; label: string }[] | null>(() => {
   }
   if (props.component === 'connector' && (name === 'fromElementId' || name === 'toElementId')) {
     return [
-      { value: '', label: 'Sin conectar' },
+      { value: '', label: t('properties.schema.unconnected') },
       ...props.elements.filter((element) => element.id !== props.elementId && element.component !== 'connector').map((element) => ({ value: element.id, label: element.name })),
     ];
   }
@@ -204,8 +205,8 @@ function itemTitle(item: unknown, index: number): string {
           class="icon-option"
           role="radio"
           :aria-checked="value === name"
-          :aria-label="CONTENT_ICON_LABELS[name]"
-          :title="CONTENT_ICON_LABELS[name]"
+          :aria-label="iconLabel(name)"
+          :title="iconLabel(name)"
           :disabled="disabled"
           :data-testid="`${inputId}-${name}`"
           @click="emit('change', path, name)"
@@ -226,12 +227,12 @@ function itemTitle(item: unknown, index: number): string {
       <div class="list" role="group" :aria-labelledby="`${inputId}-label`">
         <div v-for="(item, index) in items" :key="index" class="item">
           <input class="pv control" type="text" :aria-label="`${field.label} ${index + 1}`" :value="str(item)" :maxlength="field.itemMaxLength ?? undefined" :disabled="disabled" :aria-invalid="!!errors[`${key}.${index}`]" :data-testid="`${inputId}-${index}`" @input="setItem(index, inputValue($event))" />
-          <button type="button" class="ib" :aria-label="`Quitar ${field.label} ${index + 1}`" title="Quitar" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">
+          <button type="button" class="ib" :aria-label="t('properties.schema.removeItem', { label: field.label, index: index + 1 })" :title="t('common.remove')" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
           <span v-if="errors[`${key}.${index}`]" class="error" role="alert" :data-testid="`field-error-${key}.${index}`">{{ errors[`${key}.${index}`] }}</span>
         </div>
-        <button type="button" class="prv add" :disabled="disabled || !canAdd" :data-testid="`${inputId}-add`" @click="addString">Agregar</button>
+        <button type="button" class="prv add" :disabled="disabled || !canAdd" :data-testid="`${inputId}-add`" @click="addString">{{ t('common.add') }}</button>
       </div>
     </template>
 
@@ -256,9 +257,9 @@ function itemTitle(item: unknown, index: number): string {
             :element-id="elementId"
             @change="(childPath, next) => emit('change', childPath, next)"
           />
-          <button type="button" class="remove" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">Quitar</button>
+          <button type="button" class="remove" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">{{ t('common.remove') }}</button>
         </fieldset>
-        <button type="button" class="prv add" :disabled="disabled || !canAdd" :data-testid="`${inputId}-add`" @click="addObject">Agregar</button>
+        <button type="button" class="prv add" :disabled="disabled || !canAdd" :data-testid="`${inputId}-add`" @click="addObject">{{ t('common.add') }}</button>
       </div>
     </template>
 

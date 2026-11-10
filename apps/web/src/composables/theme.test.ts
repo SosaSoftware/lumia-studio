@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LANG_KEY, isLangAvailable, readLang } from './theme.ts';
+import { LANG_KEY, readLang } from '../i18n/index.ts';
 
 function storageWith(value: string | null): Storage {
   const values = new Map<string, string>(value === null ? [] : [[LANG_KEY, value]]);
@@ -20,10 +20,10 @@ function storageWith(value: string | null): Storage {
 }
 
 describe('language', () => {
-  it('shows Spanish while English is disabled, even when English was chosen before', () => {
-    expect(isLangAvailable('es')).toBe(true);
-    expect(isLangAvailable('en')).toBe(false);
-    expect(readLang(storageWith('en'))).toBe('es');
+  it('restores the stored language and falls back to Spanish', () => {
+    expect(readLang(storageWith('en'))).toBe('en');
+    expect(readLang(storageWith('es'))).toBe('es');
+    expect(readLang(storageWith('fr'))).toBe('es');
     expect(readLang(storageWith(null))).toBe('es');
   });
 });

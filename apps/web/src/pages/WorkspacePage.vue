@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { ACTIONS } from '../composables/app-context.ts';
 import { canChange, changeDenial } from '../composables/edit-lock.ts';
+import { t } from '../i18n/index.ts';
 import { isPaletteGroup, openPanel, panels, toggleLeft } from '../composables/panels.ts';
 import { useWorkspace } from '../composables/workspace.ts';
 import CommentsPanel from '../features/comments/CommentsPanel.vue';
@@ -81,16 +82,16 @@ function dropComponent(component: string, x: number, y: number): void {
       <ComponentPalette v-if="leftGroup" :group="leftGroup" />
       <ContentTree v-else-if="panels.left === 'explorer'" />
 
-      <main class="center" aria-label="Editor">
+      <main class="center" :aria-label="t('workspace.page.editor')">
         <ClassTabs v-if="hasTabs" />
 
         <template v-if="hasTabs">
-          <div v-if="session.state.loading" class="empty" role="status"><p class="muted">Cargando la clase…</p></div>
+          <div v-if="session.state.loading" class="empty" role="status"><p class="muted">{{ t('workspace.page.loading') }}</p></div>
           <div v-else-if="session.state.loadError" class="empty" role="alert" data-testid="load-error">
             <div class="box">
               <StudioIcon name="alert-circle" :size="28" />
               <p>{{ session.state.loadError }}</p>
-              <button type="button" class="prv" @click="workspace.activeClass.value && session.open(workspace.activeClass.value)">Reintentar</button>
+              <button type="button" class="prv" @click="workspace.activeClass.value && session.open(workspace.activeClass.value)">{{ t('common.retry') }}</button>
             </div>
           </div>
           <template v-else-if="showCanvas && shownSlide">
@@ -116,10 +117,10 @@ function dropComponent(component: string, x: number, y: number): void {
           <div v-else-if="hasClass" class="empty" data-testid="no-content">
             <div class="box">
               <LumiStar :size="40" />
-              <h2>{{ className }} todavía no tiene contenido</h2>
-              <p>Agrega la primera diapositiva, en blanco, aquí o desde el grupo Diapositivas de la barra de la izquierda.</p>
-              <button type="button" class="cta" :aria-disabled="!canEdit" :title="canEdit ? 'Agregar una diapositiva en blanco' : changeDenial('No tienes permiso para editar la clase')" data-testid="add-first-slide" @click="addFirstSlide">
-                <StudioIcon name="plus" :size="13" :stroke="2" /> Agregar diapositiva
+              <h2>{{ t('workspace.page.emptyTitle', { name: className }) }}</h2>
+              <p>{{ t('workspace.page.emptyHint') }}</p>
+              <button type="button" class="cta" :aria-disabled="!canEdit" :title="canEdit ? t('workspace.page.addBlank') : changeDenial('workspace.page.noPermissionEditClass')" data-testid="add-first-slide" @click="addFirstSlide">
+                <StudioIcon name="plus" :size="13" :stroke="2" /> {{ t('workspace.page.addSlide') }}
               </button>
             </div>
           </div>
@@ -130,11 +131,11 @@ function dropComponent(component: string, x: number, y: number): void {
             <LumiStar :size="150" :opacity="0.08" />
             <h1 class="sr-only">Lumia Studio</h1>
             <dl>
-              <dt>Abrir una clase</dt>
-              <dd><span class="kbd">Doble clic en el árbol</span></dd>
-              <dt>Mostrar u ocultar el explorador</dt>
-              <dd><button type="button" class="kbd" data-testid="shortcut-explorer" @click="toggleLeft('explorer')"><StudioIcon name="explorer" :size="14" /> Explorador</button></dd>
-              <dt>Pedirle ayuda a Lumi</dt>
+              <dt>{{ t('workspace.page.openClass') }}</dt>
+              <dd><span class="kbd">{{ t('workspace.page.openClassHow') }}</span></dd>
+              <dt>{{ t('workspace.page.toggleExplorer') }}</dt>
+              <dd><button type="button" class="kbd" data-testid="shortcut-explorer" @click="toggleLeft('explorer')"><StudioIcon name="explorer" :size="14" /> {{ t('shell.activity.explorer') }}</button></dd>
+              <dt>{{ t('workspace.page.askLumi') }}</dt>
               <dd><button type="button" class="kbd" data-testid="shortcut-lumi" @click="openPanel('lumi')"><LumiStar :size="14" /> Lumi</button></dd>
             </dl>
           </div>

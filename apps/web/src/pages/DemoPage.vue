@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef } from 'vue';
 import { componentCatalog } from '@lumia/packages/catalog';
 import { theme } from '../composables/theme.ts';
+import { t } from '../i18n/index.ts';
 import { DemoUnavailableError, demoFileUrl, download } from '../features/demo/demo-source.ts';
 import { openLumia } from '../features/demo/lumia-file.ts';
 import type { LumiaClass } from '../features/demo/lumia-file.ts';
@@ -43,7 +44,7 @@ onMounted(async () => {
     if (disposed) opened.dispose();
     else lesson.value = opened;
   } catch (error) {
-    failure.value = error instanceof DemoUnavailableError ? error.message : 'No se pudo cargar la demo.';
+    failure.value = error instanceof DemoUnavailableError ? error.message : t('demo.loadFailed');
   }
 });
 
@@ -61,7 +62,7 @@ onBeforeUnmount(() => {
     <section class="content" @pointerdown.capture="start" @keydown.capture="start">
       <PreviewPlayer v-if="lesson" ref="player" :slides="lesson.slides" :media="lesson.media" :class-name="lesson.displayName" :is-question="isQuestion" :chrome="false" :auto-start="false" />
       <p v-else-if="failure" class="state" role="status" data-testid="demo-unavailable">{{ failure }}</p>
-      <div v-else class="state" role="progressbar" aria-label="Cargando la demo" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="Math.round(progress * 100)" data-testid="demo-loading">
+      <div v-else class="state" role="progressbar" :aria-label="t('demo.loading')" aria-valuemin="0" aria-valuemax="100" :aria-valuenow="Math.round(progress * 100)" data-testid="demo-loading">
         <span class="bar"><span class="fill" :style="{ width: `${progress * 100}%` }"></span></span>
       </div>
     </section>

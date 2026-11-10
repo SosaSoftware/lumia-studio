@@ -4,6 +4,7 @@ import { ApiError } from '../../api/graphql-client.ts';
 import type { MediaAsset } from '../../api/types.ts';
 import { ACTIONS, can, useApp } from '../../composables/app-context.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import ChipGroup from '../properties/ChipGroup.vue';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import { UploadError, uploadMedia } from './upload.ts';
@@ -27,13 +28,13 @@ const filter = ref(props.mimeFilter ?? '');
 const canUpload = computed(() => can(ACTIONS.upload));
 let opener: Element | null = null;
 
-const FILTERS = [
-  { value: '', label: 'Todos' },
-  { value: 'image/', label: 'Imágenes' },
-  { value: 'audio/', label: 'Audio' },
-  { value: 'video/', label: 'Video' },
-  { value: 'application/', label: 'Documentos' },
-];
+const filters = computed(() => [
+  { value: '', label: t('media.filters.all') },
+  { value: 'image/', label: t('media.filters.image') },
+  { value: 'audio/', label: t('media.filters.audio') },
+  { value: 'video/', label: t('media.filters.video') },
+  { value: 'application/', label: t('media.filters.documents') },
+]);
 
 const assets = computed(() => workspace.media.assets.value.filter((asset) => filter.value === '' || asset.mimeType.startsWith(filter.value)));
 
@@ -66,12 +67,12 @@ async function upload(event: Event): Promise<void> {
   uploadError.value = null;
   try {
     const categoryId = workspace.media.category;
-    if (categoryId === null) throw new UploadError('Abre una clase para subir archivos a su biblioteca.');
+    if (categoryId === null) throw new UploadError(t('properties.picker.openClassToUpload'));
     const asset = await uploadMedia(app.studio, categoryId, file);
     workspace.media.add(asset);
     if (props.selectable && (props.mimeFilter === undefined || asset.mimeType.startsWith(props.mimeFilter))) emit('select', asset);
   } catch (error) {
-    uploadError.value = error instanceof ApiError || error instanceof Error ? error.message : 'No se pudo subir el archivo.';
+    uploadError.value = error instanceof ApiError || error instanceof Error ? error.message : t('errors.uploadFailed');
   } finally {
     uploading.value = false;
     if (input !== null) input.value = '';
@@ -95,29 +96,29 @@ function kindIcon(mimeType: string): string {
     <section ref="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="media-title" data-testid="media-library">
       <div class="head">
         <div class="titles">
-          <h2 id="media-title">Biblioteca de medios</h2>
-          <p>{{ selectable ? 'Elige un archivo o sube uno nuevo.' : 'Imágenes, audio y video que puedes usar en tus clases.' }}</p>
+          <h2 id="media-title">{{ t('media.title') }}</h2>
+          <p>{{ selectable ? t('media.selectHint') : t('media.browseHint') }}</p>
         </div>
-        <button type="button" class="x" aria-label="Cerrar" title="Cerrar" data-testid="media-close" @click="emit('close')"><StudioIcon name="close" :size="18" /></button>
+        <button type="button" class="x" :aria-label="t('common.close')" :title="t('common.close')" data-testid="media-close" @click="emit('close')"><StudioIcon name="close" :size="18" /></button>
       </div>
       <div class="toolbar">
-        <ChipGroup v-model="filter" :options="FILTERS" label="Tipo de medio" testid="media-filter" />
+        <ChipGroup v-model="filter" :options="filters" :label="t('media.filterLabel')" testid="media-filter" />
         <label v-if="canUpload" class="pub upload" :aria-disabled="uploading">
-          <StudioIcon name="upload" :size="13" :stroke="2" />{{ uploading ? 'Subiendo…' : 'Subir archivo' }}
+          <StudioIcon name="upload" :size="13" :stroke="2" />{{ uploading ? t('media.uploading') : t('media.upload') }}
           <input type="file" class="sr-only" :accept="mimeFilter ? `${mimeFilter}*` : 'image/*,audio/*,video/*,application/pdf'" :disabled="uploading" data-testid="media-upload-input" @change="upload" />
         </label>
       </div>
       <p v-if="uploadError" class="error" role="alert" data-testid="media-upload-error">{{ uploadError }}</p>
       <div class="grid" data-testid="media-grid">
-        <p v-if="loading" class="note">Cargando…</p>
-        <p v-else-if="assets.length === 0" class="note">No hay medios{{ filter ? ' de este tipo' : '' }} todavía.</p>
+        <p v-if="loading" class="note">{{ t('media.loading') }}</p>
+        <p v-else-if="assets.length === 0" class="note">{{ filter ? t('media.emptyOfType') : t('media.empty') }}</p>
         <button
           v-for="asset in assets"
           :key="asset.id"
           type="button"
           class="card"
           :class="{ selectable }"
-          :aria-label="selectable ? `Elegir ${asset.name}` : asset.name"
+          :aria-label="selectable ? t('media.choose', { name: asset.name }) : asset.name"
           :data-testid="`media-${asset.id}`"
           @click="choose(asset)"
         >

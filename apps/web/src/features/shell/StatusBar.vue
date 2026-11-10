@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
 import LumiStar from '../../ui/LumiStar.vue';
 import StudioIcon from '../../ui/StudioIcon.vue';
 
@@ -21,7 +22,7 @@ const crumbs = computed(() => {
 const position = computed(() => {
   const slides = session.state.slides;
   const index = slides.findIndex((slide) => slide.id === session.state.selectedSlideId);
-  return workspace.activeClass.value !== null && slides.length > 0 && index >= 0 ? `Diapositiva ${String(index + 1)} de ${String(slides.length)}` : '';
+  return workspace.activeClass.value !== null && slides.length > 0 && index >= 0 ? t('shell.statusBar.slideOf', { position: index + 1, total: slides.length }) : '';
 });
 const saving = computed(() => session.state.pending > 0);
 </script>
@@ -29,7 +30,7 @@ const saving = computed(() => session.state.pending > 0);
 <template>
   <footer class="statusbar" data-testid="statusbar">
     <span class="brand"><LumiStar :size="12" color="var(--s-on-active)" dots="var(--s-lumi-dots-on)" /> Lumia Studio</span>
-    <nav aria-label="Ruta" class="crumbs" data-testid="status-route">
+    <nav :aria-label="t('shell.statusBar.route')" class="crumbs" data-testid="status-route">
       <template v-for="(crumb, index) in crumbs" :key="index">
         <span v-if="index > 0" class="sep" aria-hidden="true"><StudioIcon name="chevron-right" :size="10" :stroke="2" /></span>
         <span class="crumb" :class="{ current: index === crumbs.length - 1 }" :aria-current="index === crumbs.length - 1 ? 'page' : undefined">
@@ -40,7 +41,7 @@ const saving = computed(() => session.state.pending > 0);
       </template>
     </nav>
     <span class="end">
-      <span class="saving" role="status" data-testid="status-saving" :data-pending="saving ? 'true' : 'false'">{{ saving ? 'Guardando…' : '' }}</span>
+      <span class="saving" role="status" data-testid="status-saving" :data-pending="saving ? 'true' : 'false'">{{ saving ? t('shell.statusBar.saving') : '' }}</span>
       <span v-if="position" data-testid="status-position">{{ position }}</span>
     </span>
   </footer>

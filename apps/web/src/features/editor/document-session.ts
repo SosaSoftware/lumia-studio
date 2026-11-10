@@ -16,7 +16,9 @@ import type {
   TreeNode,
 } from '../../api/types.ts';
 import { canvasMargins } from '../../composables/canvas-margins.ts';
+import { t } from '../../i18n/index.ts';
 import { nextStart, narrationDuration } from '../timeline/timeline-model.ts';
+import { componentName } from './catalog-labels.ts';
 import type { CatalogStore } from './catalog-store.ts';
 import type { Geometry } from './geometry.ts';
 import { clampGeometry, findFreeSpot, fitInsideMargins } from './geometry.ts';
@@ -135,7 +137,7 @@ function without<T>(record: Record<string, T>, key: string): Record<string, T> {
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof ApiError ? error.message : 'No se pudo guardar el cambio.';
+  return error instanceof ApiError ? error.message : t('errors.saveFailed');
 }
 
 /**
@@ -337,7 +339,7 @@ export class DocumentSession {
     await this.flush();
     const node = this.state.classNode;
     const document = this.state.document;
-    if (node === null) throw new ApiError('Conflict', 'No hay una clase abierta.');
+    if (node === null) throw new ApiError('Conflict', t('errors.noClassOpen'));
     if (document === null) {
       this.apply(await this.api.createDocument(node.id));
       this.fixSelection();
@@ -378,7 +380,7 @@ export class DocumentSession {
     this.state.selectedElementId = selected.element === null ? null : remap.element(selected.element);
     this.state.selectedClip = selected.clip === null || selected.clip.kind === 'transition' ? selected.clip : { kind: selected.clip.kind, id: remap.child(selected.clip.id) };
     this.fixSelection();
-    this.showNotice(`Se creó la versión ${String(this.versionNumber ?? '')} en borrador.`);
+    this.showNotice(t('notices.versionCreated', { number: this.versionNumber ?? '' }));
     this.onChanged();
     return remap;
   }
@@ -402,7 +404,7 @@ export class DocumentSession {
       await this.prepare();
       const versionId = this.requireVersion();
       const definition = this.catalog.slideType(NEW_SLIDE_TYPE);
-      if (definition === undefined) throw new ApiError('ValidationError', 'type: el tipo de diapositiva no existe.');
+      if (definition === undefined) throw new ApiError('ValidationError', `type: ${t('errors.slideTypeMissing')}`);
       const created = await this.api.applySlidesDraft(versionId, null, [
         { type: NEW_SLIDE_TYPE, title: definition.name, background: definition.defaultBackground, durationS: definition.defaultDurationS, elements: [] },
       ]);
@@ -457,7 +459,7 @@ export class DocumentSession {
           await this.api.reorderSlides(this.requireVersion(), ordered);
         } catch (error) {
           if (error instanceof ApiError && error.errorType === 'ValidationError') {
-            throw new ApiError('Conflict', 'Las diapositivas cambiaron desde otra pestaña o por Lumi. Se actualizó la lista; vuelve a mover la diapositiva.');
+            throw new ApiError('Conflict', t('errors.slidesChanged'));
           }
           throw error;
         }
@@ -542,7 +544,7 @@ export class DocumentSession {
   public async addElement(component: string, at?: { x: number; y: number }): Promise<void> {
     await this.run(async () => {
       const info = this.catalog.component(component);
-      if (info === undefined) throw new ApiError('ValidationError', 'component: el componente no existe en el catálogo.');
+      if (info === undefined) throw new ApiError('ValidationError', `component: ${t('errors.componentMissing')}`);
       const remap = await this.prepare();
       const slide = this.currentSlide;
       const size = info.defaultSize;
@@ -552,8 +554,8 @@ export class DocumentSession {
         const created = await this.api.applySlidesDraft(versionId, null, [
           {
             type: 'explanatory',
-            title: 'Diapositiva',
-            elements: [{ component, name: info.name, ...geometry, z: 1, appearsAtS: 0, props: { ...info.defaults } }],
+            title: t('slides.defaultTitle'),
+            elements: [{ component, name: componentName(info), ...geometry, z: 1, appearsAtS: 0, props: { ...info.defaults } }],
           },
         ]);
         await this.reload();
@@ -687,7 +689,7 @@ export class DocumentSession {
 
   private requireSlide(id: string): Slide {
     const slide = this.state.slides.find((candidate) => candidate.id === id);
-    if (slide === undefined) throw new ApiError('NotFound', 'La diapositiva ya no existe.');
+    if (slide === undefined) throw new ApiError('NotFound', t('errors.slideGone'));
     return slide;
   }
 
@@ -823,8 +825,8 @@ export class DocumentSession {
       await this.flush();
       const clip = this.state.slides.flatMap((slide) => slide.narrationClips).find((candidate) => candidate.id === id);
       if (clip === undefined) return;
-      if (clip.script.trim() === '') throw new ApiError('ValidationError', 'Escribe lo que dirá la voz antes de generarla.');
-      if (clip.voice === null) throw new ApiError('ValidationError', 'Elige una voz de Polly antes de generar la narración.');
+      if (clip.script.trim() === '') throw new ApiError('ValidationError', t('errors.scriptRequired'));
+      if (clip.voice === null) throw new ApiError('ValidationError', t('errors.voiceRequired'));
       clip.status = 'generating';
       clip.errorMessage = null;
       const result = await this.api.generateNarrationFor(clip);
@@ -910,7 +912,7 @@ export class DocumentSession {
       const published = await this.api.publishVersion(document.id);
       this.apply(published);
       this.fixSelection();
-      this.showNotice(`La versión ${String(published.publishedVersion ?? '')} está publicada.`);
+      this.showNotice(t('notices.versionPublished', { number: published.publishedVersion ?? '' }));
       this.onChanged();
     });
   }
@@ -929,7 +931,7 @@ export class DocumentSession {
 
   private requireVersion(): string {
     const id = this.versionId;
-    if (id === null) throw new ApiError('Conflict', 'La clase no tiene una versión en borrador.');
+    if (id === null) throw new ApiError('Conflict', t('errors.noDraftVersion'));
     return id;
   }
 

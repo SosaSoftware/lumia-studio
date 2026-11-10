@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '@lumia/packages/catalog';
 import { DEFAULT_MARGIN, canvasMargins } from '../../composables/canvas-margins.ts';
+import { t } from '../../i18n/index.ts';
 import type { MarginSide } from '../../composables/canvas-margins.ts';
 import type { Geometry } from './geometry.ts';
 import { MarginDrag, marginLine } from './margin-lines.ts';
@@ -30,7 +31,6 @@ const RULERS: readonly RulerSpec[] = [
 /** Distance between two ticks, and between two numbered ticks, in `cqw`. */
 const TICK_STEP = 2;
 const LABEL_STEP = 10;
-const LABELS: Record<MarginSide, string> = { top: 'superior', right: 'derecho', bottom: 'inferior', left: 'izquierdo' };
 
 function ticksOf(length: number): number[] {
   const ticks: number[] = [];
@@ -96,7 +96,7 @@ function reset(side: MarginSide): void {
       :style="{ [startOf(ruler.orientation)]: `${String(marginLine(side))}cqw` }"
       :data-side="side"
       :data-testid="`marker-${side}`"
-      :title="`Margen ${LABELS[side]}: arrastra para moverlo, doble clic para restablecerlo`"
+      :title="t(`editor.margin.${side}`)"
       @pointerdown="onPointerDown($event, side)"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"

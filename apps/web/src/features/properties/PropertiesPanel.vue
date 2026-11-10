@@ -2,6 +2,8 @@
 import { computed } from 'vue';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
+import { t } from '../../i18n/index.ts';
+import { componentName, slideTypeName } from '../editor/catalog-labels.ts';
 import { tagGroup } from '../palette/palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
 import AudioProperties from './AudioProperties.vue';
@@ -23,7 +25,11 @@ const narration = computed(() => session.selectedNarration);
 const audio = computed(() => session.selectedAudio);
 const pause = computed(() => session.selectedPause);
 const className = computed(() => workspace.activeClass.value?.displayName ?? '');
-const typeName = computed(() => (slide.value === null ? '' : (workspace.catalog.slideType(slide.value.type)?.name ?? slide.value.type)));
+const typeName = computed(() => {
+  if (slide.value === null) return '';
+  const type = workspace.catalog.slideType(slide.value.type);
+  return type === undefined ? slide.value.type : slideTypeName(type);
+});
 
 /** What the breadcrumb shows after "Diapositiva N", as in the design. */
 const selectionLabel = computed(() => {
@@ -31,15 +37,15 @@ const selectionLabel = computed(() => {
   if (current === null) return '';
   if (element.value !== null) {
     const info = workspace.catalog.component(element.value.component);
-    return info === undefined ? element.value.name : `${tagGroup(info.group)} · ${info.name}`;
+    return info === undefined ? element.value.name : `${tagGroup(info.group)} · ${componentName(info)}`;
   }
   if (narration.value !== null) {
     const index = current.narrationClips.findIndex((clip) => clip.id === narration.value?.id);
-    return `Narración · clip ${String(index + 1)} de ${String(current.narrationClips.length)}`;
+    return t('properties.panel.narrationCrumb', { index: index + 1, total: current.narrationClips.length });
   }
-  if (audio.value !== null) return `Audio · ${audio.value.name}`;
-  if (pause.value !== null) return `Pausa ${String(current.pauses.findIndex((item) => item.id === pause.value?.id) + 1)}`;
-  if (session.state.selectedClip?.kind === 'transition') return 'Transición';
+  if (audio.value !== null) return t('properties.panel.audioCrumb', { name: audio.value.name });
+  if (pause.value !== null) return t('properties.panel.pauseCrumb', { number: current.pauses.findIndex((item) => item.id === pause.value?.id) + 1 });
+  if (session.state.selectedClip?.kind === 'transition') return t('properties.panel.transitionCrumb');
   return '';
 });
 
@@ -52,24 +58,24 @@ function clear(): void {
 <template>
   <aside class="panel" aria-labelledby="h-props" data-testid="panel-properties">
     <div class="s-panel-head">
-      <h2 id="h-props" class="lbl">Propiedades</h2>
-      <button type="button" class="ib" aria-label="Ocultar propiedades" title="Ocultar" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>
+      <h2 id="h-props" class="lbl">{{ t('properties.panel.title') }}</h2>
+      <button type="button" class="ib" :aria-label="t('properties.panel.hide')" :title="t('common.hide')" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>
     </div>
 
     <NodeProperties v-if="inspected" :key="inspected.id" :node="inspected" />
-    <p v-else-if="!slide" class="empty" data-testid="properties-empty">Elige un elemento del árbol o abre una clase para ver sus propiedades.</p>
+    <p v-else-if="!slide" class="empty" data-testid="properties-empty">{{ t('properties.panel.empty') }}</p>
 
     <template v-else>
-      <div class="s-identity" :aria-label="`Estás editando la diapositiva ${position} de ${total}: ${slide.title}`" data-testid="properties-identity">
+      <div class="s-identity" :aria-label="t('properties.panel.editingSlide', { position, total, title: slide.title })" data-testid="properties-identity">
         <span class="s-identity-num" aria-hidden="true">{{ position }}</span>
         <span class="s-identity-meta">
-          <span class="s-identity-where">{{ className }} · Diapositiva {{ position }} de {{ total }}</span>
+          <span class="s-identity-where">{{ t('properties.panel.slideWhere', { className, position, total }) }}</span>
           <span class="s-identity-title">{{ slide.title }}</span>
         </span>
         <span class="s-identity-pill">{{ typeName }}</span>
       </div>
       <div v-if="selectionLabel" class="crumb">
-        <button type="button" class="lnk" data-testid="properties-back" @click="clear">Diapositiva {{ position }}</button>
+        <button type="button" class="lnk" data-testid="properties-back" @click="clear">{{ t('properties.panel.slideCrumb', { position }) }}</button>
         <span aria-hidden="true">›</span>
         <span class="current" data-testid="properties-selection">{{ selectionLabel }}</span>
       </div>

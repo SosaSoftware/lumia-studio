@@ -1,4 +1,5 @@
 import type { IconName } from '@lumia/packages/catalog';
+import { t } from '../../i18n/index.ts';
 
 const ring = (cx: number, cy: number, r: number): string => `M${String(cx)} ${String(cy - r)}a${String(r)} ${String(r)} 0 1 0 0 ${String(2 * r)}a${String(r)} ${String(r)} 0 1 0 0 ${String(-2 * r)}z`;
 
@@ -71,6 +72,11 @@ export const CONTENT_ICON_LABELS: Readonly<Record<IconName, string>> = {
   mountain: 'Montaña',
   sun: 'Sol',
 };
+
+/** Name of an icon in the current language, for the editor controls. Slides keep `CONTENT_ICON_LABELS`. */
+export function iconLabel(name: IconName): string {
+  return t(`properties.icons.${name}`);
+}
 
 export function contentIcon(name: string): readonly string[] {
   return Object.entries(CONTENT_ICONS).find(([key]) => key === name)?.[1] ?? CONTENT_ICONS.idea;
