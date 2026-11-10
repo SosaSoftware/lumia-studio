@@ -227,12 +227,14 @@ function onDrop(event: DragEvent): void {
 <style scoped>
 /* isolation keeps the z-index of the elements (up to 1000 when selected) inside the canvas, below dialogs and menus. */
 /* The padding leaves room for the rulers above and to the left of the slide. */
-.stage { position: relative; isolation: isolate; flex: 4 1 0; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; padding: 56px 40px 24px; box-sizing: border-box; }
-.toolbar { position: absolute; top: 10px; right: 12px; display: flex; gap: 8px; }
-.toolbar .prv { height: 26px; }
+.stage { position: relative; isolation: isolate; flex: 4 1 0; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; padding: 66px 40px 24px; box-sizing: border-box; }
+/* The ruler starts 44px below the top of the canvas when the slide is limited by its height (timeline open), and the
+   toolbar ends at 30px, which leaves a 14px gap between them. */
+.toolbar { position: absolute; top: 6px; right: 12px; display: flex; gap: 8px; }
+.toolbar .prv { height: 24px; }
 /* Beside the slide, past the ruler on its left; they stay inside the canvas when the slide fills its width. The top
    offset is half of the difference between the top and the bottom padding, which centers them on the slide. */
-.step { position: absolute; top: calc(50% + 16px); transform: translateY(-50%); z-index: 4; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0; background: var(--s-panel); border: 1px solid var(--s-border); border-radius: 50%; color: var(--s-text-2); cursor: pointer; }
+.step { position: absolute; top: calc(50% + 21px); transform: translateY(-50%); z-index: 4; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0; background: var(--s-panel); border: 1px solid var(--s-border); border-radius: 50%; color: var(--s-text-2); cursor: pointer; }
 .step:hover { background: var(--s-hover); color: var(--s-text); }
 .step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
 .step[aria-disabled='true']:hover { background: var(--s-panel); color: var(--s-text-2); }
