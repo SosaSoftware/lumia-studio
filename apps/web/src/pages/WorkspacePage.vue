@@ -2,10 +2,14 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue';
 import { ACTIONS } from '../composables/app-context.ts';
 import { canChange, changeDenial } from '../composables/edit-lock.ts';
+import { ShortcutRegistry } from '../composables/shortcuts.ts';
 import { t } from '../i18n/index.ts';
 import { isPaletteGroup, openPanel, panels, toggleLeft } from '../composables/panels.ts';
 import { useWorkspace } from '../composables/workspace.ts';
 import CommentsPanel from '../features/comments/CommentsPanel.vue';
+import { EDITOR_SHORTCUTS } from '../features/editor/editor-shortcuts.ts';
+import type { EditorShortcutContext } from '../features/editor/editor-shortcuts.ts';
+import { ElementClipboard } from '../features/editor/element-clipboard.ts';
 import SlideCanvas from '../features/editor/SlideCanvas.vue';
 import LumiPanel from '../features/lumi/LumiPanel.vue';
 import PreviewPlayer from '../features/preview/PreviewPlayer.vue';
@@ -45,13 +49,24 @@ const slidePosition = computed(() => {
 const footer = computed(() => slideFooter(workspace.activeClass.value, slidePosition.value.position));
 const startIndex = computed(() => Math.max(slides.value.findIndex((slide) => slide.id === session.state.selectedSlideId), 0));
 
+const clipboard = new ElementClipboard();
+const shortcuts = new ShortcutRegistry<EditorShortcutContext>(
+  () => ({ session, clipboard, canEdit: () => canEdit.value }),
+  // The preview listens to its own keys while it is open.
+  () => !workspace.previewOpen.value && hasClass.value,
+);
+shortcuts.register(EDITOR_SHORTCUTS);
+let detachShortcuts: (() => void) | null = null;
+
 onMounted(() => {
   void workspace.init();
   window.addEventListener('beforeunload', flushOnLeave);
+  detachShortcuts = shortcuts.attach();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', flushOnLeave);
+  detachShortcuts?.();
 });
 
 function flushOnLeave(): void {
@@ -98,16 +113,21 @@ function dropComponent(component: string, x: number, y: number): void {
             <SlideCanvas
               :slide="shownSlide"
               :selected-element-id="session.state.selectedElementId"
+              :selected-element-ids="session.state.selectedElementIds"
               :position="slidePosition.position"
               :total="slidePosition.total"
               :editable="canEdit"
               :footer="footer"
               :navigation="panels.bottom === 'timeline'"
               @select-element="session.selectElement($event)"
+              @select-elements="session.selectElements($event)"
+              @toggle-element="session.toggleElement($event)"
               @select-slide="workspace.showSlide()"
               @step="stepSlide"
               @geometry="(id, geometry) => session.updateGeometry(id, geometry)"
+              @geometries="session.updateGeometries($event)"
               @remove-element="session.deleteElement($event)"
+              @remove-elements="session.deleteElements($event)"
               @drop-component="dropComponent"
               @fit-height="(id, height, bound) => session.reportHeight(id, height, bound)"
             />

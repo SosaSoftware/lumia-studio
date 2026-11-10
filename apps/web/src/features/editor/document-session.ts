@@ -21,6 +21,11 @@ import { nextStart, narrationDuration } from '../timeline/timeline-model.ts';
 import { componentName } from './catalog-labels.ts';
 import type { CatalogStore } from './catalog-store.ts';
 import type { Geometry } from './geometry.ts';
+import type { ClippedElement } from './element-clipboard.ts';
+import { SessionHistory } from './session-history.ts';
+import type { HistoryOps } from './session-history.ts';
+import { pairElements } from './undo-snapshots.ts';
+import type { ClipData, ClipKind, ElementData, RestoredSlide, SlideData } from './undo-snapshots.ts';
 import { clampGeometry, findFreeSpot, fitInsideMargins } from './geometry.ts';
 import { SaveScheduler } from './save-scheduler.ts';
 
@@ -76,7 +81,7 @@ export interface AudioPatch {
 
 export interface NarrationPatch {
   script?: string;
-  voice?: string;
+  voice?: string | null;
   speed?: number;
   startsAtS?: number;
 }
@@ -87,6 +92,13 @@ export interface SessionState {
   document: ClassDocument | null;
   slides: Slide[];
   selectedSlideId: string | null;
+  /** Elements selected on the canvas, in the order they were picked. */
+  selectedElementIds: string[];
+  /**
+   * The selected element when there is exactly one, and null for none or for several: Properties, the timeline and
+   * Lumi work on a single element, so a group never shows the properties of one of its members. Setting it selects
+   * that element alone, or clears the selection.
+   */
   selectedElementId: string | null;
   selectedClip: ClipSelection | null;
   loading: boolean;
@@ -124,6 +136,11 @@ export class IdRemap {
   public child(id: string): string {
     return this.children.get(id) ?? id;
   }
+
+  /** Every id that changed, as `[from, to]`. */
+  public pairs(): [string, string][] {
+    return [...this.slides, ...this.elements, ...this.children];
+  }
 }
 
 /** Type of a new slide. */
@@ -144,13 +161,19 @@ function errorMessage(error: unknown): string {
  * The class being edited: its document, slides and selection, with debounced saves.
  * Editing a published version first creates the next draft; editing a class without content first creates its document.
  */
-export class DocumentSession {
+export class DocumentSession implements HistoryOps {
   public readonly state: SessionState = reactive<SessionState>({
     classNode: null,
     document: null,
     slides: [],
     selectedSlideId: null,
-    selectedElementId: null,
+    selectedElementIds: [],
+    get selectedElementId(): string | null {
+      return this.selectedElementIds.length === 1 ? (this.selectedElementIds[0] ?? null) : null;
+    },
+    set selectedElementId(id: string | null) {
+      this.selectedElementIds = id === null ? [] : [id];
+    },
     selectedClip: null,
     loading: false,
     loadError: null,
@@ -162,6 +185,8 @@ export class DocumentSession {
   });
 
   private readonly scheduler: SaveScheduler;
+  /** Undo and redo of the class being edited. */
+  private readonly history = new SessionHistory(this);
   private preparing: Promise<IdRemap> | null = null;
   private noticeTimer: ReturnType<typeof setTimeout> | undefined;
   private opening = 0;
@@ -197,6 +222,12 @@ export class DocumentSession {
   public get selectedElement(): SlideElement | null {
     const slide = this.currentSlide;
     return slide?.elements.find((element) => element.id === this.state.selectedElementId) ?? null;
+  }
+
+  /** The selected elements of the current slide, in the order of the slide. */
+  public get selectedElements(): SlideElement[] {
+    const ids = new Set(this.state.selectedElementIds);
+    return this.currentSlide?.elements.filter((element) => ids.has(element.id)) ?? [];
   }
 
   public get selectedNarration(): NarrationClip | null {
@@ -239,6 +270,7 @@ export class DocumentSession {
     const ticket = ++this.opening;
     this.touched.clear();
     this.slideAliases.clear();
+    this.history.clear();
     this.desiredOrder = null;
     this.state.classNode = node;
     this.state.document = null;
@@ -267,6 +299,7 @@ export class DocumentSession {
   public async close(): Promise<void> {
     await this.flush();
     this.opening += 1;
+    this.history.clear();
     this.state.classNode = null;
     this.state.document = null;
     this.state.slides = [];
@@ -285,6 +318,15 @@ export class DocumentSession {
     this.fixSelection();
   }
 
+  /**
+   * Loads the class again after something else changed it, such as Lumi. What the history would undo no longer
+   * matches the class, so the history starts over.
+   */
+  public async refresh(): Promise<void> {
+    await this.reload();
+    this.history.clear();
+  }
+
   private apply(document: ClassDocument | null): void {
     this.state.document = document;
     this.state.slides = document?.editingVersion.slides ?? [];
@@ -297,7 +339,8 @@ export class DocumentSession {
       this.state.selectedElementId = null;
       this.state.selectedClip = null;
     }
-    if (this.selectedElement === null) this.state.selectedElementId = null;
+    const present = new Set(this.currentSlide?.elements.map((element) => element.id));
+    this.state.selectedElementIds = this.state.selectedElementIds.filter((id) => present.has(id));
     const clip = this.state.selectedClip;
     if (clip !== null && clip.kind !== 'transition' && this.selectedNarration === null && this.selectedAudio === null && this.selectedPause === null) {
       this.state.selectedClip = null;
@@ -317,6 +360,27 @@ export class DocumentSession {
   public selectElement(id: string | null): void {
     this.state.selectedElementId = id;
     if (id !== null) this.state.selectedClip = null;
+  }
+
+  /** Selects several elements of the current slide at once; ids that are not in it are ignored. */
+  public selectElements(ids: readonly string[]): void {
+    const present = new Set(this.currentSlide?.elements.map((element) => element.id));
+    const next = [...new Set(ids)].filter((id) => present.has(id));
+    const current = this.state.selectedElementIds;
+    if (next.length === current.length && next.every((id, index) => id === current[index])) return;
+    this.state.selectedElementIds = next;
+    if (next.length > 0) this.state.selectedClip = null;
+  }
+
+  /** Adds an element to the selection, or removes it when it is already in it. */
+  public toggleElement(id: string): void {
+    const current = this.state.selectedElementIds;
+    this.selectElements(current.includes(id) ? current.filter((selected) => selected !== id) : [...current, id]);
+  }
+
+  /** Selects every element of the current slide. */
+  public selectAllElements(): void {
+    this.selectElements(this.currentSlide?.elements.map((element) => element.id) ?? []);
   }
 
   /** Selects the transition or a clip of the current slide; null clears it. */
@@ -349,7 +413,7 @@ export class DocumentSession {
     if (document.editingVersion.status !== 'published') return new IdRemap(new Map(), new Map());
     // The copy keeps the stored order, so the slides are paired in that order and not in the order shown after a move.
     const before = [...this.state.slides].sort((a, b) => a.position - b.position);
-    const selected = { slide: this.state.selectedSlideId, element: this.state.selectedElementId, clip: this.state.selectedClip };
+    const selected = { slide: this.state.selectedSlideId, elements: [...this.state.selectedElementIds], clip: this.state.selectedClip };
     await this.api.createVersion(document.id);
     await this.reload();
     const slides = new Map<string, string>();
@@ -376,8 +440,9 @@ export class DocumentSession {
     });
     slides.forEach((copy, original) => this.slideAliases.set(original, copy));
     const remap = new IdRemap(slides, elements, children);
+    this.history.handles.remap(remap.pairs());
     this.state.selectedSlideId = selected.slide === null ? null : remap.slide(selected.slide);
-    this.state.selectedElementId = selected.element === null ? null : remap.element(selected.element);
+    this.state.selectedElementIds = selected.elements.map((id) => remap.element(id));
     this.state.selectedClip = selected.clip === null || selected.clip.kind === 'transition' ? selected.clip : { kind: selected.clip.kind, id: remap.child(selected.clip.id) };
     this.fixSelection();
     this.showNotice(t('notices.versionCreated', { number: this.versionNumber ?? '' }));
@@ -410,7 +475,14 @@ export class DocumentSession {
       ]);
       await this.reload();
       this.selectSlide(created[0]?.id ?? this.state.selectedSlideId);
+      this.recordSlideCreated(created[0]?.id);
     });
+  }
+
+  /** Reports a slide that now exists to the history, so its creation can be undone. */
+  private recordSlideCreated(id: string | undefined): void {
+    const slide = this.state.slides.find((candidate) => candidate.id === id);
+    if (slide !== undefined) this.history.recordSlideCreated(slide, this.state.slides.indexOf(slide));
   }
 
   public async duplicateSlide(slideId: string): Promise<void> {
@@ -419,6 +491,7 @@ export class DocumentSession {
       const copy = await this.api.duplicateSlide(remap.slide(slideId));
       await this.reload();
       this.selectSlide(copy.id);
+      this.recordSlideCreated(copy.id);
     });
   }
 
@@ -427,11 +500,14 @@ export class DocumentSession {
       const remap = await this.prepare();
       const id = remap.slide(slideId);
       const index = this.state.slides.findIndex((slide) => slide.id === id);
+      const doomed = this.state.slides[index];
+      const snapshot = doomed === undefined ? null : this.history.snapshotSlide(doomed);
       this.cancelSlideSaves(id);
       await this.api.deleteSlide(id);
       await this.reload();
       const next = this.state.slides[Math.min(index, this.state.slides.length - 1)];
       this.selectSlide(next?.id ?? null);
+      if (snapshot !== null) this.history.recordSlideDeleted(snapshot, index);
       this.onChanged();
     });
   }
@@ -464,6 +540,7 @@ export class DocumentSession {
           throw error;
         }
         this.confirmSlideOrder(ordered);
+        this.history.recordSlideMoved(this.currentSlideIds([slideId])[0] ?? slideId, from, target);
       } finally {
         if (this.desiredOrder === ids) this.desiredOrder = null;
       }
@@ -496,6 +573,13 @@ export class DocumentSession {
 
   /** Edits slide properties; the change shows now and is saved after the debounce. */
   public updateSlide(slideId: string, patch: SlidePatch): void {
+    const slide = this.state.slides.find((candidate) => candidate.id === slideId);
+    if (slide !== undefined) this.history.recordSlidePatch(slideId, this.history.before(slide, patch), patch);
+    this.editSlide(slideId, patch);
+  }
+
+  /** The change of `updateSlide` without a step in the history, for what the session changes on its own. */
+  private editSlide(slideId: string, patch: SlidePatch): void {
     if (this.needsPreparation) {
       void this.run(async () => {
         const remap = await this.prepare();
@@ -561,6 +645,7 @@ export class DocumentSession {
         await this.reload();
         this.selectSlide(created[0]?.id ?? null);
         this.state.selectedElementId = created[0]?.elements[0]?.id ?? null;
+        this.recordSlideCreated(created[0]?.id);
         return;
       }
       const offset = (slide.elements.length % 6) * 2;
@@ -577,11 +662,49 @@ export class DocumentSession {
       target?.elements.push(created);
       this.touched.add(created.id);
       this.state.selectedElementId = created.id;
+      this.history.recordElementsCreated([created]);
+    });
+  }
+
+  /**
+   * Creates copies of elements on the current slide, each `offset` away from where it was, and selects them. Timing
+   * and entrance come along; the slide is only asked to be long enough for the element to appear.
+   */
+  public async pasteElements(items: readonly ClippedElement[], offset: number): Promise<void> {
+    await this.run(async () => {
+      const remap = await this.prepare();
+      const slide = this.currentSlide;
+      if (slide === null) return;
+      const created: SlideElement[] = [];
+      for (const item of items) {
+        // A component the catalog no longer has cannot be created, so it is left out of the paste.
+        if (this.catalog.component(item.component) === undefined) continue;
+        const geometry = clampGeometry({ x: item.x + offset, y: item.y + offset, w: item.w, h: item.h });
+        const saved = await this.api.saveElement(remap.slide(slide.id), null, item.component, {
+          name: item.name,
+          ...geometry,
+          appearsAtS: Math.min(item.appearsAtS, slide.durationS),
+          entrance: item.entrance,
+          props: item.props,
+        });
+        this.state.slides.find((candidate) => candidate.id === saved.slideId)?.elements.push(saved);
+        this.touched.add(saved.id);
+        created.push(saved);
+      }
+      this.selectElements(created.map((element) => element.id));
+      this.history.recordElementsCreated(created);
     });
   }
 
   /** Edits an element; the change shows now and is saved after the debounce. */
   public updateElement(elementId: string, patch: ElementPatch): void {
+    const element = this.findElement(elementId);
+    if (element !== undefined) this.history.recordElementPatch(elementId, this.history.before(element, patch), patch);
+    this.editElement(elementId, patch);
+  }
+
+  /** The change of `updateElement` without a step in the history. */
+  private editElement(elementId: string, patch: ElementPatch): void {
     if (this.needsPreparation) {
       void this.run(async () => {
         const remap = await this.prepare();
@@ -595,6 +718,18 @@ export class DocumentSession {
   /** Geometry change from a drag or a key press. */
   public updateGeometry(elementId: string, geometry: Geometry): void {
     this.updateElement(elementId, geometry);
+  }
+
+  /** Geometry change of several elements at once: a group moved or aligned. */
+  public updateGeometries(changes: readonly { readonly id: string; readonly geometry: Geometry }[]): void {
+    // One step for the whole group, so undoing brings every element back together.
+    this.history.recordElementPatches(
+      changes.flatMap((change) => {
+        const element = this.findElement(change.id);
+        return element === undefined ? [] : [{ id: change.id, before: this.history.before(element, change.geometry), after: change.geometry }];
+      }),
+    );
+    for (const change of changes) this.editElement(change.id, change.geometry);
   }
 
   /**
@@ -673,6 +808,21 @@ export class DocumentSession {
   }
 
   public async deleteElement(elementId: string): Promise<void> {
+    await this.deleteElements([elementId]);
+  }
+
+  /** Deletes several elements, one after another, as one step of the history. */
+  public async deleteElements(elementIds: readonly string[]): Promise<void> {
+    const snapshots = elementIds.flatMap((id) => {
+      const element = this.findElement(id);
+      return element === undefined ? [] : [this.history.snapshotElement(element)];
+    });
+    for (const id of elementIds) await this.removeElement(id);
+    // What was not deleted (the request failed and the class was loaded again) is still there, so there is nothing to restore.
+    this.history.recordElementsDeleted(snapshots.filter((snapshot) => this.findElement(this.history.handles.real(snapshot.handle)) === undefined));
+  }
+
+  private async removeElement(elementId: string): Promise<void> {
     await this.run(async () => {
       const remap = await this.prepare();
       const id = remap.element(elementId);
@@ -682,7 +832,7 @@ export class DocumentSession {
         slide.elements = slide.elements.filter((element) => element.id !== id);
       }
       this.state.fieldErrors = without(this.state.fieldErrors, id);
-      if (this.state.selectedElementId === id) this.state.selectedElementId = null;
+      this.state.selectedElementIds = this.state.selectedElementIds.filter((selected) => selected !== id);
       this.syncPending();
     });
   }
@@ -697,7 +847,7 @@ export class DocumentSession {
 
   /** Makes the slide long enough for a clip that ends at `end`. */
   private extendSlide(slide: Slide, end: number): void {
-    if (end > slide.durationS) this.updateSlide(slide.id, { durationS: Math.ceil(end + 1) });
+    if (end > slide.durationS) this.editSlide(slide.id, { durationS: Math.ceil(end + 1) });
   }
 
   /** Appends a pause to the current slide and selects it. */
@@ -710,12 +860,16 @@ export class DocumentSession {
       const startsAtS = nextStart(slide.pauses);
       const created = await this.api.savePause(slide.id, null, { startsAtS, durationS: 10, message: 'Nueva pausa', onEnd: 'continue', timerElementId: null });
       slide.pauses.push(created);
+      const length = slide.durationS;
       this.extendSlide(slide, startsAtS + created.durationS);
       this.selectClip({ kind: 'pause', id: created.id });
+      this.history.recordClipCreated(this.history.snapshotPause(created), { before: length, after: slide.durationS });
     });
   }
 
   public updatePause(pauseId: string, patch: PausePatch): void {
+    const current = this.state.slides.flatMap((slide) => slide.pauses).find((pause) => pause.id === pauseId);
+    if (current !== undefined) this.history.recordPausePatch(pauseId, this.history.before(current, patch), patch);
     this.patchChild(pauseId, (remapped) => {
       const slide = this.state.slides.find((candidate) => candidate.pauses.some((pause) => pause.id === remapped));
       const pause = slide?.pauses.find((candidate) => candidate.id === remapped);
@@ -732,10 +886,13 @@ export class DocumentSession {
     await this.run(async () => {
       const remap = await this.prepare();
       const id = remap.child(pauseId);
+      const doomed = this.state.slides.flatMap((slide) => slide.pauses).find((pause) => pause.id === id);
+      const snapshot = doomed === undefined ? null : this.history.snapshotPause(doomed);
       this.scheduler.cancel(`pause:${id}`);
       await this.api.deletePause(id);
       for (const slide of this.state.slides) slide.pauses = slide.pauses.filter((pause) => pause.id !== id);
       this.clearClip(id);
+      if (snapshot !== null) this.history.recordClipDeleted(snapshot);
     });
   }
 
@@ -750,12 +907,17 @@ export class DocumentSession {
       const name = media.name.replace(/\.[a-z0-9]{2,4}$/i, '');
       const created = await this.api.saveAudio(slide.id, null, { mediaId: media.id, startsAtS, durationS, name, kind: 'effect', volume: 0.6 });
       slide.audioClips.push(created);
+      const length = slide.durationS;
       this.extendSlide(slide, startsAtS + durationS);
       this.selectClip({ kind: 'audio', id: created.id });
+      const snapshot = this.history.snapshotAudio(created);
+      if (snapshot !== null) this.history.recordClipCreated(snapshot, { before: length, after: slide.durationS });
     });
   }
 
   public updateAudio(audioId: string, patch: AudioPatch): void {
+    const current = this.state.slides.flatMap((slide) => slide.audioClips).find((clip) => clip.id === audioId);
+    if (current !== undefined) this.history.recordAudioPatch(audioId, this.history.before(current, patch), patch);
     this.patchChild(audioId, (remapped) => {
       const slide = this.state.slides.find((candidate) => candidate.audioClips.some((clip) => clip.id === remapped));
       const clip = slide?.audioClips.find((candidate) => candidate.id === remapped);
@@ -773,10 +935,13 @@ export class DocumentSession {
     await this.run(async () => {
       const remap = await this.prepare();
       const id = remap.child(audioId);
+      const doomed = this.state.slides.flatMap((slide) => slide.audioClips).find((clip) => clip.id === id);
+      const snapshot = doomed === undefined ? null : this.history.snapshotAudio(doomed);
       this.scheduler.cancel(`audio:${id}`);
       await this.api.deleteAudio(id);
       for (const slide of this.state.slides) slide.audioClips = slide.audioClips.filter((clip) => clip.id !== id);
       this.clearClip(id);
+      if (snapshot !== null) this.history.recordClipDeleted(snapshot);
     });
   }
 
@@ -791,13 +956,17 @@ export class DocumentSession {
       // The clip has no voice until the person picks one of the voices that Polly lists.
       const created = await this.api.saveNarration(slide.id, null, { script: '', startsAtS, voice: null, speed: 1 });
       slide.narrationClips.push(created);
+      const length = slide.durationS;
       this.extendSlide(slide, startsAtS + narrationDuration(created));
       this.selectClip({ kind: 'narration', id: created.id });
+      this.history.recordClipCreated(this.history.snapshotNarration(created), { before: length, after: slide.durationS });
     });
   }
 
   /** Edits a narration clip; a new script or voice leaves it without voice until it is generated again. */
   public updateNarration(clipId: string, patch: NarrationPatch): void {
+    const current = this.state.slides.flatMap((slide) => slide.narrationClips).find((clip) => clip.id === clipId);
+    if (current !== undefined) this.history.recordNarrationPatch(clipId, this.history.before(current, patch), patch);
     this.patchChild(clipId, (remapped) => {
       const slide = this.state.slides.find((candidate) => candidate.narrationClips.some((clip) => clip.id === remapped));
       const clip = slide?.narrationClips.find((candidate) => candidate.id === remapped);
@@ -842,10 +1011,13 @@ export class DocumentSession {
     await this.run(async () => {
       const remap = await this.prepare();
       const id = remap.child(clipId);
+      const doomed = this.state.slides.flatMap((slide) => slide.narrationClips).find((clip) => clip.id === id);
+      const snapshot = doomed === undefined ? null : this.history.snapshotNarration(doomed);
       this.scheduler.cancel(`narration:${id}`);
       await this.api.deleteNarration(id);
       for (const slide of this.state.slides) slide.narrationClips = slide.narrationClips.filter((clip) => clip.id !== id);
       this.clearClip(id);
+      if (snapshot !== null) this.history.recordClipDeleted(snapshot);
     });
   }
 
@@ -904,6 +1076,152 @@ export class DocumentSession {
     this.syncPending();
   }
 
+  // -- History: undo and redo -----------------------------------------------
+
+  /** Whether there is a change to undo. */
+  public get canUndo(): boolean {
+    return this.history.steps.state.canUndo;
+  }
+
+  /** Whether there is an undone change to do again. */
+  public get canRedo(): boolean {
+    return this.history.steps.state.canRedo;
+  }
+
+  /** Undoes the last change; false when there is nothing to undo. */
+  public async undo(): Promise<boolean> {
+    return this.replay(() => this.history.steps.undo());
+  }
+
+  /** Does again the last change that was undone. */
+  public async redo(): Promise<boolean> {
+    return this.replay(() => this.history.steps.redo());
+  }
+
+  private async replay(step: () => Promise<boolean>): Promise<boolean> {
+    try {
+      return await step();
+    } catch (error) {
+      this.state.saveError = errorMessage(error);
+      return false;
+    }
+  }
+
+  // The following are what the history uses to put things back; each one creates, deletes or selects what it is told.
+
+  public settle(): Promise<void> {
+    return this.chain;
+  }
+
+  public slideOfElement(id: string): string | null {
+    return this.findElement(id)?.slideId ?? null;
+  }
+
+  public focus(slideId: string | null, elementIds: readonly string[]): void {
+    if (slideId !== null) this.selectSlide(slideId);
+    this.selectElements(elementIds);
+  }
+
+  public focusClip(kind: ClipKind, id: string): void {
+    this.selectClip({ kind, id });
+  }
+
+  public async restoreElements(slideId: string, items: readonly ElementData[]): Promise<SlideElement[]> {
+    const created: SlideElement[] = [];
+    await this.run(async () => {
+      const remap = await this.prepare();
+      const slide = this.requireSlide(remap.slide(slideId));
+      for (const item of items) {
+        const saved = await this.api.saveElement(slide.id, null, item.component, {
+          name: item.name,
+          x: item.x,
+          y: item.y,
+          w: item.w,
+          h: item.h,
+          z: item.z,
+          appearsAtS: item.appearsAtS,
+          entrance: item.entrance,
+          props: item.props,
+        });
+        slide.elements.push(saved);
+        this.touched.add(saved.id);
+        created.push(saved);
+      }
+    });
+    return created;
+  }
+
+  public async restoreSlide(data: SlideData, index: number): Promise<RestoredSlide> {
+    const result: { value: RestoredSlide | null } = { value: null };
+    await this.run(async () => {
+      await this.prepare();
+      const versionId = this.requireVersion();
+      const position = Math.min(Math.max(index, 0), this.state.slides.length);
+      const drafts = await this.api.applySlidesDraft(versionId, position, [
+        { type: data.type, title: data.title, background: data.background, durationS: data.durationS, elements: data.elements.map((element) => ({ ...element })) },
+      ]);
+      const created = drafts[0];
+      if (created === undefined) throw new ApiError('Conflict', t('errors.slideGone'));
+      const elementIds = pairElements(data.elements, created.elements);
+      if (created.transition !== data.transition || created.advance !== data.advance) {
+        await this.api.saveSlide(created.id, created.versionId, { type: data.type, title: data.title, background: data.background, durationS: data.durationS, transition: data.transition, advance: data.advance });
+      }
+      const pauseIds: string[] = [];
+      for (const pause of data.pauses) {
+        const timer = pause.timerIndex === null ? null : (elementIds[pause.timerIndex] ?? null);
+        const { startsAtS, durationS, message, onEnd } = pause;
+        pauseIds.push((await this.api.savePause(created.id, null, { startsAtS, durationS, message, onEnd, timerElementId: timer === '' ? null : timer })).id);
+      }
+      const audioIds: string[] = [];
+      for (const clip of data.audio) {
+        const { mediaId, startsAtS, durationS, name, audioKind, volume } = clip;
+        audioIds.push((await this.api.saveAudio(created.id, null, { mediaId, startsAtS, durationS, name, kind: audioKind, volume })).id);
+      }
+      // The voice of a narration clip is not kept, so it comes back without voice until it is generated again.
+      const narrationIds: string[] = [];
+      for (const clip of data.narration) {
+        const { script, startsAtS, voice, speed } = clip;
+        narrationIds.push((await this.api.saveNarration(created.id, null, { script, startsAtS, voice, speed })).id);
+      }
+      await this.reload();
+      this.selectSlide(created.id);
+      result.value = { slideId: created.id, elementIds, pauseIds, audioIds, narrationIds };
+    });
+    if (result.value === null) throw new ApiError('Conflict', t('errors.slideGone'));
+    return result.value;
+  }
+
+  public async restoreClip(slideId: string, data: ClipData): Promise<string> {
+    const result = { id: '' };
+    await this.run(async () => {
+      const remap = await this.prepare();
+      const slide = this.requireSlide(remap.slide(slideId));
+      if (data.kind === 'pause') {
+        const { startsAtS, durationS, message, onEnd } = data;
+        const created = await this.api.savePause(slide.id, null, { startsAtS, durationS, message, onEnd, timerElementId: data.timerElementId === null ? null : remap.element(data.timerElementId) });
+        slide.pauses.push(created);
+        result.id = created.id;
+      } else if (data.kind === 'audio') {
+        const { mediaId, startsAtS, durationS, name, audioKind, volume } = data;
+        const created = await this.api.saveAudio(slide.id, null, { mediaId, startsAtS, durationS, name, kind: audioKind, volume });
+        slide.audioClips.push(created);
+        result.id = created.id;
+      } else {
+        const { script, startsAtS, voice, speed } = data;
+        const created = await this.api.saveNarration(slide.id, null, { script, startsAtS, voice, speed });
+        slide.narrationClips.push(created);
+        result.id = created.id;
+      }
+    });
+    return result.id;
+  }
+
+  public async deleteClip(kind: ClipKind, id: string): Promise<void> {
+    if (kind === 'pause') await this.deletePause(id);
+    else if (kind === 'audio') await this.deleteAudio(id);
+    else await this.deleteNarration(id);
+  }
+
   // -- Publishing -----------------------------------------------------------
 
   public async publish(): Promise<void> {
@@ -958,6 +1276,8 @@ export class DocumentSession {
       this.state.saveError = null;
     } catch (error) {
       this.state.saveError = errorMessage(error);
+      // The class is loaded again from the server, so what the steps expect may no longer be there.
+      this.history.clear();
       try {
         await this.reload();
       } catch {

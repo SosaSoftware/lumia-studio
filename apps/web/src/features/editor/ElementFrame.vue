@@ -9,6 +9,7 @@ import type { DragOperation } from './drag-session.ts';
 import { round2 } from './geometry.ts';
 import type { Geometry } from './geometry.ts';
 import { announce, applyCommand, parseKey } from './keyboard.ts';
+import type { GroupContext } from './selection-geometry.ts';
 
 const props = defineProps<{
   element: SlideElement;
@@ -25,11 +26,17 @@ const props = defineProps<{
   tag: string;
   /** The height of the component is the height of its content: the frame has no height of its own. */
   fitsContent: boolean;
+  /** Set when the element is one of several selected: it then moves with the group instead of alone. */
+  group: GroupContext | null;
 }>();
 
 const emit = defineEmits<{
   select: [id: string];
+  /** A press with Shift, Cmd or Ctrl: adds the element to the selection or removes it. */
+  toggle: [id: string];
   geometry: [id: string, geometry: Geometry];
+  /** The group the element belongs to moved: the rectangle that holds all of it. */
+  'group-geometry': [bounds: Geometry];
   remove: [id: string];
   announce: [message: string];
   /** Lines the element is aligned with while it moves; empty when the gesture ends. */
@@ -44,6 +51,8 @@ const emit = defineEmits<{
 
 const root = ref<HTMLElement | null>(null);
 let session: DragSession | null = null;
+/** The press that started `session` was on a member of a group, so it moves the group. */
+let groupPress = false;
 let origin = { x: 0, y: 0 };
 
 /** Height the element needs, in `cqw`; null until it is measured. */
@@ -119,6 +128,22 @@ function onFramePointerDown(event: PointerEvent): void {
     emit('select', props.element.id);
     return;
   }
+  if (event.button !== 0) return;
+  if (event.shiftKey || event.metaKey || event.ctrlKey) {
+    emit('toggle', props.element.id);
+    return;
+  }
+  const group = props.group;
+  if (group !== null) {
+    // Pressing a member keeps the group, so it can be dragged; a press that does not move selects only that member.
+    groupPress = true;
+    root.value?.focus({ preventScroll: true });
+    session = new DragSession({ kind: 'move' }, group.bounds(), props.slideWidth(), group.alignment());
+    origin = { x: event.clientX, y: event.clientY };
+    if (event.currentTarget instanceof Element) event.currentTarget.setPointerCapture(event.pointerId);
+    return;
+  }
+  groupPress = false;
   begin(event, { kind: 'move' });
 }
 
@@ -127,7 +152,8 @@ function onPointerMove(event: PointerEvent): void {
   // Holding Alt moves the element freely, without pulling it onto the alignment lines.
   const next = session.update(event.clientX - origin.x, event.clientY - origin.y, !event.altKey);
   if (session.isDrag) {
-    emit('geometry', props.element.id, next);
+    if (groupPress) emit('group-geometry', next);
+    else emit('geometry', props.element.id, next);
     emit('guides', session.guides);
   }
 }
@@ -136,8 +162,15 @@ function onPointerUp(event: PointerEvent): void {
   if (event.currentTarget instanceof Element && event.currentTarget.hasPointerCapture(event.pointerId)) {
     event.currentTarget.releasePointerCapture(event.pointerId);
   }
+  if (groupPress && session !== null && !session.isDrag) emit('select', props.element.id);
+  groupPress = false;
   session = null;
   emit('guides', NO_GUIDES);
+}
+
+/** Only keyboard focus selects: a press already did, and selecting again would undo a group or a toggle. */
+function onFocus(): void {
+  if (!props.selected && root.value?.matches(':focus-visible') === true) emit('select', props.element.id);
 }
 
 function onKeydown(event: KeyboardEvent): void {
@@ -145,7 +178,8 @@ function onKeydown(event: KeyboardEvent): void {
     root.value?.blur();
     return;
   }
-  if (!props.editable) return;
+  // A group is handled by the canvas, which reads the key as it bubbles up.
+  if (!props.editable || props.group !== null) return;
   const command = parseKey(event.key, event.shiftKey);
   if (command === null) return;
   event.preventDefault();
@@ -174,6 +208,7 @@ function onKeydown(event: KeyboardEvent): void {
     :data-tags="showTag"
     :data-editable="editable"
     :data-component="element.component"
+    :data-element-id="element.id"
     :data-testid="`element-${element.id}`"
     :style="{
       left: `${element.x}cqw`,
@@ -187,7 +222,7 @@ function onKeydown(event: KeyboardEvent): void {
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerUp"
-    @focus="emit('select', element.id)"
+    @focus="onFocus"
     @keydown="onKeydown"
   >
     <div class="content"><CatalogElement :element="element" mode="edit" :selected="selected" design :design-hidden="!showFeedback" /></div>
@@ -197,7 +232,8 @@ function onKeydown(event: KeyboardEvent): void {
 
 <style scoped>
 /* The outline is centered on the real edge of the element, so it matches the margins and the alignment lines. */
-.frame { position: absolute; box-sizing: border-box; outline-offset: -0.075cqw; touch-action: none; user-select: none; }
+/* Safari needs the prefixed property, or the text of the components gets selected when a selection rectangle crosses it. */
+.frame { position: absolute; box-sizing: border-box; outline-offset: -0.075cqw; touch-action: none; user-select: none; -webkit-user-select: none; }
 .frame[data-tags='true'] { outline: 0.15cqw dashed var(--s-active-ring); }
 .frame[data-editable='true']:hover { outline: 0.15cqw solid var(--s-active-ring); }
 .frame[data-selected='true'], .frame:focus-visible { outline: 0.3cqw solid var(--s-active); outline-offset: -0.15cqw; }

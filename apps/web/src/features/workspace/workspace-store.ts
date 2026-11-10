@@ -107,7 +107,7 @@ export class WorkspaceStore {
     });
     // Selecting a slide, an element or a clip shows it in Properties instead of the tree node.
     watch(
-      () => [this.session.state.selectedSlideId, this.session.state.selectedElementId, this.session.state.selectedClip],
+      () => [this.session.state.selectedSlideId, this.session.state.selectedElementIds, this.session.state.selectedClip],
       () => {
         this.inspectedId.value = null;
       },

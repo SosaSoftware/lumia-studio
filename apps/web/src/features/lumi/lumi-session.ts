@@ -582,7 +582,7 @@ export class LumiSession {
   private async refreshClass(): Promise<void> {
     try {
       await this.workspace.session.flush();
-      await this.workspace.session.reload();
+      await this.workspace.session.refresh();
       await this.workspace.refreshNodes();
     } catch {
       // The editor keeps what it shows; opening the class again loads the saved state.
