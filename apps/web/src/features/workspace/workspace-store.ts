@@ -200,6 +200,13 @@ export class WorkspaceStore {
     this.treeRootOpen.value = true;
   }
 
+  /** Shows the properties of the current slide: nothing inside it and no node of the tree is selected. */
+  public showSlide(): void {
+    this.inspectedId.value = null;
+    this.session.selectElement(null);
+    this.session.selectClip(null);
+  }
+
   /** Selects a node, opens the folders that contain it and shows it in Properties. */
   public select(id: string): void {
     this.reveal(id);

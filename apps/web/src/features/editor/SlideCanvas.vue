@@ -26,10 +26,16 @@ const props = defineProps<{
   total: number;
   editable: boolean;
   footer: SlideFooter | null;
+  /** Shows an arrow on each side to change slide, for when the strip of slides is not in view. */
+  navigation: boolean;
 }>();
 
 const emit = defineEmits<{
   'select-element': [id: string | null];
+  /** A click on a free place of the canvas or of the slide: the properties of the slide are shown. */
+  'select-slide': [];
+  /** The arrows beside the slide: -1 goes to the previous slide and 1 to the next. */
+  step: [direction: -1 | 1];
   geometry: [id: string, geometry: Geometry];
   'remove-element': [id: string];
   'drop-component': [component: string, x: number, y: number];
@@ -104,6 +110,11 @@ function selectedAlignment(): Alignment {
   return alignmentOf(props.selectedElementId ?? '');
 }
 
+function step(direction: -1 | 1): void {
+  if ((direction < 0 && props.position <= 1) || (direction > 0 && props.position >= props.total)) return;
+  emit('step', direction);
+}
+
 function announce(text: string): void {
   // Clearing first makes screen readers repeat identical consecutive messages.
   message.value = '';
@@ -129,7 +140,7 @@ function onDrop(event: DragEvent): void {
 </script>
 
 <template>
-  <div class="stage" data-testid="canvas-stage">
+  <div class="stage" data-testid="canvas-stage" @pointerdown.self="emit('select-slide')">
     <div class="toolbar">
       <button
         type="button"
@@ -154,6 +165,12 @@ function onDrop(event: DragEvent): void {
         <StudioIcon name="eye" :size="13" :stroke="2" />Componentes
       </button>
     </div>
+    <button v-if="navigation" type="button" class="step prev" :aria-disabled="position <= 1" aria-label="Diapositiva anterior" title="Diapositiva anterior" data-testid="canvas-prev" @click="step(-1)">
+      <StudioIcon name="chevron-left" :size="16" :stroke="2" />
+    </button>
+    <button v-if="navigation" type="button" class="step next" :aria-disabled="position >= total" aria-label="Diapositiva siguiente" title="Diapositiva siguiente" data-testid="canvas-next" @click="step(1)">
+      <StudioIcon name="chevron-right" :size="16" :stroke="2" />
+    </button>
     <div class="slide-box">
       <div
         ref="slideEl"
@@ -165,7 +182,7 @@ function onDrop(event: DragEvent): void {
         @dragover="onDragOver"
         @drop="onDrop"
       >
-        <SlideSurface :background="slide.background" :type="slide.type" :footer="hasFooter(slide.type) ? footer : null" :context="context" @pointerdown.self="emit('select-element', null)">
+        <SlideSurface :background="slide.background" :type="slide.type" :footer="hasFooter(slide.type) ? footer : null" :context="context" @pointerdown.self="emit('select-slide')">
           <!-- Behind the elements, which stack above it. -->
           <div v-if="canvasGrid.visible" class="grid" :style="{ backgroundSize: `${String(GRID_SIZE)}cqw ${String(GRID_SIZE)}cqw` }" aria-hidden="true" data-testid="canvas-grid-lines"></div>
           <ElementFrame
@@ -211,6 +228,15 @@ function onDrop(event: DragEvent): void {
 .stage { position: relative; isolation: isolate; flex: 4 1 0; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; padding: 56px 40px 24px; box-sizing: border-box; }
 .toolbar { position: absolute; top: 10px; right: 12px; display: flex; gap: 8px; }
 .toolbar .prv { height: 26px; }
+/* Beside the slide, past the ruler on its left; they stay inside the canvas when the slide fills its width. The top
+   offset is half of the difference between the top and the bottom padding, which centers them on the slide. */
+.step { position: absolute; top: calc(50% + 16px); transform: translateY(-50%); z-index: 4; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; padding: 0; background: var(--s-panel); border: 1px solid var(--s-border); border-radius: 50%; color: var(--s-text-2); cursor: pointer; }
+.step:hover { background: var(--s-hover); color: var(--s-text); }
+.step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.step[aria-disabled='true']:hover { background: var(--s-panel); color: var(--s-text-2); }
+.step:focus-visible { outline: 2px solid var(--s-active); outline-offset: 2px; }
+.step.prev { left: max(6px, calc(50% - min(100cqw, calc(100cqh * 16 / 9)) / 2 - 62px)); }
+.step.next { left: min(calc(100% - 36px), calc(50% + min(100cqw, calc(100cqh * 16 / 9)) / 2 + 32px)); }
 /* The cell is 1/16 of the width, so the grid has 16 by 9 squares. It sits behind the elements and does not take clicks. */
 .grid { position: absolute; inset: 0; z-index: 0; pointer-events: none; background-image: linear-gradient(to right, rgba(110, 120, 140, 0.3) 1px, transparent 1px), linear-gradient(to bottom, rgba(110, 120, 140, 0.3) 1px, transparent 1px); }
 /* The box is the size container of the overlay, so the handles use the same cqw units as the slide. */

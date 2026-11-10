@@ -57,6 +57,12 @@ function flushOnLeave(): void {
   void session.flush();
 }
 
+/** Goes to the previous or the next slide, from the arrows beside the canvas. */
+function stepSlide(direction: -1 | 1): void {
+  const target = slides.value[startIndex.value + direction];
+  if (target !== undefined) session.selectSlide(target.id);
+}
+
 function addFirstSlide(): void {
   if (canEdit.value) void session.addSlide();
 }
@@ -95,7 +101,10 @@ function dropComponent(component: string, x: number, y: number): void {
               :total="slidePosition.total"
               :editable="canEdit"
               :footer="footer"
+              :navigation="panels.bottom === 'timeline'"
               @select-element="session.selectElement($event)"
+              @select-slide="workspace.showSlide()"
+              @step="stepSlide"
               @geometry="(id, geometry) => session.updateGeometry(id, geometry)"
               @remove-element="session.deleteElement($event)"
               @drop-component="dropComponent"
