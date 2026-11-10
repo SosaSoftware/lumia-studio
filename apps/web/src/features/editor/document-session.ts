@@ -167,6 +167,10 @@ export class DocumentSession {
   private readonly measured = new Map<string, number>();
   /** Elements the person edited since the class was opened: only those get their measured height saved. */
   private readonly touched = new Set<string>();
+  /** Slide ids of the published version mapped to their copy in the draft, for moves queued before the draft existed. */
+  private readonly slideAliases = new Map<string, string>();
+  /** Order of the slides the person asked for last, until the API has stored it. */
+  private desiredOrder: readonly string[] | null = null;
   /** Structural actions run one after another, so quick clicks reach the API in order. */
   private chain: Promise<void> = Promise.resolve();
   private running = 0;
@@ -232,6 +236,8 @@ export class DocumentSession {
     await this.flush();
     const ticket = ++this.opening;
     this.touched.clear();
+    this.slideAliases.clear();
+    this.desiredOrder = null;
     this.state.classNode = node;
     this.state.document = null;
     this.state.slides = [];
@@ -339,7 +345,8 @@ export class DocumentSession {
       return new IdRemap(new Map(), new Map());
     }
     if (document.editingVersion.status !== 'published') return new IdRemap(new Map(), new Map());
-    const before = this.state.slides;
+    // The copy keeps the stored order, so the slides are paired in that order and not in the order shown after a move.
+    const before = [...this.state.slides].sort((a, b) => a.position - b.position);
     const selected = { slide: this.state.selectedSlideId, element: this.state.selectedElementId, clip: this.state.selectedClip };
     await this.api.createVersion(document.id);
     await this.reload();
@@ -365,6 +372,7 @@ export class DocumentSession {
       pairs(slide.pauses, copy.pauses);
       pairs(slide.comments, copy.comments);
     });
+    slides.forEach((copy, original) => this.slideAliases.set(original, copy));
     const remap = new IdRemap(slides, elements, children);
     this.state.selectedSlideId = selected.slide === null ? null : remap.slide(selected.slide);
     this.state.selectedElementId = selected.element === null ? null : remap.element(selected.element);
@@ -434,28 +442,62 @@ export class DocumentSession {
     });
   }
 
-  /** Moves a slide to a 0-based index. */
+  /**
+   * Moves a slide to a 0-based index. The new order shows at once, so a second move starts from what the person sees;
+   * the API call follows in the queue with the full list of ids, not with an index.
+   */
   public async moveSlide(slideId: string, toIndex: number): Promise<void> {
+    const ids = this.state.slides.map((slide) => slide.id);
+    const from = ids.indexOf(slideId);
+    const target = Math.min(Math.max(toIndex, 0), ids.length - 1);
+    if (from < 0 || target === from) return;
+    ids.splice(from, 1);
+    ids.splice(target, 0, slideId);
+    this.desiredOrder = ids;
+    this.showSlideOrder(ids);
     await this.run(async () => {
-      const remap = await this.prepare();
-      const id = remap.slide(slideId);
-      const ids = this.state.slides.map((slide) => slide.id);
-      const from = ids.indexOf(id);
-      if (from < 0) return;
-      const target = Math.min(Math.max(toIndex, 0), ids.length - 1);
-      if (target === from) return;
-      ids.splice(from, 1);
-      ids.splice(target, 0, id);
-      const versionId = this.requireVersion();
-      // The order shows right away; the API answer replaces it.
-      const bySlide = new Map(this.state.slides.map((slide) => [slide.id, slide]));
-      this.state.slides = ids.flatMap((slideId2) => {
-        const slide = bySlide.get(slideId2);
-        return slide === undefined ? [] : [slide];
-      });
-      await this.api.reorderSlides(versionId, ids);
-      await this.reload();
+      try {
+        await this.prepare();
+        // Creating the draft reloads the slides in their stored order, so the latest order asked for is shown again.
+        this.showSlideOrder(this.currentSlideIds(this.desiredOrder ?? ids));
+        const ordered = this.currentSlideIds(ids);
+        try {
+          await this.api.reorderSlides(this.requireVersion(), ordered);
+        } catch (error) {
+          if (error instanceof ApiError && error.errorType === 'ValidationError') {
+            throw new ApiError('Conflict', 'Las diapositivas cambiaron desde otra pestaña o por Lumi. Se actualizó la lista; vuelve a mover la diapositiva.');
+          }
+          throw error;
+        }
+        this.confirmSlideOrder(ordered);
+      } finally {
+        if (this.desiredOrder === ids) this.desiredOrder = null;
+      }
     });
+  }
+
+  /** Slide ids as they are now: those of a published version map to their copy in the draft. */
+  private currentSlideIds(ids: readonly string[]): string[] {
+    return ids.map((id) => this.slideAliases.get(id) ?? id);
+  }
+
+  /** Shows the slides in the order of `ids`; the list is left as it is when it does not name the same slides. */
+  private showSlideOrder(ids: readonly string[]): void {
+    const bySlide = new Map(this.state.slides.map((slide) => [slide.id, slide]));
+    const ordered = ids.flatMap((id) => {
+      const slide = bySlide.get(id);
+      return slide === undefined ? [] : [slide];
+    });
+    if (ordered.length === this.state.slides.length) this.state.slides = ordered;
+  }
+
+  /** Stores the position the API gave to each slide, so the next action reads the right one. */
+  private confirmSlideOrder(ids: readonly string[]): void {
+    const positions = new Map(ids.map((id, index) => [id, index + 1]));
+    for (const slide of this.state.slides) {
+      const position = positions.get(slide.id);
+      if (position !== undefined) slide.position = position;
+    }
   }
 
   /** Edits slide properties; the change shows now and is saved after the debounce. */
