@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import type { Slide } from '../../api/types.ts';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import type { Slide, SlideElement } from '../../api/types.ts';
 import type { SlideContext } from '../slide-components/slide-context.ts';
 import { GRID_SIZE, canvasGrid } from '../../composables/canvas-grid.ts';
 import { canvasMargins } from '../../composables/canvas-margins.ts';
@@ -33,6 +33,8 @@ const emit = defineEmits<{
   geometry: [id: string, geometry: Geometry];
   'remove-element': [id: string];
   'drop-component': [component: string, x: number, y: number];
+  /** Height in `cqw` that an element needs for its content, as the browser measured it. */
+  'fit-height': [id: string, height: number];
 }>();
 
 const workspace = useWorkspace();
@@ -40,6 +42,8 @@ const slideEl = ref<HTMLElement | null>(null);
 const width = ref(0);
 const message = ref('');
 const guides = ref<Guides>(NO_GUIDES);
+/** Height each element needs for its content, measured by its frame; it can differ from the stored one. */
+const heights = reactive<Record<string, number>>({});
 let observer: ResizeObserver | null = null;
 
 const label = computed(() => `Diapositiva ${String(props.position)} de ${String(props.total)}: ${props.slide.title}`);
@@ -47,10 +51,24 @@ const context: SlideContext = { elements: () => props.slide.elements, media: (id
 const tags = computed(() => panels.tags);
 const selectedElement = computed(() => (props.editable ? (props.slide.elements.find((element) => element.id === props.selectedElementId) ?? null) : null));
 
+/** Height of an element as it is drawn: the measured one when there is one. */
+function heightOf(element: SlideElement): number {
+  return heights[element.id] ?? element.h;
+}
+
+function fitsContent(component: string): boolean {
+  return workspace.catalog.fitsContent(component);
+}
+
+function onSize(id: string, height: number): void {
+  heights[id] = height;
+  emit('fit-height', id, height);
+}
+
 /** Where the selected element sits, shown as a band on the rulers. */
 const selectionGeometry = computed<Geometry | null>(() => {
   const element = selectedElement.value;
-  return element === null ? null : { x: element.x, y: element.y, w: element.w, h: element.h };
+  return element === null ? null : { x: element.x, y: element.y, w: element.w, h: heightOf(element) };
 });
 
 function tagOf(component: string): string {
@@ -78,7 +96,7 @@ function slideWidth(): number {
 
 /** What an element can align with while it moves: the other elements of the slide and the margins. */
 function alignmentOf(id: string): Alignment {
-  const others = props.slide.elements.filter((element) => element.id !== id).map((element) => ({ x: element.x, y: element.y, w: element.w, h: element.h }));
+  const others = props.slide.elements.filter((element) => element.id !== id).map((element) => ({ x: element.x, y: element.y, w: element.w, h: heightOf(element) }));
   return { others, margins: { ...canvasMargins } };
 }
 
@@ -160,6 +178,8 @@ function onDrop(event: DragEvent): void {
             :alignment="() => alignmentOf(element.id)"
             :show-tag="tags"
             :tag="tagOf(element.component)"
+            :fits-content="fitsContent(element.component)"
+            @size="onSize"
             @select="emit('select-element', $event)"
             @geometry="(id, geometry) => emit('geometry', id, geometry)"
             @remove="emit('remove-element', $event)"
@@ -173,6 +193,8 @@ function onDrop(event: DragEvent): void {
       <SelectionOverlay
         v-if="selectedElement"
         :element="selectedElement"
+        :height="heightOf(selectedElement)"
+        :fits-content="fitsContent(selectedElement.component)"
         :slide-width="slideWidth"
         :alignment="selectedAlignment"
         @geometry="(id, geometry) => emit('geometry', id, geometry)"

@@ -43,6 +43,7 @@ export const multipleChoiceComponent = defineComponent({
     attempts: 2,
   },
   defaultSize: { w: 88, h: 32 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: true,
 });
@@ -96,6 +97,7 @@ export const fillBlankComponent = defineComponent({
     attempts: 2,
   },
   defaultSize: { w: 80, h: 20 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: true,
 });
@@ -178,6 +180,7 @@ export const orderingComponent = defineComponent({
     attempts: 2,
   },
   defaultSize: { w: 80, h: 25 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: true,
 });
@@ -208,6 +211,7 @@ export const matchingComponent = defineComponent({
     attempts: 2,
   },
   defaultSize: { w: 80, h: 30 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: true,
 });

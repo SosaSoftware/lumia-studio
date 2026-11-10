@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { SlideElement } from '../../api/types.ts';
 import CatalogElement from '../slide-components/CatalogElement.vue';
 import { NO_GUIDES } from './alignment.ts';
 import type { Alignment, Guides } from './alignment.ts';
 import { DragSession } from './drag-session.ts';
 import type { DragOperation } from './drag-session.ts';
+import { round2 } from './geometry.ts';
 import type { Geometry } from './geometry.ts';
 import { announce, applyCommand, parseKey } from './keyboard.ts';
 
@@ -20,6 +21,8 @@ const props = defineProps<{
   /** Shows the dashed outline and the "Grupo · Componente" tag of the design. */
   showTag: boolean;
   tag: string;
+  /** The height of the component is the height of its content: the frame has no height of its own. */
+  fitsContent: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -29,13 +32,66 @@ const emit = defineEmits<{
   announce: [message: string];
   /** Lines the element is aligned with while it moves; empty when the gesture ends. */
   guides: [guides: Guides];
+  /** Height in `cqw` that the element needs for its content; reported when it changes. */
+  size: [id: string, height: number];
 }>();
 
 const root = ref<HTMLElement | null>(null);
 let session: DragSession | null = null;
 let origin = { x: 0, y: 0 };
 
-const geometry = computed<Geometry>(() => ({ x: props.element.x, y: props.element.y, w: props.element.w, h: props.element.h }));
+/** Height the element needs, in `cqw`; null until it is measured. */
+const needed = ref<number | null>(null);
+let resizeObserver: ResizeObserver | null = null;
+let mutationObserver: MutationObserver | null = null;
+let measureRequest = 0;
+
+/** The height of the frame as it is drawn: the measured one, which can differ from the one stored in the class. */
+const geometry = computed<Geometry>(() => ({ x: props.element.x, y: props.element.y, w: props.element.w, h: needed.value ?? props.element.h }));
+
+/**
+ * Measures the height the element needs: the frame itself when it fits its content, and otherwise the larger of the
+ * frame and its content, which can overflow when the person writes more than fits.
+ */
+function measure(): void {
+  measureRequest = 0;
+  const frame = root.value;
+  const slide = props.slideWidth();
+  if (frame === null || slide <= 0) return;
+  const frameHeight = frame.getBoundingClientRect().height;
+  const content = frame.querySelector('.content')?.firstElementChild;
+  const height = props.fitsContent || !(content instanceof HTMLElement) ? frameHeight : Math.max(frameHeight, content.scrollHeight);
+  const next = round2((height / slide) * 100);
+  if (needed.value === next) return;
+  needed.value = next;
+  emit('size', props.element.id, next);
+}
+
+function scheduleMeasure(): void {
+  if (measureRequest === 0) measureRequest = requestAnimationFrame(measure);
+}
+
+onMounted(() => {
+  const frame = root.value;
+  if (frame === null) return;
+  const content = frame.querySelector('.content');
+  resizeObserver = new ResizeObserver(scheduleMeasure);
+  resizeObserver.observe(frame);
+  if (content?.firstElementChild) resizeObserver.observe(content.firstElementChild);
+  if (content !== null) {
+    mutationObserver = new MutationObserver(scheduleMeasure);
+    mutationObserver.observe(content, { childList: true, subtree: true, characterData: true, attributes: true });
+  }
+  measure();
+});
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect();
+  mutationObserver?.disconnect();
+  if (measureRequest !== 0) cancelAnimationFrame(measureRequest);
+});
+
+watch(() => [props.element.w, props.element.h, props.fitsContent], scheduleMeasure);
 
 function begin(event: PointerEvent, operation: DragOperation): void {
   if (!props.editable || event.button !== 0) return;
@@ -111,7 +167,7 @@ function onKeydown(event: KeyboardEvent): void {
       left: `${element.x}cqw`,
       top: `${element.y}cqw`,
       width: `${element.w}cqw`,
-      height: `${element.h}cqw`,
+      height: fitsContent ? 'auto' : `${element.h}cqw`,
       zIndex: selected ? 1000 : element.z,
       cursor: editable ? (selected ? 'move' : 'pointer') : 'default',
     }"

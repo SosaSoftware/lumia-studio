@@ -57,6 +57,11 @@ export class CatalogStore {
     return this.info.value.components.find((component) => component.key === key);
   }
 
+  /** Whether the height of the component is the height of its content, so the editor sizes its frame to it. */
+  public fitsContent(key: string): boolean {
+    return componentCatalog.get(key)?.fitsContent === true;
+  }
+
   public slideType(key: string): CatalogSlideTypeInfo | undefined {
     return this.info.value.slideTypes.find((type) => type.key === key);
   }

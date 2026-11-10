@@ -21,6 +21,12 @@ export interface ComponentDefinition<TSchema extends z.ZodType = z.ZodType> {
   readonly propsSchema: TSchema;
   readonly defaults: z.infer<TSchema>;
   readonly defaultSize: Size;
+  /**
+   * The height of the component is the height of its content: the editor sizes the frame to it, so the frame has no
+   * empty space and grows with the content. Components that fill their frame leave it out; `defaultSize.h` is then
+   * the height they start with and the person resizes them.
+   */
+  readonly fitsContent?: boolean;
   /** The props reference media assets: one `mediaId` (image, video, audio, illustration) or one per item (gallery). */
   readonly usesMedia: boolean;
   readonly isQuestion: boolean;

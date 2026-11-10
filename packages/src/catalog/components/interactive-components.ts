@@ -91,6 +91,7 @@ export const accordionComponent = defineComponent({
     ],
   },
   defaultSize: { w: 80, h: 30 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: false,
 });
@@ -140,6 +141,7 @@ export const timelineComponentDef = defineComponent({
     ],
   },
   defaultSize: { w: 80, h: 25 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: false,
 });

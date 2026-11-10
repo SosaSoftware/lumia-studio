@@ -18,6 +18,8 @@ const workspace = useWorkspace();
 const session = workspace.session;
 const canEdit = computed(() => canChange(ACTIONS.edit));
 const info = computed(() => workspace.catalog.component(props.element.component));
+/** The height of the component is the height of its content, so it is not typed. */
+const fitsContent = computed(() => workspace.catalog.fitsContent(props.element.component));
 const tag = computed(() => (info.value === undefined ? props.element.component : `${tagGroup(info.value.group)} · ${info.value.name}`));
 const errors = computed(() => session.state.fieldErrors[props.element.id] ?? {});
 const propErrors = computed(() => {
@@ -80,7 +82,7 @@ function onMedia(asset: MediaAsset | null): void {
         <span class="prop-label">Tamaño</span>
         <div class="prop-row">
           <NumberField :model-value="element.w" label="Ancho" prefix="ancho" :step="0.5" :disabled="!canEdit" :invalid="!!errors.geometry" testid="prop-w" @update:model-value="patch('w', $event)" />
-          <NumberField :model-value="element.h" label="Alto" prefix="alto" :step="0.5" :disabled="!canEdit" :invalid="!!errors.geometry" testid="prop-h" @update:model-value="patch('h', $event)" />
+          <NumberField :model-value="element.h" label="Alto" prefix="alto" :step="0.5" :disabled="!canEdit || fitsContent" :title="fitsContent ? 'El alto se ajusta al contenido' : undefined" :invalid="!!errors.geometry" testid="prop-h" @update:model-value="patch('h', $event)" />
         </div>
         <span v-if="errors.geometry" class="prop-error" role="alert" data-testid="field-error-geometry">{{ errors.geometry }}</span>
       </div>

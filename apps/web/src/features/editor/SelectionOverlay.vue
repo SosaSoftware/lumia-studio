@@ -13,6 +13,10 @@ import type { Geometry, ResizeHandle } from './geometry.ts';
  */
 const props = defineProps<{
   element: SlideElement;
+  /** Height of the element as it is drawn, in `cqw`: the one of its content when it fits its content. */
+  height: number;
+  /** The height of the element is the height of its content, so only its width can be resized. */
+  fitsContent: boolean;
   slideWidth: () => number;
   /** What the element can match while it is resized: the other elements of the slide. */
   alignment: () => Alignment;
@@ -36,13 +40,15 @@ const HANDLE_LABELS: Record<ResizeHandle, string> = {
 
 let session: DragSession | null = null;
 let origin = { x: 0, y: 0 };
-const box = computed(() => ({ left: `${String(props.element.x)}cqw`, top: `${String(props.element.y)}cqw`, width: `${String(props.element.w)}cqw`, height: `${String(props.element.h)}cqw` }));
+const box = computed(() => ({ left: `${String(props.element.x)}cqw`, top: `${String(props.element.y)}cqw`, width: `${String(props.element.w)}cqw`, height: `${String(props.height)}cqw` }));
+/** The handles of the sides when the height follows the content; all of them otherwise. */
+const handles = computed<readonly ResizeHandle[]>(() => (props.fitsContent ? ['w', 'e'] : RESIZE_HANDLES));
 
 function onPointerDown(event: PointerEvent, handle: ResizeHandle): void {
   if (event.button !== 0) return;
   event.stopPropagation();
   event.preventDefault();
-  session = new DragSession({ kind: 'resize', handle }, { x: props.element.x, y: props.element.y, w: props.element.w, h: props.element.h }, props.slideWidth(), props.alignment());
+  session = new DragSession({ kind: 'resize', handle }, { x: props.element.x, y: props.element.y, w: props.element.w, h: props.height }, props.slideWidth(), props.alignment());
   origin = { x: event.clientX, y: event.clientY };
   if (event.currentTarget instanceof Element) event.currentTarget.setPointerCapture(event.pointerId);
 }
@@ -69,7 +75,7 @@ function onPointerUp(event: PointerEvent): void {
     <div class="box" :style="box">
       <!-- mousedown.prevent keeps the keyboard focus on the element while resizing. -->
       <span
-        v-for="handle in RESIZE_HANDLES"
+        v-for="handle in handles"
         :key="handle"
         class="handle"
         :data-handle="handle"

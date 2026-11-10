@@ -15,6 +15,7 @@ export const titleComponent = defineComponent({
   }),
   defaults: { text: 'Título', level: 'h2', align: 'left' },
   defaultSize: { w: 88, h: 9 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: false,
 });
@@ -31,6 +32,7 @@ export const paragraphComponent = defineComponent({
   }),
   defaults: { text: 'Escribe aquí el contenido.', align: 'left', size: 'md' },
   defaultSize: { w: 88, h: 18 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: false,
 });
@@ -46,6 +48,7 @@ export const bulletListComponent = defineComponent({
   }),
   defaults: { items: ['Primer punto', 'Segundo punto'], ordered: false },
   defaultSize: { w: 88, h: 22 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: false,
 });
@@ -87,6 +90,7 @@ export const tableComponent = defineComponent({
     headerRow: true,
   },
   defaultSize: { w: 80, h: 25 },
+  fitsContent: true,
   usesMedia: false,
   isQuestion: false,
 });

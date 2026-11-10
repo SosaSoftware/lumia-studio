@@ -24,6 +24,10 @@ import type { Geometry } from './geometry.ts';
 import { clampGeometry, findFreeSpot, fitInsideMargins } from './geometry.ts';
 import { SaveScheduler } from './save-scheduler.ts';
 
+/** Difference in `cqw` from which the height of a component that fits its content is saved again. */
+const FIT_EPSILON = 0.05;
+/** Difference from which the height of another component grows; the content height is read in whole pixels. */
+const GROW_EPSILON = 0.15;
 
 export type DocumentApi = Pick<
   StudioApi,
@@ -159,6 +163,10 @@ export class DocumentSession {
   private preparing: Promise<IdRemap> | null = null;
   private noticeTimer: ReturnType<typeof setTimeout> | undefined;
   private opening = 0;
+  /** Height each element needs for its content, as the canvas measured it. */
+  private readonly measured = new Map<string, number>();
+  /** Elements the person edited since the class was opened: only those get their measured height saved. */
+  private readonly touched = new Set<string>();
   /** Structural actions run one after another, so quick clicks reach the API in order. */
   private chain: Promise<void> = Promise.resolve();
   private running = 0;
@@ -223,6 +231,7 @@ export class DocumentSession {
   public async open(node: TreeNode): Promise<void> {
     await this.flush();
     const ticket = ++this.opening;
+    this.touched.clear();
     this.state.classNode = node;
     this.state.document = null;
     this.state.slides = [];
@@ -530,6 +539,7 @@ export class DocumentSession {
       });
       const target = this.state.slides.find((candidate) => candidate.id === created.slideId);
       target?.elements.push(created);
+      this.touched.add(created.id);
       this.state.selectedElementId = created.id;
     });
   }
@@ -551,6 +561,25 @@ export class DocumentSession {
     this.updateElement(elementId, geometry);
   }
 
+  /**
+   * The canvas reports the height that an element needs for its content. It is saved only for an element the person
+   * edited, so opening a class never changes it.
+   */
+  public reportHeight(elementId: string, height: number): void {
+    this.measured.set(elementId, height);
+    if (this.touched.has(elementId)) this.fitHeight(elementId);
+  }
+
+  /** Gives an element the height its content needs: always for a component that fits its content, and only when the content outgrows the frame for the others. */
+  private fitHeight(elementId: string): void {
+    const element = this.findElement(elementId);
+    const needed = this.measured.get(elementId);
+    if (element === undefined || needed === undefined) return;
+    const difference = needed - element.h;
+    const fits = this.catalog.fitsContent(element.component) ? Math.abs(difference) > FIT_EPSILON : difference > GROW_EPSILON;
+    if (fits) this.applyElementPatch(elementId, { h: needed });
+  }
+
   private findElement(elementId: string): SlideElement | undefined {
     for (const slide of this.state.slides) {
       const element = slide.elements.find((candidate) => candidate.id === elementId);
@@ -563,6 +592,8 @@ export class DocumentSession {
     const element = this.findElement(elementId);
     if (element === undefined) return;
     Object.assign(element, patch);
+    this.touched.add(elementId);
+    this.fitHeight(elementId);
     this.scheduler.schedule(`element:${elementId}`, async () => {
       const latest = this.findElement(elementId);
       if (latest === undefined) return;
