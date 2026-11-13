@@ -33,7 +33,7 @@ Un turno que falla durante el stream termina con `RUN_ERROR`. El navegador recib
 | Caracteres de un mensaje | 50 000 | `DEFAULT_LIMITS` en `input-guard.ts` |
 | Caracteres de una respuesta de herramienta | 20 000 | `DEFAULT_LIMITS` en `input-guard.ts` |
 | Herramientas declaradas por petición | 32 | `DEFAULT_LIMITS` en `input-guard.ts` |
-| Entradas del contexto de pantalla | 16, de hasta 600 caracteres | `DEFAULT_LIMITS` en `screen-context.ts` |
+| Entradas del contexto de pantalla | 16, de hasta 1200 caracteres | `DEFAULT_LIMITS` en `screen-context.ts` |
 | Conversaciones en memoria | 100 | `MAX_THREADS` en `lumi-runtime.ts` |
 | Sesión inactiva del runtime | 2 horas | `IDLE_SESSION_TIMEOUT` en `lumia-studio-agent-runtime-stack.ts` |
 

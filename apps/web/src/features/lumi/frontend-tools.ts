@@ -159,6 +159,9 @@ export interface ContextUser {
   readonly role: string;
 }
 
+/** Selected components listed in the screen context; the count always covers all of them. */
+const MAX_SELECTED_IN_CONTEXT = 10;
+
 /** Screen context sent with every run: person, page, scope, open class, selection and panels. */
 export function buildContext(workspace: WorkspaceStore, user: ContextUser | null = null): ContextEntry[] {
   const session = workspace.session;
@@ -196,13 +199,18 @@ export function buildContext(workspace: WorkspaceStore, user: ContextUser | null
     }
     entries.push({ description: 'record', value: JSON.stringify(record) });
     const slide = session.currentSlide;
-    const element = session.selectedElement;
+    const selected = session.selectedElements;
     if (slide !== null) {
       const selection: Record<string, unknown> = { slideId: slide.id, slidePosition: slide.position, slideTitle: slide.title };
-      if (element !== null) {
-        selection.elementId = element.id;
-        selection.elementComponent = element.component;
-        selection.elementName = element.name;
+      const [only] = selected;
+      if (selected.length === 1 && only !== undefined) {
+        selection.elementId = only.id;
+        selection.elementComponent = only.component;
+        selection.elementName = only.name;
+      } else if (selected.length > 1) {
+        // Several components are selected: Lumi gets how many and which ones, up to a limit that keeps the value short.
+        selection.selectedCount = selected.length;
+        selection.elements = selected.slice(0, MAX_SELECTED_IN_CONTEXT).map((element) => ({ id: element.id, component: element.component }));
       }
       const clip = session.state.selectedClip;
       if (clip !== null) selection.timeline = clip;

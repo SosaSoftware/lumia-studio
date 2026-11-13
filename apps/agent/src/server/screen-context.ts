@@ -7,7 +7,7 @@ export interface ScreenContextLimits {
   readonly maxValueChars: number;
 }
 
-const DEFAULT_LIMITS: ScreenContextLimits = { maxEntries: 16, maxValueChars: 600 };
+const DEFAULT_LIMITS: ScreenContextLimits = { maxEntries: 16, maxValueChars: 1200 };
 
 /** Names the web gives to its entries: `page`, `record`, `selection`… */
 const ENTRY_NAME = /^[A-Za-z][A-Za-z0-9_-]{0,39}$/;
