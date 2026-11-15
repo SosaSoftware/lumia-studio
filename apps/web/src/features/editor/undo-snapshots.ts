@@ -1,4 +1,4 @@
-import type { AdvanceMode, AudioKind, Entrance, PauseEnd, Slide, SlideElement, Transition } from '../../api/types.ts';
+import type { NextUnlock, StartMode, AudioKind, Entrance, Exit, PauseEnd, Slide, SlideElement, Transition } from '../../api/types.ts';
 import type { ThemeColorKey } from '@lumia/packages/catalog';
 import type { IdHandles } from './id-handles.ts';
 
@@ -31,6 +31,8 @@ export interface ElementData {
   readonly z: number;
   readonly appearsAtS: number;
   readonly entrance: Entrance;
+  readonly exit: Exit;
+  readonly disappearsAtS: number | null;
   readonly props: Record<string, unknown>;
 }
 
@@ -85,7 +87,11 @@ export interface SlideData {
   readonly background: ThemeColorKey;
   readonly durationS: number;
   readonly transition: Transition;
-  readonly advance: AdvanceMode;
+  readonly unlock: NextUnlock;
+  readonly startMode: StartMode;
+  /** Places in `elements` of the start and custom buttons. */
+  readonly startIndex: number | null;
+  readonly unlockIndex: number | null;
   readonly elements: readonly ElementData[];
   /** `timerIndex` is the place in `elements` of the timer element a pause waits for. */
   readonly pauses: readonly (PauseFields & { readonly timerIndex: number | null })[];
@@ -121,12 +127,19 @@ export function elementData(element: SlideElement): ElementData {
     z: element.z,
     appearsAtS: element.appearsAtS,
     entrance: element.entrance,
+    exit: element.exit,
+    disappearsAtS: element.disappearsAtS,
     props: cloneValue(element.props),
   };
 }
 
 export function snapshotElement(handles: IdHandles, element: SlideElement): ElementSnapshot {
   return { ...elementData(element), handle: handles.handle(element.id), slideHandle: handles.handle(element.slideId) };
+}
+
+function indexOf(elements: readonly SlideElement[], id: string | null): number | null {
+  const index = id === null ? -1 : elements.findIndex((element) => element.id === id);
+  return index < 0 ? null : index;
 }
 
 export function snapshotSlide(handles: IdHandles, slide: Slide): SlideSnapshot {
@@ -137,7 +150,10 @@ export function snapshotSlide(handles: IdHandles, slide: Slide): SlideSnapshot {
     background: slide.background,
     durationS: slide.durationS,
     transition: slide.transition,
-    advance: slide.advance,
+    unlock: slide.unlock,
+    startMode: slide.startMode,
+    startIndex: indexOf(slide.elements, slide.startElementId),
+    unlockIndex: indexOf(slide.elements, slide.unlockElementId),
     elements: slide.elements.map(elementData),
     elementHandles: slide.elements.map((element) => handles.handle(element.id)),
     pauses: slide.pauses.map((pause) => {

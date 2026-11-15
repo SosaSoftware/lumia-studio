@@ -40,10 +40,13 @@ const version: DocumentVersionDto = {
       background: 'surface',
       durationS: 8,
       transition: 'none',
-      advance: 'click',
+      unlock: 'always',
+      startMode: 'auto',
+      startElementId: null,
+      unlockElementId: null,
       elements: [
-        { id: 'e-1', slideId: 's-1', component: 'image', name: 'Imagen', x: 0, y: 0, w: 10, h: 10, z: 1, appearsAtS: 0, entrance: 'none', props: { mediaId: IMAGE, alt: 'Robot' }, mediaId: IMAGE, media: null },
-        { id: 'e-2', slideId: 's-1', component: 'gallery', name: 'Galería', x: 0, y: 0, w: 10, h: 10, z: 2, appearsAtS: 0, entrance: 'none', props: { items: [{ mediaId: PHOTO }, { mediaId: null }] }, mediaId: null, media: null },
+        { id: 'e-1', slideId: 's-1', component: 'image', name: 'Imagen', x: 0, y: 0, w: 10, h: 10, z: 1, appearsAtS: 0, entrance: 'none', exit: 'none', disappearsAtS: null, props: { mediaId: IMAGE, alt: 'Robot' }, mediaId: IMAGE, media: null },
+        { id: 'e-2', slideId: 's-1', component: 'gallery', name: 'Galería', x: 0, y: 0, w: 10, h: 10, z: 2, appearsAtS: 0, entrance: 'none', exit: 'none', disappearsAtS: null, props: { items: [{ mediaId: PHOTO }, { mediaId: null }] }, mediaId: null, media: null },
       ],
       narrationClips: [
         { id: 'c-1', slideId: 's-1', startsAtS: 0, script: 'Hola', voice: 'Mia', speed: 1, generatedDurationS: 2.5, audioUrl: 'x', speechMarksUrl: 'y', status: 'ready', errorMessage: null },
@@ -75,7 +78,7 @@ describe('.lumia export', () => {
     ];
     const narration = [{ id: 'c-1', audioKey: 'narration/d-1/c-1.mp3', speechMarksKey: 'narration/d-1/c-1.marks.json' }];
     const definition = buildDefinition(source, version, media, narration, new Date('2026-11-05T02:00:00Z'));
-    expect(definition).toMatchObject({ format: 'lumia', formatVersion: 1, class: { name: 'que-es-la-ia.lumia', folders: [{ name: 'fundamentos' }] }, version: { number: 3 } });
+    expect(definition).toMatchObject({ format: 'lumia', formatVersion: 2, class: { name: 'que-es-la-ia.lumia', folders: [{ name: 'fundamentos' }] }, version: { number: 3 } });
     expect(definition.media).toEqual({
       [IMAGE]: { path: `media/${IMAGE}/robot.png`, name: 'robot.png', mimeType: 'image/png', sizeBytes: 3 },
       [SONG]: { path: `media/${SONG}/fondo.mp3`, name: 'Fondo musical.mp3', mimeType: 'audio/mpeg', sizeBytes: 4 },

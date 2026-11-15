@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { advanceState, isFinished, isVisibleAt, stepIndex } from './preview-clock.ts';
+import { slideButton } from '../slides/slide-buttons.ts';
+import { isVisibleAt, nextState, stepIndex, timeState } from './preview-clock.ts';
 
 describe('preview clock', () => {
   it('shows an element from its appearsAtS', () => {
@@ -8,10 +9,10 @@ describe('preview clock', () => {
     expect(isVisibleAt({ appearsAtS: 0 }, 0)).toBe(true);
   });
 
-  it('finishes only automatic slides after their duration', () => {
-    expect(isFinished({ advance: 'auto', durationS: 8 }, 7.9)).toBe(false);
-    expect(isFinished({ advance: 'auto', durationS: 8 }, 8)).toBe(true);
-    expect(isFinished({ advance: 'click', durationS: 8 }, 100)).toBe(false);
+  it('runs the time of a slide until its duration', () => {
+    expect(timeState(8, 4)).toEqual({ done: false, progress: 0.5 });
+    expect(timeState(8, 8)).toEqual({ done: true, progress: 1 });
+    expect(timeState(0, 0)).toEqual({ done: true, progress: 1 });
   });
 
   it('keeps the index inside the deck', () => {
@@ -22,17 +23,37 @@ describe('preview clock', () => {
   });
 });
 
-describe('advance when the questions are completed', () => {
-  it('blocks moving forward until every question is completed, then moves on by itself', () => {
-    expect(advanceState('on_complete', ['q1', 'q2'], new Set())).toEqual({ blocked: true, autoAdvance: false });
-    expect(advanceState('on_complete', ['q1', 'q2'], new Set(['q1']))).toEqual({ blocked: true, autoAdvance: false });
-    expect(advanceState('on_complete', ['q1', 'q2'], new Set(['q1', 'q2']))).toEqual({ blocked: false, autoAdvance: true });
+describe('Next button', () => {
+  const running = { done: false, progress: 0.5 };
+  const finished = { done: true, progress: 1 };
+  const base = { time: running, activities: { total: 0, completed: 0 }, hasCustomButton: false, unlockedBefore: false };
+
+  it('is on from the start for always, and never moves on by itself', () => {
+    expect(nextState({ ...base, unlock: 'always' })).toEqual({ enabled: true, progress: 1, waitsFor: null });
   });
 
-  it('never blocks other modes or a slide without questions, and never finishes by time', () => {
-    expect(advanceState('click', ['q1'], new Set())).toEqual({ blocked: false, autoAdvance: false });
-    expect(advanceState('auto', ['q1'], new Set())).toEqual({ blocked: false, autoAdvance: false });
-    expect(advanceState('on_complete', [], new Set())).toEqual({ blocked: false, autoAdvance: false });
-    expect(isFinished({ advance: 'on_complete', durationS: 8 }, 100)).toBe(false);
+  it('waits for the time or the activities', () => {
+    expect(nextState({ ...base, unlock: 'after_time' })).toEqual({ enabled: false, progress: 0.5, waitsFor: 'time' });
+    expect(nextState({ ...base, unlock: 'after_time', time: finished }).enabled).toBe(true);
+    expect(nextState({ ...base, unlock: 'after_activities', activities: { total: 2, completed: 1 } })).toEqual({ enabled: false, progress: 0.5, waitsFor: 'activities' });
+    expect(nextState({ ...base, unlock: 'after_activities', activities: { total: 2, completed: 2 } }).enabled).toBe(true);
+  });
+
+  it('leaves the lateral Next off while a custom button moves on, and on without that button', () => {
+    expect(nextState({ ...base, unlock: 'custom_button', hasCustomButton: true, unlockedBefore: true })).toEqual({ enabled: false, progress: 0, waitsFor: 'button' });
+    expect(nextState({ ...base, unlock: 'custom_button' }).enabled).toBe(true);
+  });
+
+  it('ignores activities on a slide without them, and stays on for a slide unlocked before', () => {
+    expect(nextState({ ...base, unlock: 'after_activities' }).enabled).toBe(true);
+    expect(nextState({ ...base, unlock: 'after_time', unlockedBefore: true }).enabled).toBe(true);
+  });
+
+  it('finds a button of the slide only with the expected action', () => {
+    const button = { id: 'b1', component: 'button_link', props: { action: 'start_slide' } };
+    const slide = { elements: [button] } as unknown as Parameters<typeof slideButton>[0]; // only the fields slideButton reads
+    expect(slideButton(slide, 'b1', ['start_slide'])?.id).toBe('b1');
+    expect(slideButton(slide, 'b1', ['next_slide'])).toBeNull();
+    expect(slideButton(slide, null, ['start_slide'])).toBeNull();
   });
 });

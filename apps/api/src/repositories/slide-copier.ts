@@ -9,7 +9,8 @@ interface IdPair {
 }
 
 /**
- * Copies slides with their elements, pauses, audio clips and narration clips (comments stay behind).
+ * Copies slides with their elements, pauses, audio clips and narration clips (comments stay behind). References to
+ * elements of the same slide (start and custom buttons, pause timers) point to the copies.
  * Narration clips keep pointing to the same stored audio: stored objects are never deleted.
  */
 export class SlideCopier {
@@ -23,8 +24,8 @@ export class SlideCopier {
     const slideMap: IdPair[] = sources.map((source) => ({ old_id: source.slideId, new_id: randomUUID(), position: source.position }));
     const slideIds = SqlParam.json(slideMap);
     await this.db.execute(
-      `insert into studio.slide (id, version_id, position, title, background, duration_s, transition, advance)
-       select m.new_id, :targetVersionId::uuid, m.position, s.title, s.background, s.duration_s, s.transition, s.advance
+      `insert into studio.slide (id, version_id, position, title, background, duration_s, transition, unlock, start_mode)
+       select m.new_id, :targetVersionId::uuid, m.position, s.title, s.background, s.duration_s, s.transition, s.unlock, s.start_mode
          from studio.slide s
          join jsonb_to_recordset(:slideMap) as m(old_id uuid, new_id uuid, position smallint) on m.old_id = s.id`,
       { targetVersionId, slideMap: slideIds },
@@ -38,11 +39,23 @@ export class SlideCopier {
     const elementMap: IdPair[] = elementRows.map((row) => ({ old_id: row.id, new_id: randomUUID() }));
     const elementIds = SqlParam.json(elementMap);
     await this.db.execute(
-      `insert into studio.slide_element (id, slide_id, component, name, x, y, w, h, z, appears_at_s, entrance, props, media_id)
-       select em.new_id, sm.new_id, e.component, e.name, e.x, e.y, e.w, e.h, e.z, e.appears_at_s, e.entrance, e.props, e.media_id
+      `insert into studio.slide_element (id, slide_id, component, name, x, y, w, h, z, appears_at_s, entrance, exit,
+                                         disappears_at_s, props, media_id)
+       select em.new_id, sm.new_id, e.component, e.name, e.x, e.y, e.w, e.h, e.z, e.appears_at_s, e.entrance, e.exit,
+              e.disappears_at_s, e.props, e.media_id
          from studio.slide_element e
          join jsonb_to_recordset(:slideMap) as sm(old_id uuid, new_id uuid, position smallint) on sm.old_id = e.slide_id
          join jsonb_to_recordset(:elementMap) as em(old_id uuid, new_id uuid) on em.old_id = e.id`,
+      { slideMap: slideIds, elementMap: elementIds },
+    );
+    // The buttons a slide relies on are elements of the same slide, so they point to the copies of those elements.
+    await this.db.execute(
+      `update studio.slide target set start_element_id = se.new_id, unlock_element_id = ue.new_id
+         from studio.slide s
+         join jsonb_to_recordset(:slideMap) as sm(old_id uuid, new_id uuid, position smallint) on sm.old_id = s.id
+         left join jsonb_to_recordset(:elementMap) as se(old_id uuid, new_id uuid) on se.old_id = s.start_element_id
+         left join jsonb_to_recordset(:elementMap) as ue(old_id uuid, new_id uuid) on ue.old_id = s.unlock_element_id
+        where target.id = sm.new_id`,
       { slideMap: slideIds, elementMap: elementIds },
     );
     await this.db.execute(

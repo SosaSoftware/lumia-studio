@@ -62,7 +62,7 @@ const slide = (id: string, elementId: string, title: string): Record<string, unk
   background: 'surface',
   durationS: 8,
   transition: 'none',
-  advance: 'click',
+  unlock: 'always',
   elements: [element(elementId, id, title)],
   narrationClips: [],
   pauses: [],

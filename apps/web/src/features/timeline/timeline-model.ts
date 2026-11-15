@@ -1,4 +1,4 @@
-import type { AdvanceMode, AudioKind, Entrance, NarrationClip, NarrationStatus, PauseEnd, Slide, SlideElement, Transition } from '../../api/types.ts';
+import type { NextUnlock, StartMode, AudioKind, Entrance, Exit, NarrationClip, NarrationStatus, PauseEnd, Slide, SlideElement, Transition } from '../../api/types.ts';
 import { t } from '../../i18n/index.ts';
 
 export const MAX_SCRIPT_LENGTH = 3000;
@@ -14,8 +14,16 @@ export function transitionLabel(value: Transition): string {
   return t(`timeline.transition.${value}`);
 }
 
-export function advanceLabel(value: AdvanceMode): string {
-  return t(`timeline.advance.${value}`);
+export function exitLabel(value: Exit): string {
+  return t(`timeline.exit.${value}`);
+}
+
+export function unlockLabel(value: NextUnlock): string {
+  return t(`timeline.unlock.${value}`);
+}
+
+export function startModeLabel(value: StartMode): string {
+  return t(`timeline.startMode.${value}`);
 }
 
 export function audioKindLabel(value: AudioKind): string {
@@ -80,9 +88,14 @@ export function slideDuration(slide: Pick<Slide, 'durationS' | 'narrationClips'>
 }
 
 /** Bar of an element on the timeline: from when it appears to the end of the slide; a timer, while it counts down. */
-export function elementSpan(element: Pick<SlideElement, 'component' | 'props' | 'appearsAtS'>, slideDurationS: number): { start: number; end: number } {
+export function elementSpan(
+  element: Pick<SlideElement, 'component' | 'props' | 'appearsAtS'> & Partial<Pick<SlideElement, 'exit' | 'disappearsAtS'>>,
+  slideDurationS: number,
+): { start: number; end: number } {
   const seconds = timerSeconds(element);
-  const end = seconds === null ? slideDurationS : Math.min(slideDurationS, element.appearsAtS + seconds);
+  // An element with an exit leaves at its own second; the rest stay until the slide or their countdown ends.
+  const leaves = element.exit !== undefined && element.exit !== 'none' && element.disappearsAtS !== undefined && element.disappearsAtS !== null ? element.disappearsAtS : null;
+  const end = leaves !== null ? Math.min(slideDurationS, leaves) : seconds === null ? slideDurationS : Math.min(slideDurationS, element.appearsAtS + seconds);
   return { start: element.appearsAtS, end: Math.max(end, element.appearsAtS) };
 }
 

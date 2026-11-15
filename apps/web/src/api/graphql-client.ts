@@ -17,7 +17,7 @@ export class ApiError extends Error {
   }
 }
 
-const FIELD_PATTERN = /(props(?:\.[A-Za-z0-9_]+)*|geometry|component|appearsAtS|mediaId|type|background|slideIds):\s/g;
+const FIELD_PATTERN = /(props(?:\.[A-Za-z0-9_]+)*|geometry|component|appearsAtS|disappearsAtS|mediaId|type|background|slideIds):\s/g;
 
 /** Extracts `path: message` pairs from a validation message such as `Elemento (title): props.text: Texto demasiado corto.` */
 export function parseFieldErrors(message: string): Record<string, string> {

@@ -2,10 +2,10 @@ import type { StudioClaims } from '../auth/index.ts';
 import type { Database } from '../infrastructure/db/index.ts';
 import { AppError } from '../shared/errors/index.ts';
 import type { ObjectStorage } from '../infrastructure/storage/index.ts';
-import { DEFAULT_SLIDE_ADVANCE, DEFAULT_SLIDE_BACKGROUND, DEFAULT_SLIDE_DURATION_S, SLIDE_HEIGHT, SLIDE_WIDTH, THEME_COLOR_KEYS, componentCatalog } from '@lumia/packages/catalog';
+import { ADVANCING_BUTTON_ACTIONS, BUTTON_COMPONENT, DEFAULT_SLIDE_START_MODE, DEFAULT_SLIDE_UNLOCK, DEFAULT_SLIDE_BACKGROUND, START_BUTTON_ACTION, DEFAULT_SLIDE_DURATION_S, SLIDE_HEIGHT, SLIDE_WIDTH, THEME_COLOR_KEYS, componentCatalog } from '@lumia/packages/catalog';
 import type { ComponentCatalog } from '@lumia/packages/catalog';
 import type { DeletedResultDto, ElementDto, SlideDto } from '../domain/dto.ts';
-import { ADVANCE_MODES, ENTRANCES, TRANSITIONS, inRange, oneOf } from '../domain/enums.ts';
+import { NEXT_UNLOCKS, ENTRANCES, EXITS, START_MODES, TRANSITIONS, inRange, oneOf } from '../domain/enums.ts';
 import type { ElementValues } from '../repositories/element-repository.ts';
 import type { RepositorySet } from '../repositories/repository-set.ts';
 import type { NewSlide, SlideChanges } from '../repositories/slide-repository.ts';
@@ -21,7 +21,12 @@ export interface SaveSlideRequest {
   background?: string;
   durationS?: number;
   transition?: string;
-  advance?: string;
+  unlock?: string;
+  startMode?: string;
+  /** Start button of the slide; an empty text clears it. */
+  startElementId?: string;
+  /** Custom button of the slide; an empty text clears it. */
+  unlockElementId?: string;
 }
 
 export interface SaveElementRequest {
@@ -36,6 +41,8 @@ export interface SaveElementRequest {
   z?: number;
   appearsAtS?: number;
   entrance?: string;
+  exit?: string;
+  disappearsAtS?: number;
   props: unknown;
   mediaId?: string;
 }
@@ -50,6 +57,8 @@ export interface DraftElement {
   z: number;
   appearsAtS: number;
   entrance?: string;
+  exit?: string;
+  disappearsAtS?: number;
   props: unknown;
 }
 
@@ -58,11 +67,34 @@ export interface DraftSlide {
   background?: string;
   durationS?: number;
   transition?: string;
-  advance?: string;
+  unlock?: string;
+  startMode?: string;
   elements: DraftElement[];
 }
 
 const MAX_REPORTED_ISSUES = 10;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Exit of an element: without an exit the element stays until the slide ends, so it has no second to leave; with one, it
+ * leaves after it appears.
+ */
+function exitOf(value: string, disappearsAtS: number | null, appearsAtS: number, label: string): { exit: string; disappearsAtS: number | null } {
+  const exit = oneOf('exit', value, EXITS);
+  if (exit === 'none') return { exit, disappearsAtS: null };
+  if (disappearsAtS === null || !Number.isFinite(disappearsAtS) || disappearsAtS <= appearsAtS) {
+    throw AppError.validation(`${label}, disappearsAtS: debe ser mayor que el segundo en que aparece (${String(appearsAtS)}).`);
+  }
+  return { exit, disappearsAtS };
+}
+
+/** Id of a referenced button: an empty text clears the reference. */
+function buttonReference(field: string, value: string): string | null {
+  if (value.trim() === '') return null;
+  if (!UUID.test(value)) throw AppError.validation(`${field}: no es un identificador válido.`);
+  return value;
+}
 
 function asRecord(value: unknown, field: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -92,16 +124,19 @@ export class SlideService extends StudioService {
       let id = request.id;
       if (id === undefined) {
         id = await this.createSlide(repos, request, changes);
+        await this.requireButtons(repos, id, changes);
       } else {
         const existing = await repos.slides.find(id);
         if (existing?.versionId !== request.versionId) {
           throw AppError.notFound('La diapositiva no existe en esta versión.');
         }
+        await this.requireButtons(repos, id, changes);
         await repos.slides.update(id, changes);
         if (request.position !== undefined) {
           await this.move(repos, request.versionId, id, request.position);
         }
       }
+      await this.pinStartButton(repos, id);
       await repos.documents.touch(owner.documentId, claims.sub);
       return id;
     });
@@ -185,6 +220,9 @@ export class SlideService extends StudioService {
       h: height,
       appearsAtS: request.appearsAtS ?? existing?.appearsAtS ?? 0,
     };
+    // The start button of the slide cannot appear later than its start.
+    if (request.id !== undefined && (await this.isStartButton(request.slideId, request.id, props))) values.appearsAtS = 0;
+    const exit = exitOf(request.exit ?? existing?.exit ?? 'none', request.disappearsAtS ?? existing?.disappearsAtS ?? null, values.appearsAtS, 'Elemento');
     const validProps = this.validator.validate({ ...values, props: candidateProps }, 'Elemento');
     await this.requireMedia(this.catalog.mediaIds(request.component, validProps), owner.categoryId);
     const elementId = await this.inTransaction(async (repos) => {
@@ -193,6 +231,7 @@ export class SlideService extends StudioService {
         ...values,
         z: request.z ?? existing?.z ?? (await repos.elements.nextZ(request.slideId)),
         entrance,
+        ...exit,
         props: validProps,
         mediaId,
       };
@@ -264,9 +303,13 @@ export class SlideService extends StudioService {
       if (!TRANSITIONS.some((key) => key === transition)) {
         issues.push(`${slideLabel}, transition: debe ser una de ${TRANSITIONS.join(', ')}.`);
       }
-      const advance = slide.advance ?? DEFAULT_SLIDE_ADVANCE;
-      if (!ADVANCE_MODES.some((key) => key === advance)) {
-        issues.push(`${slideLabel}, advance: debe ser uno de ${ADVANCE_MODES.join(', ')}.`);
+      const unlock = slide.unlock ?? DEFAULT_SLIDE_UNLOCK;
+      if (!NEXT_UNLOCKS.some((key) => key === unlock)) {
+        issues.push(`${slideLabel}, unlock: debe ser uno de ${NEXT_UNLOCKS.join(', ')}.`);
+      }
+      const startMode = slide.startMode ?? DEFAULT_SLIDE_START_MODE;
+      if (!START_MODES.some((key) => key === startMode)) {
+        issues.push(`${slideLabel}, startMode: debe ser uno de ${START_MODES.join(', ')}.`);
       }
       const elements = slide.elements.flatMap((element, elementIndex): ElementValues[] => {
         try {
@@ -282,6 +325,7 @@ export class SlideService extends StudioService {
             x: element.x, y: element.y, w: element.w, h: element.h, z: element.z,
             appearsAtS: element.appearsAtS,
             entrance: oneOf('entrance', element.entrance ?? 'none', ENTRANCES),
+            ...exitOf(element.exit ?? 'none', element.disappearsAtS ?? null, element.appearsAtS, `${slideLabel}, elemento ${String(elementIndex + 1)}`),
             props,
             mediaId,
           }];
@@ -299,7 +343,8 @@ export class SlideService extends StudioService {
           background,
           durationS: slide.durationS ?? DEFAULT_SLIDE_DURATION_S,
           transition,
-          advance,
+          unlock,
+          startMode,
         },
         elements,
       };
@@ -325,10 +370,61 @@ export class SlideService extends StudioService {
     if (request.transition !== undefined) {
       changes.transition = oneOf('transition', request.transition, TRANSITIONS);
     }
-    if (request.advance !== undefined) {
-      changes.advance = oneOf('advance', request.advance, ADVANCE_MODES);
+    if (request.unlock !== undefined) {
+      changes.unlock = oneOf('unlock', request.unlock, NEXT_UNLOCKS);
+    }
+    if (request.startMode !== undefined) {
+      changes.startMode = oneOf('startMode', request.startMode, START_MODES);
+    }
+    if (request.startElementId !== undefined) {
+      changes.startElementId = buttonReference('startElementId', request.startElementId);
+    }
+    if (request.unlockElementId !== undefined) {
+      changes.unlockElementId = buttonReference('unlockElementId', request.unlockElementId);
     }
     return changes;
+  }
+
+  /**
+   * Checks the buttons a slide starts to refer to: the start button must start the slide, and the custom button must
+   * move on. Both must be buttons of the same slide. A reference that does not change is not checked again, so a save
+   * of the whole slide keeps working after the button changes its action; the player then ignores that button.
+   */
+  private async requireButtons(repos: RepositorySet, slideId: string, changes: SlideChanges): Promise<void> {
+    const current = await repos.slides.behavior(slideId);
+    if (typeof changes.startElementId === 'string' && changes.startElementId !== current.startElementId) {
+      await this.requireButton(repos, slideId, changes.startElementId, 'startElementId', [START_BUTTON_ACTION]);
+    }
+    if (typeof changes.unlockElementId === 'string' && changes.unlockElementId !== current.unlockElementId) {
+      await this.requireButton(repos, slideId, changes.unlockElementId, 'unlockElementId', ADVANCING_BUTTON_ACTIONS);
+    }
+  }
+
+  /** The start button of a slide that starts with a button appears at second 0: the slide starts with it. */
+  private async pinStartButton(repos: RepositorySet, slideId: string): Promise<void> {
+    const behavior = await repos.slides.behavior(slideId);
+    if (behavior.unlock !== 'after_time' || behavior.startMode !== 'button' || behavior.startElementId === null) return;
+    if ((await repos.elements.propsOf(behavior.startElementId)).action === START_BUTTON_ACTION) {
+      await repos.elements.moveToStart(behavior.startElementId);
+    }
+  }
+
+  /** Whether the element is the start button its slide uses now, so it stays at second 0. */
+  private async isStartButton(slideId: string, elementId: string, props: Record<string, unknown>): Promise<boolean> {
+    if (props.action !== START_BUTTON_ACTION) return false;
+    const behavior = await this.repos.slides.behavior(slideId);
+    return behavior.unlock === 'after_time' && behavior.startMode === 'button' && behavior.startElementId === elementId;
+  }
+
+  private async requireButton(repos: RepositorySet, slideId: string, elementId: string, field: string, actions: readonly string[]): Promise<void> {
+    const element = await repos.elements.find(elementId);
+    if (element?.slideId !== slideId || element.component !== BUTTON_COMPONENT) {
+      throw AppError.validation(`${field}: debe ser un botón de esta diapositiva.`);
+    }
+    const action = (await repos.elements.propsOf(elementId)).action;
+    if (typeof action !== 'string' || !actions.includes(action)) {
+      throw AppError.validation(`${field}: el botón debe tener la acción ${actions.join(' o ')}.`);
+    }
   }
 
   private async createSlide(repos: RepositorySet, request: SaveSlideRequest, changes: SlideChanges): Promise<string> {
@@ -342,7 +438,8 @@ export class SlideService extends StudioService {
       background: changes.background ?? DEFAULT_SLIDE_BACKGROUND,
       durationS: changes.durationS ?? DEFAULT_SLIDE_DURATION_S,
       transition: changes.transition ?? 'none',
-      advance: changes.advance ?? DEFAULT_SLIDE_ADVANCE,
+      unlock: changes.unlock ?? DEFAULT_SLIDE_UNLOCK,
+      startMode: changes.startMode ?? DEFAULT_SLIDE_START_MODE,
     });
   }
 

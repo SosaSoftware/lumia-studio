@@ -1,5 +1,5 @@
-import { ENTRANCES } from '../../api/types.ts';
-import type { Entrance, SlideElement } from '../../api/types.ts';
+import { ENTRANCES, EXITS } from '../../api/types.ts';
+import type { Entrance, Exit, SlideElement } from '../../api/types.ts';
 import { num, rec, str } from '../../api/decode.ts';
 
 /** What of an element travels in the clipboard: everything that defines it, and nothing that identifies it. */
@@ -12,6 +12,8 @@ export interface ClippedElement {
   readonly h: number;
   readonly appearsAtS: number;
   readonly entrance: Entrance;
+  readonly exit: Exit;
+  readonly disappearsAtS: number | null;
   readonly props: Record<string, unknown>;
 }
 
@@ -39,6 +41,8 @@ export function clipElement(element: SlideElement): ClippedElement {
     h: element.h,
     appearsAtS: element.appearsAtS,
     entrance: element.entrance,
+    exit: element.exit,
+    disappearsAtS: element.disappearsAtS,
     props: rec(JSON.parse(JSON.stringify(element.props))),
   };
 }
@@ -56,6 +60,8 @@ function decodeElement(value: unknown): ClippedElement | null {
     h: num(item.h),
     appearsAtS: num(item.appearsAtS),
     entrance: ENTRANCES.find((candidate) => candidate === item.entrance) ?? 'none',
+    exit: EXITS.find((candidate) => candidate === item.exit) ?? 'none',
+    disappearsAtS: typeof item.disappearsAtS === 'number' ? item.disappearsAtS : null,
     props: rec(item.props),
   };
 }

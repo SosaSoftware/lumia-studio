@@ -10,6 +10,8 @@ import CommentsPanel from '../features/comments/CommentsPanel.vue';
 import { EDITOR_SHORTCUTS } from '../features/editor/editor-shortcuts.ts';
 import type { EditorShortcutContext } from '../features/editor/editor-shortcuts.ts';
 import { ElementClipboard } from '../features/editor/element-clipboard.ts';
+import { elementDeletion } from '../features/editor/element-deletion.ts';
+import ConfirmDialog from '../ui/ConfirmDialog.vue';
 import SlideCanvas from '../features/editor/SlideCanvas.vue';
 import LumiPanel from '../features/lumi/LumiPanel.vue';
 import PreviewPlayer from '../features/preview/PreviewPlayer.vue';
@@ -30,6 +32,18 @@ import WorkspaceToasts from '../features/shell/WorkspaceToasts.vue';
 
 const workspace = useWorkspace();
 const session = workspace.session;
+
+/** Deletes elements, asking first when one of them is a button a slide relies on. */
+function removeElements(ids: readonly string[]): void {
+  elementDeletion.request(session.state.slides, ids, () => {
+    void session.deleteElements(ids);
+  });
+}
+
+/** Where each button about to be deleted is linked, as the confirmation says it. */
+const deletionMessage = computed(() =>
+  elementDeletion.state.links.map((link) => t(link.kind === 'start' ? 'editor.deleteLinked.start' : 'editor.deleteLinked.custom', { name: link.name, number: link.slideNumber })).join(' '),
+);
 
 const hasTabs = computed(() => workspace.openIds.value.length > 0);
 const hasClass = computed(() => workspace.activeClass.value !== null);
@@ -126,13 +140,13 @@ function dropComponent(component: string, x: number, y: number): void {
               @step="stepSlide"
               @geometry="(id, geometry) => session.updateGeometry(id, geometry)"
               @geometries="session.updateGeometries($event)"
-              @remove-element="session.deleteElement($event)"
-              @remove-elements="session.deleteElements($event)"
+              @remove-element="removeElements([$event])"
+              @remove-elements="removeElements($event)"
               @drop-component="dropComponent"
               @fit-height="(id, height, bound) => session.reportHeight(id, height, bound)"
             />
             <TimelinePanel v-if="panels.bottom === 'timeline' && hasDeck" />
-            <SlidesPanel v-else-if="panels.bottom === 'slides' || !hasDeck" />
+            <SlidesPanel v-else />
           </template>
           <div v-else-if="hasClass" class="empty" data-testid="no-content">
             <div class="box">
@@ -169,6 +183,15 @@ function dropComponent(component: string, x: number, y: number): void {
     </div>
     <StatusBar />
     <WorkspaceToasts />
+    <ConfirmDialog
+      v-if="elementDeletion.state.links.length > 0"
+      :title="t('editor.deleteLinked.title')"
+      :message="deletionMessage"
+      :confirm-label="t('editor.deleteLinked.confirm')"
+      danger
+      @confirm="elementDeletion.confirm()"
+      @cancel="elementDeletion.cancel()"
+    />
 
     <PreviewPlayer v-if="workspace.previewOpen.value && slides.length > 0" :slides="slides" :start-index="startIndex" @close="workspace.previewOpen.value = false" />
   </div>

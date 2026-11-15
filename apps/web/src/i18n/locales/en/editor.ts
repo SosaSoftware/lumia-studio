@@ -7,6 +7,12 @@ export const editor: typeof esEditor = {
   tagsToggle: 'Show or hide the name of each component',
   feedbackToggle: 'Show or hide the feedback field of questions and hotspots',
   components: 'Components',
+  deleteLinked: {
+    title: 'Delete a linked button',
+    start: '«{name}» is the start button of slide {number}: if you delete it, the slide will start by itself.',
+    custom: '«{name}» is the custom button of slide {number}: if you delete it, the lateral Next button will be on from the start.',
+    confirm: 'Delete',
+  },
   resize: 'Resize ({handle})',
   handles: {
     nw: 'northwest',
@@ -63,4 +69,7 @@ export const colors: typeof esColors = {
   danger: 'Red',
   text: 'Dark',
   muted: 'Gray',
+  purple: 'Purple',
+  pink: 'Pink',
+  orange: 'Orange',
 };

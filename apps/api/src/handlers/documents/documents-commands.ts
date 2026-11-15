@@ -27,7 +27,10 @@ function slideRequest(input: InputReader): SaveSlideRequest {
     background: input.optionalString('background'),
     durationS: input.optionalNumber('durationS'),
     transition: input.optionalString('transition'),
-    advance: input.optionalString('advance'),
+    unlock: input.optionalString('unlock'),
+    startMode: input.optionalString('startMode'),
+    startElementId: input.optionalString('startElementId'),
+    unlockElementId: input.optionalString('unlockElementId'),
   });
 }
 
@@ -44,6 +47,8 @@ function elementRequest(input: InputReader): SaveElementRequest {
     z: input.optionalInteger('z'),
     appearsAtS: input.optionalNumber('appearsAtS'),
     entrance: input.optionalString('entrance'),
+    exit: input.optionalString('exit'),
+    disappearsAtS: input.optionalNumber('disappearsAtS'),
     props: input.json('props'),
     mediaId: input.optionalId('mediaId'),
   });
@@ -60,6 +65,8 @@ function draftElement(input: InputReader): DraftElement {
     z: input.optionalInteger('z') ?? 0,
     appearsAtS: input.number('appearsAtS'),
     entrance: input.optionalString('entrance'),
+    exit: input.optionalString('exit'),
+    disappearsAtS: input.optionalNumber('disappearsAtS'),
     props: input.json('props'),
   });
 }
@@ -70,7 +77,8 @@ function draftSlide(input: InputReader): DraftSlide {
     background: input.optionalString('background'),
     durationS: input.optionalNumber('durationS'),
     transition: input.optionalString('transition'),
-    advance: input.optionalString('advance'),
+    unlock: input.optionalString('unlock'),
+    startMode: input.optionalString('startMode'),
     elements: input.objects('elements').map(draftElement),
   });
 }
@@ -106,7 +114,7 @@ export function documentsCommands(services: DocumentsServices): Map<string, Fiel
   return commandMap({
     'Query.document': (call) => documents.document(call.args.id('nodeId')),
     'Query.version': (call) => documents.version(call.args.id('id')),
-    'Query.componentCatalog': () => Promise.resolve(catalog.describe()),
+    'Query.componentCatalog': () => catalog.describe(),
     'Mutation.createDocument': (call) => documents.createDocument(call.claims, call.args.id('nodeId')),
     'Mutation.createVersion': (call) => documents.createVersion(call.claims, call.args.id('documentId')),
     'Mutation.saveSlide': (call) => slides.saveSlide(call.claims, slideRequest(call.args.object('input'))),

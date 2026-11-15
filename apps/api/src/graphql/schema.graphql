@@ -70,12 +70,22 @@ enum Transition {
   zoom
 }
 
-"How a slide moves on: when its time ends, with a click, or once every question on it is completed."
-enum AdvanceMode {
+"When the Next button of a slide turns on. A slide never moves on by itself or with a click on its surface."
+enum NextUnlock {
+  "From the start."
+  always
+  "Once the slide duration has run, counted from the start of the slide."
+  after_time
+  "Once every question and game of the slide is completed."
+  after_activities
+  "Never: a button of the slide (unlockElementId) moves on instead of the lateral Next."
+  custom_button
+}
+
+"How a slide with the rule after_time starts: when it opens, or when the student presses its start button."
+enum StartMode {
   auto
-  click
-  "When every question of the slide is answered correctly or runs out of attempts."
-  on_complete
+  button
 }
 
 enum Entrance {
@@ -84,6 +94,14 @@ enum Entrance {
   fade
   slide
   draw
+}
+
+"How an element leaves its slide at disappearsAtS; none keeps it until the slide ends."
+enum Exit {
+  none
+  disappear
+  fade
+  slide
 }
 
 enum NarrationStatus {
@@ -98,9 +116,10 @@ enum AudioKind {
   effect
 }
 
+"What a pause does when it ends: continue, or wait until the student presses Next."
 enum PauseEnd {
   continue
-  wait_click
+  wait_next
 }
 
 enum TreeNodeKind {
@@ -227,6 +246,9 @@ type SlideElement {
   z: Int!
   appearsAtS: Float!
   entrance: Entrance!
+  exit: Exit!
+  "Second the element leaves the slide; null when exit is none."
+  disappearsAtS: Float
   props: AWSJSON!
   mediaId: ID
   media: MediaRef
@@ -286,7 +308,12 @@ type Slide {
   background: String!
   durationS: Float!
   transition: Transition!
-  advance: AdvanceMode!
+  unlock: NextUnlock!
+  startMode: StartMode!
+  "Button with the action start_slide that starts the slide when startMode is button."
+  startElementId: ID
+  "Button with the action next_slide or go_to_slide that replaces the lateral Next when unlock is custom_button."
+  unlockElementId: ID
   elements: [SlideElement!]!
   narrationClips: [NarrationClip!]!
   pauses: [Pause!]!
@@ -350,9 +377,36 @@ type CatalogComponent {
   defaultSize: CatalogSize!
   usesMedia: Boolean!
   isQuestion: Boolean!
+  "Section and order of each visible prop in the Properties panel."
+  layout: [PropertyPlacement!]!
+}
+
+"A section of the Properties panel. Labels are texts by language code."
+type PropertySection {
+  key: String!
+  nature: String!
+  position: Int!
+  labels: AWSJSON!
+  isFallback: Boolean!
+}
+
+"Where a prop goes in the Properties panel. visibleWhen is { prop, op, value?, values? } with op empty, notEmpty, equals or in."
+type PropertyPlacement {
+  prop: String!
+  section: String!
+  position: Int!
+  advanced: Boolean!
+  visibleWhen: AWSJSON
+  labels: AWSJSON
+  help: AWSJSON
 }
 
 type ComponentCatalog {
+  sections: [PropertySection!]!
+  "Placement of the fields every element has: geometry, entrance and appearance time."
+  elementLayout: [PropertyPlacement!]!
+  "Placement of the fields of a slide: title, unlock rule, duration, background and transition."
+  slideLayout: [PropertyPlacement!]!
   components: [CatalogComponent!]!
 }
 
@@ -391,7 +445,12 @@ input SlideInput {
   background: String
   durationS: Float
   transition: Transition
-  advance: AdvanceMode
+  unlock: NextUnlock
+  startMode: StartMode
+  "Id of the start button of the slide; an empty text clears it."
+  startElementId: String
+  "Id of the custom button of the slide; an empty text clears it."
+  unlockElementId: String
 }
 
 "Creates the element when id is null; geometry defaults to the component size inside the slide."
@@ -407,6 +466,9 @@ input ElementInput {
   z: Int
   appearsAtS: Float
   entrance: Entrance
+  exit: Exit
+  "Second the element leaves the slide; required, and later than appearsAtS, when exit is not none."
+  disappearsAtS: Float
   props: AWSJSON!
   mediaId: ID
 }
@@ -421,6 +483,8 @@ input DraftElementInput {
   z: Int!
   appearsAtS: Float!
   entrance: Entrance
+  exit: Exit
+  disappearsAtS: Float
   props: AWSJSON!
 }
 
@@ -429,7 +493,8 @@ input DraftSlideInput {
   background: String
   durationS: Float
   transition: Transition
-  advance: AdvanceMode
+  unlock: NextUnlock
+  startMode: StartMode
   elements: [DraftElementInput!]!
 }
 

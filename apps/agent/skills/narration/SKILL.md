@@ -13,7 +13,7 @@ description: Write, change or voice the narration of slides, and place audio and
 
 ## Audio and pauses
 - Background music or an effect: find the file with `studio-read___search_media` (`type: "audio"`), then `studio-timeline___save_audio_clip` with `slideId`, `mediaId` and `durationS`.
-- A pause: `studio-timeline___save_pause` with `slideId`, `startsAtS` and `durationS`; `onEnd: "wait_click"` waits for a click.
+- A pause: `studio-timeline___save_pause` with `slideId`, `startsAtS` and `durationS`; `onEnd: "wait_next"` waits until the student presses Next.
 
 ## Rules
 - Write scripts to be heard: short sentences, in the language the person asks for or the language of the class.

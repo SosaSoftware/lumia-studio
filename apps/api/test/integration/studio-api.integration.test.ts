@@ -239,9 +239,9 @@ describe('slide editing', () => {
     expect(element).toMatchObject({ w: 64, h: 36, x: 18, mediaId: null, media: null });
 
     const pause = (await run(creator, 'Mutation', 'savePause', {
-      input: { slideId: slide.id, startsAtS: 5, durationS: 0, message: 'Piensa', onEnd: 'wait_click', timerElementId: element.id },
+      input: { slideId: slide.id, startsAtS: 5, durationS: 0, message: 'Piensa', onEnd: 'wait_next', timerElementId: element.id },
     })) as { id: string };
-    expect(pause).toMatchObject({ message: 'Piensa', onEnd: 'wait_click', timerElementId: element.id });
+    expect(pause).toMatchObject({ message: 'Piensa', onEnd: 'wait_next', timerElementId: element.id });
     await expect(
       run(creator, 'Mutation', 'savePause', { input: { slideId: slide.id, startsAtS: 1, durationS: 1, message: '', onEnd: 'continue', timerElementId: slide.id } }),
     ).rejects.toMatchObject({ errorType: 'ValidationError' });

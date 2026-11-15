@@ -2,12 +2,12 @@ import { json, list, num, optionalNum, optionalText, record, text } from './deco
 
 /** GraphQL selections of the class content; signed URLs are left out because the model cannot use them. */
 const MEDIA_FIELDS = 'id name mimeType';
-export const ELEMENT_FIELDS = `id slideId component name x y w h z appearsAtS entrance props mediaId media { ${MEDIA_FIELDS} }`;
+export const ELEMENT_FIELDS = `id slideId component name x y w h z appearsAtS entrance exit disappearsAtS props mediaId media { ${MEDIA_FIELDS} }`;
 export const NARRATION_FIELDS = 'id slideId startsAtS script voice speed generatedDurationS status errorMessage';
 export const PAUSE_FIELDS = 'id slideId startsAtS durationS message onEnd timerElementId';
 export const AUDIO_FIELDS = `id slideId mediaId media { ${MEDIA_FIELDS} } startsAtS durationS name kind volume`;
 const COMMENT_FIELDS = 'id authorName body createdAt';
-export const SLIDE_FIELDS = `id versionId position title background durationS transition advance
+export const SLIDE_FIELDS = `id versionId position title background durationS transition unlock startMode startElementId unlockElementId
   elements { ${ELEMENT_FIELDS} } narrationClips { ${NARRATION_FIELDS} } pauses { ${PAUSE_FIELDS} }
   audioClips { ${AUDIO_FIELDS} } comments { ${COMMENT_FIELDS} }`;
 export const VERSION_FIELDS = `id documentId number status slides { ${SLIDE_FIELDS} }`;
@@ -31,6 +31,8 @@ export interface ElementData {
   readonly z: number;
   readonly appearsAtS: number;
   readonly entrance: string;
+  readonly exit: string;
+  readonly disappearsAtS: number | null;
   readonly props: Record<string, unknown>;
   readonly media: MediaData | null;
 }
@@ -84,7 +86,10 @@ export interface SlideData {
   readonly background: string;
   readonly durationS: number;
   readonly transition: string;
-  readonly advance: string;
+  readonly unlock: string;
+  readonly startMode: string;
+  readonly startElementId: string | null;
+  readonly unlockElementId: string | null;
   readonly elements: readonly ElementData[];
   readonly narrationClips: readonly NarrationData[];
   readonly pauses: readonly PauseData[];
@@ -128,6 +133,8 @@ export function decodeElement(value: unknown): ElementData {
     z: num(element.z),
     appearsAtS: num(element.appearsAtS),
     entrance: text(element.entrance, 'none'),
+    exit: text(element.exit, 'none'),
+    disappearsAtS: optionalNum(element.disappearsAtS),
     props: record(json(element.props)),
     media: decodeMedia(element.media),
   };
@@ -191,7 +198,10 @@ export function decodeSlide(value: unknown): SlideData {
     background: text(slide.background),
     durationS: num(slide.durationS),
     transition: text(slide.transition, 'none'),
-    advance: text(slide.advance, 'click'),
+    unlock: text(slide.unlock, 'always'),
+    startMode: text(slide.startMode, 'auto'),
+    startElementId: optionalText(slide.startElementId),
+    unlockElementId: optionalText(slide.unlockElementId),
     elements: list(slide.elements).map(decodeElement),
     narrationClips: list(slide.narrationClips).map(decodeNarration),
     pauses: list(slide.pauses).map(decodePause),
@@ -234,7 +244,10 @@ export interface SlideSummary {
   readonly title: string;
   readonly durationS: number;
   readonly transition: string;
-  readonly advance: string;
+  readonly unlock: string;
+  readonly startMode: string;
+  readonly startElementId: string | null;
+  readonly unlockElementId: string | null;
   readonly components: readonly string[];
   readonly narrationClips: number;
   readonly audioClips: number;
@@ -249,7 +262,10 @@ export function slideSummary(slide: SlideData): SlideSummary {
     title: slide.title,
     durationS: slide.durationS,
     transition: slide.transition,
-    advance: slide.advance,
+    unlock: slide.unlock,
+    startMode: slide.startMode,
+    startElementId: slide.startElementId,
+    unlockElementId: slide.unlockElementId,
     components: slide.elements.map((element) => element.component),
     narrationClips: slide.narrationClips.length,
     audioClips: slide.audioClips.length,
@@ -272,6 +288,8 @@ export function elementView(element: ElementData): ElementView {
     z: element.z,
     appearsAtS: element.appearsAtS,
     entrance: element.entrance,
+    exit: element.exit,
+    disappearsAtS: element.disappearsAtS,
     props: element.props,
     media: element.media,
   };
@@ -289,7 +307,10 @@ export function slideView(slide: SlideData): SlideView {
     background: slide.background,
     durationS: slide.durationS,
     transition: slide.transition,
-    advance: slide.advance,
+    unlock: slide.unlock,
+    startMode: slide.startMode,
+    startElementId: slide.startElementId,
+    unlockElementId: slide.unlockElementId,
     elements: slide.elements.map(elementView),
     narrationClips: slide.narrationClips,
     pauses: slide.pauses,

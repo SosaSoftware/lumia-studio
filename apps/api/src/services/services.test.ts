@@ -120,16 +120,16 @@ describe('SlideService', () => {
     expect(db.ran('insert into')).toBe(false);
   });
 
-  it('creates a slide that advances with a click and accepts every advance mode', async () => {
+  it('creates a slide whose Next button is always on and accepts every unlock rule', async () => {
     const versionOwner = { match: 'from studio.document_version v join studio.class_document', rows: [ownerRow('draft')] };
     const db = new ScriptedDatabase([versionOwner, lockAnswer, { match: 'from studio.slide s', rows: [] }]);
     const service = new SlideService(db, new MemoryStorage());
     await service.saveSlide(claims, { versionId: ID, title: 'Quiz' }).catch(() => undefined);
     const insert = db.statements.find((statement) => statement.sql.includes('insert into studio.slide'));
-    expect(insert?.params.advance).toBe('click');
-    await service.saveSlide(claims, { versionId: ID, title: 'Quiz', advance: 'on_complete' }).catch(() => undefined);
-    expect(db.statements.filter((statement) => statement.sql.includes('insert into studio.slide')).at(-1)?.params.advance).toBe('on_complete');
-    await expect(service.saveSlide(claims, { versionId: ID, title: 'Portada', advance: 'never' })).rejects.toMatchObject({ errorType: 'ValidationError' });
+    expect(insert?.params.unlock).toBe('always');
+    await service.saveSlide(claims, { versionId: ID, title: 'Quiz', unlock: 'after_activities' }).catch(() => undefined);
+    expect(db.statements.filter((statement) => statement.sql.includes('insert into studio.slide')).at(-1)?.params.unlock).toBe('after_activities');
+    await expect(service.saveSlide(claims, { versionId: ID, title: 'Portada', unlock: 'never' })).rejects.toMatchObject({ errorType: 'ValidationError' });
   });
 
   const element = { component: 'title', x: 6, y: 4, w: 88, h: 9, appearsAtS: 0 };

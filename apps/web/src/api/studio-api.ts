@@ -38,9 +38,10 @@ import type {
 const NARRATION_FIELDS = `id slideId startsAtS script voice speed generatedDurationS audioUrl status errorMessage`;
 const PAUSE_FIELDS = `id slideId startsAtS durationS message onEnd timerElementId`;
 const AUDIO_FIELDS = `id slideId mediaId media { id name mimeType url } startsAtS durationS name kind volume`;
+const PLACEMENT_FIELDS = `prop section position advanced visibleWhen labels help`;
 const COMMENT_FIELDS = `id slideId authorSub authorName body createdAt`;
-const ELEMENT_FIELDS = `id slideId component name x y w h z appearsAtS entrance props mediaId media { id name mimeType url }`;
-const SLIDE_FIELDS = `id versionId position title background durationS transition advance elements { ${ELEMENT_FIELDS} } narrationClips { ${NARRATION_FIELDS} } pauses { ${PAUSE_FIELDS} } audioClips { ${AUDIO_FIELDS} } comments { ${COMMENT_FIELDS} }`;
+const ELEMENT_FIELDS = `id slideId component name x y w h z appearsAtS entrance exit disappearsAtS props mediaId media { id name mimeType url }`;
+const SLIDE_FIELDS = `id versionId position title background durationS transition unlock startMode startElementId unlockElementId elements { ${ELEMENT_FIELDS} } narrationClips { ${NARRATION_FIELDS} } pauses { ${PAUSE_FIELDS} } audioClips { ${AUDIO_FIELDS} } comments { ${COMMENT_FIELDS} }`;
 const VERSION_FIELDS = `id documentId number status slides { ${SLIDE_FIELDS} }`;
 const DOCUMENT_FIELDS = `id nodeId status currentVersion publishedVersion versions { id number status } editingVersion { ${VERSION_FIELDS} }`;
 const TREE_NODE_FIELDS = `id subcategoryId parentId kind name displayName description position documentId documentStatus currentVersion publishedVersion`;
@@ -85,7 +86,7 @@ export class StudioApi {
 
   public async componentCatalog(): Promise<CatalogInfo> {
     const data = await this.client.request(
-      `query { componentCatalog { components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion } }`,
+      `query { componentCatalog { sections { key nature position labels isFallback } elementLayout { ${PLACEMENT_FIELDS} } slideLayout { ${PLACEMENT_FIELDS} } components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion layout { ${PLACEMENT_FIELDS} } } } }`,
     );
     return decodeCatalog(data.componentCatalog);
   }
@@ -118,7 +119,16 @@ export class StudioApi {
   public async saveSlide(slideId: string, versionId: string, patch: SlidePatch): Promise<Slide> {
     const data = await this.client.request(
       `mutation($input: SlideInput!) { saveSlide(input: $input) { ${SLIDE_FIELDS} } }`,
-      { input: { id: slideId, versionId, ...patch } },
+      // The API clears a button reference with an empty text; null would mean "no change".
+      {
+        input: {
+          id: slideId,
+          versionId,
+          ...patch,
+          ...(patch.startElementId === undefined ? {} : { startElementId: patch.startElementId ?? '' }),
+          ...(patch.unlockElementId === undefined ? {} : { unlockElementId: patch.unlockElementId ?? '' }),
+        },
+      },
     );
     return decodeSlide(data.saveSlide);
   }

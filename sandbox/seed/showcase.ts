@@ -125,7 +125,7 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     title: 'Preguntas A',
     background: 'surface',
     durationS: 60,
-    advance: 'on_complete',
+    unlock: 'after_activities',
     elements: [
       title('Comprueba lo que aprendiste'),
       el('multiple_choice', 6, 13, 56, 24, {
@@ -144,7 +144,7 @@ export const SHOWCASE_SLIDES: DraftSlide[] = [
     title: 'Preguntas B',
     background: 'surface',
     durationS: 60,
-    advance: 'on_complete',
+    unlock: 'after_activities',
     elements: [
       title('Practica'),
       el('drag_drop', 6, 13, 56, 24, {

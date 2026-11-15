@@ -7,7 +7,7 @@ import type { MediaRef, Slide } from '../../api/types.ts';
 /** Format written by the export of the API (`definition.json` inside the zip). */
 const DEFINITION_FILE = 'definition.json';
 const FORMAT = 'lumia';
-const FORMAT_VERSION = 1;
+const FORMAT_VERSION = 2;
 
 /** A published class opened from its .lumia file, ready for the player. */
 export interface LumiaClass {

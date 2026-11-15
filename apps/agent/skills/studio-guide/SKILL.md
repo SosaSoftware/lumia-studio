@@ -22,11 +22,13 @@ description: Explain how Lumia Studio works and guide the person through its scr
 ## Screen tools
 - `open_panel(panel)`: `explorer`, `components`, `slides`, `timeline`, `properties`, `comments` or `lumi`. Most panels need an open class.
 - `select_slide(slideId)` and `select_element(elementId)`: ids from `get_class` and `get_slide`.
-- `highlight_element(target)`: points at a control for a few seconds. Targets: `topbar-preview`, `topbar-publish`, `topbar-category`, `topbar-subcategory`, `slides-add`, `activity-explorer`, `activity-components`, `activity-slides`, `activity-timeline`, `activity-properties`, `activity-comments`, `palette-group-<group>`, `palette-item-<component key>`, `palette-item-slide-blank`, `slide-thumb-<slideId>`, or the id of a component on the canvas.
+- `highlight_element(target)`: points at a control for a few seconds. Targets: `topbar-preview`, `topbar-publish`, `topbar-category`, `topbar-subcategory`, `slides-add`, `activity-explorer`, `activity-components`, `activity-slides`, `activity-timeline`, `activity-properties`, `activity-comments`, `palette-group-<group>`, `palette-item-<component key>`, `palette-item-slide-blank`, `slide-thumb-<slideId>`, the id of a component on the canvas, a section of the Properties panel as `prop-section-<section>` (`content`, `answer`, `behavior`, `appearance`, `motion`, `placement`), or one of its fields as `schema-field-<prop>`.
 - `filter_tree(status?, text?)`: filters the tree by state (`all`, `no_content`, `draft`, `published`) or text.
 - `start_preview(slideId?)`: opens the preview, from a slide when given.
 
 ## How to guide
 - Answer in short numbered steps that name the controls as the person sees them.
 - Show each control with `open_panel` or `highlight_element` when that helps. One highlight at a time.
+- The Properties panel groups the props of a component in sections, always in this order: Contenido, Respuesta, Comportamiento, Apariencia, Animación, Ubicación. Name the section and the field, for example "Apariencia › Color". `selection.focusedField` and `selection.focusedSection` of the screen context are the field the person last edited.
+- In the preview, the slide moves on only with the long Next button at its right; Previous is at its left. Next turns on when the slide allows it (`unlock`). With `custom_button`, Next stays off and a button on the slide moves on; with `after_time` and `startMode: "button"`, the slide waits until the student presses its start button.
 - Describe only what is on this page. If the person asks about something Studio does not do, say so.

@@ -1,15 +1,20 @@
-import type { AdvanceMode, ThemeColorKey } from '@lumia/packages/catalog';
+import type { NextUnlock, StartMode, ThemeColorKey } from '@lumia/packages/catalog';
 
 export type DocumentStatus = 'no_content' | 'draft' | 'published';
 export type VersionStatus = 'draft' | 'published' | 'archived';
 export type Transition = 'none' | 'fade' | 'slide' | 'zoom';
-export type { AdvanceMode } from '@lumia/packages/catalog';
+export type { NextUnlock, StartMode } from '@lumia/packages/catalog';
 export type Entrance = 'none' | 'appear' | 'fade' | 'slide' | 'draw';
+/** How an element leaves its slide at `disappearsAtS`; `none` keeps it until the slide ends. */
+export type Exit = 'none' | 'disappear' | 'fade' | 'slide';
 
 export const TRANSITIONS: readonly Transition[] = ['none', 'fade', 'slide', 'zoom'];
-/** Advance modes in the order Properties offers them. */
-export const ADVANCE_MODES: readonly AdvanceMode[] = ['auto', 'click', 'on_complete'];
+/** Rules of the Next button in the order Properties offers them. */
+export const NEXT_UNLOCKS: readonly NextUnlock[] = ['always', 'after_time', 'after_activities', 'custom_button'];
+/** How a slide with the rule `after_time` starts, in the order Properties offers them. */
+export const START_MODES: readonly StartMode[] = ['auto', 'button'];
 export const ENTRANCES: readonly Entrance[] = ['none', 'appear', 'fade', 'slide', 'draw'];
+export const EXITS: readonly Exit[] = ['none', 'disappear', 'fade', 'slide'];
 
 export interface Subcategory {
   id: string;
@@ -71,6 +76,9 @@ export interface SlideElement {
   z: number;
   appearsAtS: number;
   entrance: Entrance;
+  exit: Exit;
+  /** Second the element leaves the slide; null when `exit` is `none`. */
+  disappearsAtS: number | null;
   props: Record<string, unknown>;
   mediaId: string | null;
   media: MediaRef | null;
@@ -78,7 +86,7 @@ export interface SlideElement {
 
 export type NarrationStatus = 'pending' | 'generating' | 'ready' | 'failed';
 export type AudioKind = 'music' | 'effect';
-export type PauseEnd = 'continue' | 'wait_click';
+export type PauseEnd = 'continue' | 'wait_next';
 
 export interface NarrationClip {
   id: string;
@@ -133,7 +141,12 @@ export interface Slide {
   background: ThemeColorKey;
   durationS: number;
   transition: Transition;
-  advance: AdvanceMode;
+  unlock: NextUnlock;
+  startMode: StartMode;
+  /** Button that starts the slide when `startMode` is `button`. */
+  startElementId: string | null;
+  /** Button that replaces the lateral Next when `unlock` is `custom_button`. */
+  unlockElementId: string | null;
   elements: SlideElement[];
   narrationClips: NarrationClip[];
   pauses: Pause[];
@@ -173,6 +186,8 @@ export interface ElementPatch {
   z?: number;
   appearsAtS?: number;
   entrance?: Entrance;
+  exit?: Exit;
+  disappearsAtS?: number | null;
   props?: Record<string, unknown>;
 }
 
@@ -181,7 +196,12 @@ export interface SlidePatch {
   background?: ThemeColorKey;
   durationS?: number;
   transition?: Transition;
-  advance?: AdvanceMode;
+  unlock?: NextUnlock;
+  startMode?: StartMode;
+  /** Null clears the reference. */
+  startElementId?: string | null;
+  /** Null clears the reference. */
+  unlockElementId?: string | null;
 }
 
 export interface DraftElementInput {
@@ -194,6 +214,8 @@ export interface DraftElementInput {
   z: number;
   appearsAtS: number;
   entrance?: Entrance;
+  exit?: Exit;
+  disappearsAtS?: number | null;
   props: Record<string, unknown>;
 }
 
@@ -202,7 +224,8 @@ export interface DraftSlideInput {
   background?: ThemeColorKey;
   durationS?: number;
   transition?: Transition;
-  advance?: AdvanceMode;
+  unlock?: NextUnlock;
+  startMode?: StartMode;
   elements: DraftElementInput[];
 }
 
@@ -240,8 +263,45 @@ export interface CatalogComponentInfo {
   defaultSize: { w: number; h: number };
   usesMedia: boolean;
   isQuestion: boolean;
+  /** Section and order of each visible prop in the Properties panel. */
+  layout: PropertyPlacementInfo[];
+}
+
+/** Texts by language code, for example `{ es: 'Contenido', en: 'Content' }`. */
+export type LocalizedText = Readonly<Record<string, string>>;
+
+/** A section of the Properties panel, as stored in the database. */
+export interface PropertySectionInfo {
+  key: string;
+  nature: string;
+  position: number;
+  labels: LocalizedText;
+  isFallback: boolean;
+}
+
+/** Condition on another prop of the element that shows a field. */
+export type VisibleWhen =
+  | { prop: string; op: 'empty' | 'notEmpty' }
+  | { prop: string; op: 'equals'; value: unknown }
+  | { prop: string; op: 'in'; values: readonly unknown[] };
+
+/** Where a prop, or a field every element has (`x`, `entrance`…), goes in the Properties panel. */
+export interface PropertyPlacementInfo {
+  prop: string;
+  section: string;
+  position: number;
+  advanced: boolean;
+  visibleWhen: VisibleWhen | null;
+  labels: LocalizedText | null;
+  help: LocalizedText | null;
 }
 
 export interface CatalogInfo {
+  /** Sections of the Properties panel, in panel order. */
+  sections: PropertySectionInfo[];
+  /** Placement of the fields every element has: geometry, entrance and appearance time. */
+  elementLayout: PropertyPlacementInfo[];
+  /** Placement of the fields of a slide: title, unlock rule, duration, background and transition. */
+  slideLayout: PropertyPlacementInfo[];
   components: CatalogComponentInfo[];
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { componentCatalog } from '@lumia/packages/catalog';
 import { ACTIONS } from '../../auth/index.ts';
-import { ENTRANCES } from '../../domain/enums.ts';
+import { ENTRANCES, EXITS } from '../../domain/enums.ts';
 import { ELEMENT_FIELDS, decodeElement, elementView } from '../class-data.ts';
 import { record } from '../decode.ts';
 import { draftNotice, findElement, findSlide, openDraft } from '../draft.ts';
@@ -17,6 +17,8 @@ const elementFields = {
   ...geometryInput,
   appearsAtS: secondsInput.optional().describe('Segundo en que aparece.'),
   entrance: z.enum(ENTRANCES).optional().describe('Animación de entrada.'),
+  exit: z.enum(EXITS).optional().describe('Animación de salida: none (se queda hasta el final de la diapositiva), disappear, fade o slide. Con salida, indica disappearsAtS.'),
+  disappearsAtS: secondsInput.optional().describe('Segundo en que el componente sale, mayor que appearsAtS. Solo con exit distinto de none.'),
 };
 
 /** Props checked against the catalog; `complete` props are taken as they are, partial ones get the defaults. */
@@ -51,7 +53,7 @@ const addElement = defineTool({
 const updateElement = defineTool({
   name: 'update_element',
   description:
-    'Cambia un componente: props, nombre, posición, tamaño, entrada o el momento en que aparece. En props manda solo las llaves que cambian; se combinan con las actuales y una lista se reemplaza completa.',
+    'Cambia un componente: props, nombre, posición, tamaño, entrada o el momento en que aparece. En props manda solo las llaves que cambian; se combinan con las actuales y una lista se reemplaza completa. El botón de inicio de una diapositiva siempre aparece en el segundo 0.',
   action: ACTIONS.documentsEdit,
   input: z.object({ nodeId: nodeIdInput, elementId: elementIdInput, ...elementFields, props: propsInput.optional() }),
   run: async ({ nodeId, elementId, props, ...fields }, { studio }) => {

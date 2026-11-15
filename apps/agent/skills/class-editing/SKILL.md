@@ -8,7 +8,7 @@ description: Change, move, duplicate or delete existing slides and components, a
 1. Identify what the person means: `selection` in the screen context ("this slide", "this text"), or the slide or component they named. If it is ambiguous, ask.
 2. Read the current state: `studio-read___get_class` for the slides and their ids, `studio-read___get_slide` for its components, props, positions and timeline.
 3. Prepare the smallest calls that do what was asked:
-   - slide data (title, type, background, duration, transition, advance): `studio-slides___update_slide` with only what changes;
+   - slide data (title, type, background, duration, transition, unlock, startMode, start and custom buttons): `studio-slides___update_slide` with only what changes;
    - order: `studio-slides___move_slide` with `position` (1 is the first);
    - copy: `studio-slides___duplicate_slide`; removal: `studio-slides___delete_slide`;
    - a component: `studio-elements___update_element` with only what changes. In `props`, send only the keys that change; they are merged with the current ones, but a list is replaced whole, so send the complete list when you change one item. Geometry (`x`, `y`, `w`, `h`) uses slide units: the slide is 100 wide and 56.25 high;
