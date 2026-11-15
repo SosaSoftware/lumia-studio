@@ -1,4 +1,5 @@
 import type { AppSyncResolverEvent } from '../../graphql/appsync/index.ts';
+import { PropertyLayoutRepository } from '../../repositories/property-layout-repository.ts';
 import { RuntimeHandler } from '../../runtime/runtime-handler.ts';
 import { CatalogService } from '../../services/catalog-service.ts';
 import { DocumentService } from '../../services/document-service.ts';
@@ -11,7 +12,7 @@ const entry = new RuntimeHandler((runtime) =>
     documents: new DocumentService(runtime.db, runtime.storage),
     slides: new SlideService(runtime.db, runtime.storage),
     timeline: new TimelineService(runtime.db, runtime.storage),
-    catalog: new CatalogService(),
+    catalog: new CatalogService(new PropertyLayoutRepository(runtime.db)),
   }),
 );
 

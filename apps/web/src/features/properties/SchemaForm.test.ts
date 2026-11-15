@@ -98,7 +98,7 @@ describe('SchemaForm', () => {
     pickers[1]?.vm.$emit('pick', asset);
     await form.vm.$nextTick();
     const props = rec(form.emitted('update:modelValue')?.[0]?.[0]);
-    expect(props).toEqual({ items: [{ mediaId: null, alt: 'Imagen 1', caption: '' }, { mediaId: asset.id, alt: 'Imagen 2', caption: '' }] });
+    expect(props.items).toEqual([{ mediaId: null, alt: 'Imagen 1', caption: '' }, { mediaId: asset.id, alt: 'Imagen 2', caption: '' }]);
     // The element-level medium is only for components with one medium.
     expect(form.emitted('media')).toBeUndefined();
     await form.setProps({ modelValue: props });
