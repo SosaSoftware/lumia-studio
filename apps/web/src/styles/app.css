@@ -35,9 +35,14 @@
   --tl-pause-bg: repeating-linear-gradient(135deg, rgba(245, 184, 0, 0.34) 0 6px, rgba(245, 184, 0, 0.12) 6px 12px);
   --tl-text: #2F6BFF;
   --tl-media: #3FC5F0;
+  --tl-decorative: #A855F7;
   --tl-shapes: #12B886;
+  --tl-data: #0EA5E9;
   --tl-interactive: #F5B800;
   --tl-questions: #FF8787;
+  --tl-games: #F0569B;
+  --tl-characters: #FF8A3D;
+  --tl-lumi: #7C4DFF;
   --tl-ai: #A5C0FF;
 }
 
@@ -189,6 +194,7 @@
 .prop-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .prop-hint { font-size: 11px; line-height: 1.4; color: var(--s-text-2); }
 .prop-hint.error { color: var(--s-danger); }
+.prop-warning { font-size: 11px; line-height: 1.4; color: var(--s-warn); }
 .prop-error { font-size: 12px; color: var(--s-danger); }
 .prop-control { width: 100%; color: var(--s-text); font: inherit; font-size: 12px; }
 .prop-control:focus { outline: none; border-color: var(--s-active); }

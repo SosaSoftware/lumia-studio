@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { list, num, rec, str } from '../../api/decode.ts';
 import type { CatalogComponentProps } from './element-mode.ts';
 import QuestionFooter from './QuestionFooter.vue';
+import { toneVars } from './tone.ts';
 import { useQuestionState } from './question-state.ts';
 import { letter, seededShuffle } from './render-helpers.ts';
 
@@ -84,7 +85,7 @@ function check(): void {
 </script>
 
 <template>
-  <div ref="root" class="el-matching" data-testid="question-matching">
+  <div ref="root" class="el-matching" :style="toneVars(data.color, 'primary')" :data-live="student" data-testid="question-matching">
     <div class="grid">
       <div class="left">
         <button
@@ -123,7 +124,7 @@ function check(): void {
         </button>
       </div>
     </div>
-    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="links.every((link) => link !== null)" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :confetti="data.confetti !== false" :design="design" :design-hidden="designHidden" :state="state" :can-check="links.every((link) => link !== null)" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 
@@ -133,19 +134,21 @@ function check(): void {
 .left, .right { display: flex; flex-direction: column; gap: 1.2cqw; }
 .match { display: flex; align-items: center; gap: 1.2cqw; padding: 1.1cqw 1.4cqw; background: var(--sl-card); border: 0.12cqw solid var(--sl-line); border-radius: 1.2cqw; color: var(--sl-ink); font: inherit; text-align: left; }
 .match:not(:disabled) { cursor: pointer; }
-.match:not(:disabled):hover { border-color: var(--sl-blue); }
-.match:focus-visible { outline: 0.25cqw solid var(--sl-blue); outline-offset: 0.2cqw; }
-.match[data-active='true'] { border-color: var(--sl-blue); box-shadow: 0 0 0 0.2cqw var(--sl-blue-soft); }
+.match:not(:disabled):hover { border-color: var(--c-ink); }
+.match:focus-visible { outline: 0.25cqw solid var(--c); outline-offset: 0.2cqw; }
+.match[data-active='true'] { border-color: var(--c-ink); box-shadow: 0 0 0 0.2cqw var(--c-soft); }
 .match[data-mark='ok'] { border-color: var(--sl-green-ink); }
 .match[data-mark='wrong'] { border-color: var(--sl-red-ink); }
-.number { width: 2.8cqw; height: 2.8cqw; flex: none; border-radius: 50%; background: var(--sl-blue); color: var(--sl-white); display: flex; align-items: center; justify-content: center; font-size: 1.4cqw; font-weight: 600; }
+.number { width: 2.8cqw; height: 2.8cqw; flex: none; border-radius: 50%; background: var(--c); color: var(--c-on); display: flex; align-items: center; justify-content: center; font-size: 1.4cqw; font-weight: 600; }
 .badge { width: 2.8cqw; height: 2.8cqw; flex: none; border-radius: 0.8cqw; background: var(--sl-cyan-soft); color: var(--sl-cyan-ink); display: flex; align-items: center; justify-content: center; font-size: 1.4cqw; font-weight: 600; }
 .text { flex: 1; min-width: 0; font-size: 1.6cqw; overflow-wrap: anywhere; }
 .ring { width: 1.3cqw; height: 1.3cqw; flex: none; box-sizing: border-box; border-radius: 50%; }
-.ring.blue { border: 0.3cqw solid var(--sl-blue); }
+.ring.blue { border: 0.3cqw solid var(--c); }
 .ring.cyan { border: 0.3cqw solid var(--sl-cyan); }
 .middle { width: 100%; height: 100%; overflow: visible; }
-.middle line { stroke: var(--sl-blue); stroke-width: 2.5; }
+.middle line { stroke: var(--c); stroke-width: 2.5; }
 .middle line[data-mark='ok'] { stroke: var(--sl-green-ink); }
 .middle line[data-mark='wrong'] { stroke: var(--sl-red-ink); }
+.el-matching[data-live='true'] .match[data-mark='ok'] { background: var(--sl-green-soft); animation: sl-correct 0.5s var(--sl-ease-bounce); }
+.el-matching[data-live='true'] .match[data-mark='wrong'] { background: var(--sl-red-soft); animation: sl-shake 0.45s ease; }
 </style>

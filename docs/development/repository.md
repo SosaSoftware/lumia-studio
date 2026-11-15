@@ -112,4 +112,4 @@ Se toca para cambiar un recurso de AWS, un permiso o la configuración del despl
 | `docs/` | Documentación para personas |
 | `docs/diagrams/` | Diagramas en SVG |
 
-Siguiente: [Pruebas](testing.md)
+Siguiente: [Componentes](components.md)

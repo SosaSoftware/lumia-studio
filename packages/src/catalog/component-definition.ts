@@ -1,14 +1,19 @@
 import type { z } from 'zod';
 import type { Size } from './geometry.ts';
 
-export type ComponentGroup = 'text' | 'media' | 'shapes' | 'interactive' | 'questions';
+export type ComponentGroup = 'text' | 'media' | 'decorative' | 'shapes' | 'data' | 'interactive' | 'questions' | 'games' | 'characters' | 'lumi';
 
 export const COMPONENT_GROUP_NAMES: Readonly<Record<ComponentGroup, string>> = {
   text: 'Texto',
   media: 'Multimedia',
+  decorative: 'Decorativos',
   shapes: 'Formas y diagramas',
+  data: 'Datos y gráficos',
   interactive: 'Interactivos',
   questions: 'Preguntas',
+  games: 'Juegos',
+  characters: 'Personajes',
+  lumi: 'Lumi',
 };
 
 /** One entry of the Studio component catalog: the single source for the API, Lumi and the web app. */

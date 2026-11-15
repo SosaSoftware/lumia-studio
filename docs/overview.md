@@ -43,7 +43,7 @@ El detalle de las tablas y las operaciones está en [architecture/data.md](archi
 | Publicación | `publishVersion` y `export_status` de `studio.document_version` | Convierte el borrador en la versión publicada y exporta su archivo `.lumia` al bucket `Published`. |
 | Archivo `.lumia` | Lambda `Export` | Zip con `definition.json`, medios y audios de una versión publicada. |
 | Diapositiva | `studio.slide` | Pantalla de una clase, con tipo, título, fondo, duración, transición y modo de avance. |
-| Componente | `studio.slide_element` y el catálogo de `packages/src/catalog` | Elemento de una diapositiva: texto, medio, forma, interacción o pregunta. El catálogo define 28 componentes. |
+| Componente | `studio.slide_element` y el catálogo de `packages/src/catalog` | Elemento de una diapositiva: texto, medio, decoración, forma, dato, interacción, pregunta, juego, personaje o Lumi. El catálogo define 66 componentes; ver [components.md](development/components.md). |
 | Línea de tiempo | `studio.narration_clip`, `studio.audio_clip` y `studio.pause` | Narraciones, audios y pausas de una diapositiva. |
 | Narración | `studio.narration_clip` | Guion que Amazon Polly convierte en audio. |
 | Medio | `studio.media_asset` | Archivo de la biblioteca de una categoría. |

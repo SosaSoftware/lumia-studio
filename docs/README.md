@@ -17,6 +17,7 @@
 
 - [development/README.md](development/README.md): ruta para el primer día en el repositorio. Se lee al empezar a trabajar en el código.
 - [development/repository.md](development/repository.md): carpetas y paquetes, sus puntos de entrada y cuándo tocarlos. Se lee para ubicar dónde va un cambio.
+- [development/components.md](development/components.md): grupos del catálogo de componentes, convenciones de propiedades y archivos que cambian al agregar uno. Se lee para crear o modificar un componente.
 - [development/conventions.md](development/conventions.md): idioma, TypeScript, ESLint, commits y secretos. Se lee para preparar un cambio.
 - [architecture/api.md](architecture/api.md), [architecture/data.md](architecture/data.md), [architecture/authentication.md](architecture/authentication.md), [architecture/lumi-tools.md](architecture/lumi-tools.md) y [architecture/lumi-reference.md](architecture/lumi-reference.md): detalle de cada pieza. Se leen al cambiar esa pieza.
 

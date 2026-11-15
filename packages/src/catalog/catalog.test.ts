@@ -18,7 +18,8 @@ describe('media of the components', () => {
 
 describe('component catalog', () => {
   it('has valid defaults and a JSON Schema for every base component', () => {
-    expect(BASE_COMPONENTS).toHaveLength(28);
+    expect(BASE_COMPONENTS.length).toBeGreaterThan(28);
+    expect(new Set(BASE_COMPONENTS.map((definition) => definition.key)).size).toBe(BASE_COMPONENTS.length);
     for (const definition of BASE_COMPONENTS) {
       expect(componentCatalog.validateProps(definition.key, definition.defaults)).toMatchObject({ ok: true });
       const schema = componentCatalog.jsonSchema(definition.key);
@@ -27,7 +28,7 @@ describe('component catalog', () => {
   });
 
   it('rejects unknown components, invalid props and unknown keys with the field path', () => {
-    expect(componentCatalog.validateProps('carousel', {})).toMatchObject({ ok: false, errors: [{ path: 'component' }] });
+    expect(componentCatalog.validateProps('no_such_component', {})).toMatchObject({ ok: false, errors: [{ path: 'component' }] });
 
     const invalid = componentCatalog.validateProps('title', { text: '', level: 'h1', align: 'left' });
     expect(invalid.ok).toBe(false);
@@ -57,8 +58,9 @@ describe('component catalog', () => {
     const base = componentCatalog.get('diagram')?.defaults as Record<string, unknown>;
     expect(componentCatalog.validateProps('diagram', base)).toMatchObject({ ok: true });
 
+    const legacy = { kind: 'flow', color: 'primary', variant: 'soft', colorful: false, animated: true };
     const duplicateNodes = componentCatalog.validateProps('diagram', {
-      ...base,
+      ...legacy,
       nodes: [
         { id: 'a', text: 'Uno' },
         { id: 'a', text: 'Dos' },
@@ -68,11 +70,23 @@ describe('component catalog', () => {
     if (!duplicateNodes.ok) expect(duplicateNodes.errors.map((e) => e.path)).toContain('props.nodes');
 
     const badEdge = componentCatalog.validateProps('diagram', {
-      ...base,
+      ...legacy,
+      nodes: [
+        { id: 'a', text: 'Uno' },
+        { id: 'b', text: 'Dos' },
+      ],
       edges: [{ from: 'a', to: 'z' }],
     });
     expect(badEdge.ok).toBe(false);
     if (!badEdge.ok) expect(badEdge.errors.map((e) => e.path)).toContain('props.edges');
+  });
+
+  it('validates the Mermaid text of diagrams and mind maps and points at the line to fix', () => {
+    expect(componentCatalog.validateProps('diagram', { ...(componentCatalog.get('diagram')?.defaults as Record<string, unknown>), code: 'A[Uno] --> B[Dos]' })).toMatchObject({ ok: true });
+    const broken = componentCatalog.validateProps('diagram', { kind: 'flow', code: 'A[Uno] --> B[Dos]\nsubgraph x' });
+    expect(broken).toMatchObject({ ok: false, errors: [{ path: 'props.code' }] });
+    const twoRoots = componentCatalog.validateProps('mindmap', { code: 'mindmap\n  root((A))\n  B', color: 'primary', colorful: true, animated: true });
+    expect(twoRoots.ok).toBe(false);
   });
 
   it('validates fill_blank: at least one [[blank]]', () => {
@@ -138,7 +152,7 @@ describe('component catalog', () => {
 
   it('describes every component compactly for Lumi', () => {
     const compact = componentCatalog.compact();
-    expect(compact).toHaveLength(28);
+    expect(compact).toHaveLength(BASE_COMPONENTS.length);
     for (const entry of compact) expect(entry.props.length).toBeGreaterThan(0);
     expect(compact.find((entry) => entry.key === 'multiple_choice')?.props).toContain('options');
   });

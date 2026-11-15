@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { list, num, str } from '../../api/decode.ts';
 import type { CatalogComponentProps } from './element-mode.ts';
 import QuestionFooter from './QuestionFooter.vue';
+import { toneVars } from './tone.ts';
 import { useQuestionState } from './question-state.ts';
 import { seededShuffle } from './render-helpers.ts';
 
@@ -45,7 +46,7 @@ function check(): void {
 </script>
 
 <template>
-  <div class="el-ordering" data-testid="question-ordering">
+  <div class="el-ordering" :style="toneVars(data.color, 'primary')" :data-live="student" data-testid="question-ordering">
     <span v-if="student" class="hint">Ordena los elementos</span>
     <ol class="items">
       <li
@@ -72,7 +73,7 @@ function check(): void {
         </span>
       </li>
     </ol>
-    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="true" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :confetti="data.confetti !== false" :design="design" :design-hidden="designHidden" :state="state" :can-check="true" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 
@@ -85,11 +86,14 @@ function check(): void {
 .item[data-mark='ok'] { border-color: var(--sl-green-ink); background: var(--sl-green-soft); }
 .item[data-mark='wrong'] { border-color: var(--sl-red-ink); background: var(--sl-red-soft); }
 .grip { width: 1.8cqw; height: 1.8cqw; flex: none; fill: var(--sl-ink-4); }
-.number { width: 2.8cqw; height: 2.8cqw; flex: none; border-radius: 0.8cqw; background: var(--sl-blue-soft); color: var(--sl-blue); display: flex; align-items: center; justify-content: center; font-size: 1.4cqw; font-weight: 600; }
+.number { width: 2.8cqw; height: 2.8cqw; flex: none; border-radius: 0.8cqw; background: var(--c-soft); color: var(--c-ink); display: flex; align-items: center; justify-content: center; font-size: 1.4cqw; font-weight: 600; }
 .text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .moves { display: flex; gap: 0.4cqw; }
 .move { width: 2.6cqw; height: 2.6cqw; padding: 0; display: flex; align-items: center; justify-content: center; background: var(--sl-card-alt); border: 0.12cqw solid var(--sl-line); border-radius: 0.6cqw; color: var(--sl-ink-2); cursor: pointer; }
 .move:disabled { opacity: 0.35; cursor: not-allowed; }
-.move:focus-visible { outline: 0.25cqw solid var(--sl-blue); outline-offset: 0.2cqw; }
+.move:focus-visible { outline: 0.25cqw solid var(--c); outline-offset: 0.2cqw; }
 .move svg { width: 70%; height: 70%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.el-ordering[data-live='true'] .item[data-mark='ok'] { animation: sl-correct 0.5s var(--sl-ease-bounce); }
+.el-ordering[data-live='true'] .item[data-mark='wrong'] { animation: sl-shake 0.45s ease; }
+.item { box-shadow: var(--sl-elev-1); transition: transform 0.25s var(--sl-ease-bounce), background 0.2s ease; }
 </style>

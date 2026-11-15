@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { list, num, rec, str } from '../../api/decode.ts';
 import type { CatalogComponentProps } from './element-mode.ts';
 import QuestionFooter from './QuestionFooter.vue';
+import { toneVars } from './tone.ts';
 import { useQuestionState } from './question-state.ts';
 import { seededShuffle } from './render-helpers.ts';
 
@@ -62,11 +63,11 @@ function check(): void {
 }
 
 const zoneColors = (index: number): { line: string; tint: string } =>
-  index % 2 === 0 ? { line: 'var(--sl-blue)', tint: 'var(--sl-blue-tint)' } : { line: 'var(--sl-cyan-ink)', tint: 'var(--sl-cyan-tint)' };
+  index % 2 === 0 ? { line: 'var(--c)', tint: 'color-mix(in srgb, var(--c-soft) 50%, var(--sl-card))' } : { line: 'var(--sl-cyan-ink)', tint: 'var(--sl-cyan-tint)' };
 </script>
 
 <template>
-  <div class="el-dd" data-testid="question-drag-drop">
+  <div class="el-dd" :style="toneVars(data.color, 'primary')" :data-live="student" data-testid="question-drag-drop">
     <div v-if="student || bank.length > 0" class="bank" role="group" aria-label="Elementos para arrastrar">
       <component
         :is="student ? 'button' : 'span'"
@@ -109,7 +110,7 @@ const zoneColors = (index: number): { line: string; tint: string } =>
         <span v-else-if="student" class="drop">{{ held ? 'Suelta aquí' : 'Arrastra aquí' }}</span>
       </div>
     </div>
-    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="targets.every((target) => placed[target.id])" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :confetti="data.confetti !== false" :design="design" :design-hidden="designHidden" :state="state" :can-check="targets.every((target) => placed[target.id])" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 
@@ -118,8 +119,8 @@ const zoneColors = (index: number): { line: string; tint: string } =>
 .bank { display: flex; gap: 1cqw; flex-wrap: wrap; min-height: 3.4cqw; }
 .chip { padding: 0.7cqw 1.3cqw; border-radius: 99cqw; font: inherit; font-size: 1.5cqw; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.6cqw; background: var(--sl-card); border: 0.15cqw solid var(--sl-line-3); box-shadow: 0 0.3cqw 0.8cqw var(--sl-shadow); color: var(--sl-ink); }
 button.chip { cursor: grab; }
-button.chip:focus-visible { outline: 0.25cqw solid var(--sl-blue); outline-offset: 0.2cqw; }
-.chip[data-held='true'] { border-color: var(--sl-blue); box-shadow: 0 0 0 0.2cqw var(--sl-blue-soft); }
+button.chip:focus-visible { outline: 0.25cqw solid var(--c); outline-offset: 0.2cqw; }
+.chip[data-held='true'] { border-color: var(--c-ink); box-shadow: 0 0 0 0.2cqw var(--c-soft); }
 .chip.placed { box-shadow: none; cursor: pointer; }
 .grip { width: 1.6cqw; height: 1.6cqw; flex: none; fill: var(--sl-ink-4); }
 .zones { flex: 1; display: grid; gap: 1.6cqw; }
@@ -128,4 +129,6 @@ button.chip:focus-visible { outline: 0.25cqw solid var(--sl-blue); outline-offse
 .zone[data-mark='wrong'] { border-style: solid; border-color: var(--sl-red-ink) !important; }
 .zone-title { font-size: 1.7cqw; font-weight: 600; }
 .drop { font-size: 1.3cqw; color: var(--sl-ink-3); }
+.el-dd[data-live='true'] .zone[data-mark='ok'] { animation: sl-correct 0.5s var(--sl-ease-bounce); }
+.el-dd[data-live='true'] .zone[data-mark='wrong'] { animation: sl-shake 0.45s ease; }
 </style>

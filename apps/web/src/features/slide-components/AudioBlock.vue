@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { str } from '../../api/decode.ts';
 import type { CatalogComponentProps } from './element-mode.ts';
 import { clock } from './render-helpers.ts';
+import { fillVars } from './tone.ts';
 
 const props = defineProps<CatalogComponentProps>();
 const BARS = Array.from({ length: 36 }, (_, index) => 30 + Math.round(70 * Math.abs(Math.sin(index * 1.7) * Math.cos(index * 0.6))));
@@ -63,16 +64,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="el-audio" data-testid="audio">
+  <div class="el-audio" :data-playing="playing" :style="fillVars(data.color, data.variant, 'primary')" data-testid="audio">
     <button v-if="live && controls" type="button" class="play" :aria-label="playing ? 'Pausar' : 'Reproducir'" data-testid="audio-toggle" @click.stop="toggle">
       <svg v-if="playing" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
       <svg v-else viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
     </button>
     <span v-else class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></span>
     <div class="middle">
-      <span class="title">{{ str(data.title) }}</span>
+      <span class="title"><span v-if="str(data.emoji).trim()" aria-hidden="true">{{ str(data.emoji).trim() }} </span>{{ str(data.title) }}</span>
       <span class="wave" aria-hidden="true">
-        <span v-for="(height, index) in BARS" :key="index" class="bar" :style="{ height: `${height}%`, background: index / BARS.length < progress ? 'var(--sl-blue)' : 'var(--sl-line-2)' }"></span>
+        <span v-for="(height, index) in BARS" :key="index" class="bar" :data-on="index / BARS.length < progress" :style="{ height: `${height}%`, animationDelay: `${(index % 7) * -0.13}s` }"></span>
       </span>
     </div>
     <span class="time">{{ time }}</span>
@@ -80,14 +81,21 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.el-audio { width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 1.6cqw; padding: 1.2cqw 1.8cqw; background: var(--sl-card); border: 0.12cqw solid var(--sl-line); border-radius: 1.2cqw; overflow: hidden; }
-.play { width: 4.4cqw; height: 4.4cqw; flex: none; padding: 0; border: 0; border-radius: 50%; background: var(--sl-blue); color: var(--sl-white); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.el-audio { width: 100%; height: 100%; box-sizing: border-box; display: flex; align-items: center; gap: 1.6cqw; padding: 1.2cqw 1.8cqw; background: var(--sl-card); border: 0.12cqw solid var(--sl-line); border-radius: 1.6cqw; box-shadow: var(--sl-elev-1); overflow: hidden; }
+.play { width: 4.4cqw; height: 4.4cqw; flex: none; padding: 0; border: 0; border-radius: 50%; background: var(--fill); color: var(--fill-fg); box-shadow: 0 0.3cqw 0.9cqw color-mix(in srgb, var(--c) 35%, transparent); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .play svg { width: 48%; height: 48%; fill: currentColor; }
 span.play { cursor: default; }
-.play:focus-visible { outline: 0.25cqw solid var(--sl-blue); outline-offset: 0.2cqw; }
+.play:focus-visible { outline: 0.25cqw solid var(--c); outline-offset: 0.2cqw; }
 .middle { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.6cqw; }
 .title { font-size: 1.6cqw; font-weight: 600; color: var(--sl-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wave { display: flex; align-items: center; gap: 0.25cqw; height: 3cqw; }
-.bar { flex: 1; border-radius: 0.3cqw; }
+.bar { flex: 1; border-radius: 0.3cqw; background: var(--sl-line-2); transform-origin: center; }
+.bar[data-on='true'] { background: var(--c); }
+[data-playing='true'] .bar { animation: audio-wave 0.9s ease-in-out infinite; }
+
+@keyframes audio-wave {
+  0%, 100% { transform: scaleY(0.55); }
+  50% { transform: scaleY(1); }
+}
 .time { flex: none; font-size: 1.4cqw; color: var(--sl-ink-3); white-space: nowrap; }
 </style>

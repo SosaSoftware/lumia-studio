@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { num, str } from '../../api/decode.ts';
 import type { CatalogComponentProps } from './element-mode.ts';
 import QuestionFooter from './QuestionFooter.vue';
+import { toneVars } from './tone.ts';
 import { useQuestionState } from './question-state.ts';
 import { seededShuffle } from './render-helpers.ts';
 
@@ -66,7 +67,7 @@ function onInput(event: Event, index: number): void {
 </script>
 
 <template>
-  <div class="el-fill" data-testid="question-fill-blank">
+  <div class="el-fill" :style="toneVars(data.color, 'primary')" :data-live="student" data-testid="question-fill-blank">
     <p class="text">
       <template v-for="(part, key) in parts" :key="key">
         <template v-if="part.kind === 'text'">{{ part.text }}</template>
@@ -91,22 +92,24 @@ function onInput(event: Event, index: number): void {
       <span class="bank-label">Banco de palabras</span>
       <component :is="student ? 'button' : 'span'" v-for="(word, index) in bank" :key="index" :type="student ? 'button' : undefined" class="chip" :disabled="student ? state.locked.value : undefined" @click.stop="student && useWord(word)">{{ word }}</component>
     </div>
-    <QuestionFooter :interactive="student" :design="design" :design-hidden="designHidden" :state="state" :can-check="values.every((value) => value.trim() !== '')" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
+    <QuestionFooter :interactive="student" :confetti="data.confetti !== false" :design="design" :design-hidden="designHidden" :state="state" :can-check="values.every((value) => value.trim() !== '')" :feedback-correct="str(data.feedbackCorrect)" :feedback-incorrect="str(data.feedbackIncorrect)" @check="check" />
   </div>
 </template>
 
 <style scoped>
 .el-fill { display: flex; flex-direction: column; gap: 1.6cqw; }
 .text { margin: 0; font-size: 2cqw; line-height: 2.1; color: var(--sl-fg); overflow-wrap: anywhere; }
-.blank { display: inline-block; min-width: 10cqw; box-sizing: border-box; margin: 0 0.5cqw; padding: 0 1cqw; border: 0; border-bottom: 0.3cqw solid var(--sl-blue); border-radius: 0.6cqw 0.6cqw 0 0; background: var(--sl-blue-soft); color: var(--sl-blue); font: inherit; font-weight: 600; text-align: center; line-height: 1.6; vertical-align: baseline; }
+.blank { display: inline-block; min-width: 10cqw; box-sizing: border-box; margin: 0 0.5cqw; padding: 0 1cqw; border: 0; border-bottom: 0.3cqw solid var(--c); border-radius: 0.6cqw 0.6cqw 0 0; background: var(--c-soft); color: var(--c-ink); font: inherit; font-weight: 600; text-align: center; line-height: 1.6; vertical-align: baseline; }
 input.blank { outline: none; }
-input.blank:focus-visible { box-shadow: 0 0 0 0.25cqw var(--sl-blue); }
+input.blank:focus-visible { box-shadow: 0 0 0 0.25cqw var(--c); }
 .blank[data-mark='ok'] { border-bottom-color: var(--sl-green-ink); background: var(--sl-green-soft); color: var(--sl-green-ink); }
 .blank[data-mark='wrong'] { border-bottom-color: var(--sl-red-ink); background: var(--sl-red-soft); color: var(--sl-red-ink); }
 .bank { display: flex; align-items: center; gap: 1cqw; flex-wrap: wrap; }
 .bank-label { font-size: 1.4cqw; color: var(--sl-fg-2); }
 .chip { padding: 0.7cqw 1.3cqw; border-radius: 99cqw; font: inherit; font-size: 1.5cqw; white-space: nowrap; background: var(--sl-card); border: 0.15cqw solid var(--sl-line-3); color: var(--sl-ink); }
 button.chip { cursor: pointer; }
-button.chip:hover:not(:disabled) { border-color: var(--sl-blue); }
-button.chip:focus-visible { outline: 0.25cqw solid var(--sl-blue); outline-offset: 0.2cqw; }
+button.chip:hover:not(:disabled) { border-color: var(--c-ink); }
+button.chip:focus-visible { outline: 0.25cqw solid var(--c); outline-offset: 0.2cqw; }
+.el-fill[data-live='true'] .blank[data-mark='ok'] { animation: sl-correct 0.5s var(--sl-ease-bounce); }
+.el-fill[data-live='true'] .blank[data-mark='wrong'] { animation: sl-shake 0.45s ease; }
 </style>
