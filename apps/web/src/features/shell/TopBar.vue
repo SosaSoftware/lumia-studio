@@ -170,26 +170,28 @@ async function signOut(): Promise<void> {
           <StudioIcon name="upload" :size="13" :stroke="2" />{{ t('shell.topBar.publish') }}
         </button>
       </div>
+      <div class="account-slot">
       <div ref="accountMenu" class="menu-anchor">
-        <button
-          type="button"
-          class="avatar"
-          :title="`${user?.name ?? ''} · ${role}`"
-          aria-haspopup="menu"
-          :aria-expanded="menu === 'account'"
-          :aria-label="t('shell.topBar.accountOf', { name: user?.name ?? '' })"
-          data-testid="topbar-user"
-          @click="toggle('account')"
-        >{{ initials }}</button>
-        <div v-if="menu === 'account'" class="s-menu account" role="menu" :aria-label="t('shell.topBar.account')">
-          <div class="who">
-            <span class="avatar big" aria-hidden="true">{{ initials }}</span>
-            <span class="who-text"><strong>{{ user?.name }}</strong><span>{{ user?.email }}</span><span>{{ role }}</span></span>
+          <button
+            type="button"
+            class="avatar"
+            :title="`${user?.name ?? ''} · ${role}`"
+            aria-haspopup="menu"
+            :aria-expanded="menu === 'account'"
+            :aria-label="t('shell.topBar.accountOf', { name: user?.name ?? '' })"
+            data-testid="topbar-user"
+            @click="toggle('account')"
+          >{{ initials }}</button>
+          <div v-if="menu === 'account'" class="s-menu account" role="menu" :aria-label="t('shell.topBar.account')">
+            <div class="who">
+              <span class="avatar big" aria-hidden="true">{{ initials }}</span>
+              <span class="who-text"><strong>{{ user?.name }}</strong><span>{{ user?.email }}</span><span>{{ role }}</span></span>
+            </div>
+            <div class="sep" role="separator"></div>
+            <button type="button" class="mi" role="menuitem" data-testid="topbar-signout" @click="signOut">
+              <StudioIcon name="sign-out" :size="15" />{{ t('shell.topBar.signOut') }}
+            </button>
           </div>
-          <div class="sep" role="separator"></div>
-          <button type="button" class="mi" role="menuitem" data-testid="topbar-signout" @click="signOut">
-            <StudioIcon name="sign-out" :size="15" />{{ t('shell.topBar.signOut') }}
-          </button>
         </div>
       </div>
     </div>
@@ -197,7 +199,7 @@ async function signOut(): Promise<void> {
 </template>
 
 <style scoped>
-.topbar { flex: none; height: 40px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 10px 0 6px; background: var(--s-chrome); border-bottom: 1px solid var(--s-border); position: relative; z-index: 30; }
+.topbar { flex: none; height: 40px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 0 0 6px; background: var(--s-chrome); border-bottom: 1px solid var(--s-border); position: relative; z-index: 30; }
 .start { flex: 1 0 auto; min-width: 0; display: flex; align-items: center; gap: 4px; }
 .logo { width: 22px; height: 22px; border-radius: 5px; display: block; margin: 0 8px 0 7px; flex: none; }
 .menu-anchor { position: relative; }
@@ -215,11 +217,13 @@ async function signOut(): Promise<void> {
 .group { display: flex; flex-direction: column; gap: 2px; }
 .grow { flex: 1; }
 .end { flex: 1 1 0; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
-.class-group { display: flex; align-items: center; gap: 8px; margin-right: 10px; padding-right: 12px; border-right: 1px solid var(--s-border); }
+.class-group { display: flex; align-items: center; gap: 8px; margin-right: -4px; padding-right: 12px; border-right: 1px solid var(--s-border); }
+/* The negative margin cancels the gap of `.end`, so the group ends exactly where the account column starts. The account column is as wide as the right activity bar (48 px, less its own 1 px border), so the divider of the group lines up with the border of that bar. */
+.account-slot { flex: none; width: 47px; display: flex; align-items: center; justify-content: center; }
 .status { height: 24px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
 .dot { width: 7px; height: 7px; border-radius: 50%; }
 .version { height: 24px; display: inline-flex; align-items: center; padding: 0 8px; border: 1px solid var(--s-border); border-radius: 6px; font-size: 12px; color: var(--s-text-2); white-space: nowrap; }
-.avatar { width: 26px; height: 26px; margin-left: 4px; padding: 0; flex: none; border: 0; border-radius: 50%; background: var(--s-active); display: flex; align-items: center; justify-content: center; font: inherit; font-size: 10px; font-weight: 600; color: var(--s-on-active); cursor: pointer; }
+.avatar { width: 26px; height: 26px; margin: 0; padding: 0; flex: none; border: 0; border-radius: 50%; background: var(--s-active); display: flex; align-items: center; justify-content: center; font: inherit; font-size: 10px; font-weight: 600; color: var(--s-on-active); cursor: pointer; }
 .avatar:focus-visible { outline: 2px solid var(--s-active); outline-offset: 2px; }
 .avatar.big { width: 32px; height: 32px; margin: 0; font-size: 12px; cursor: default; }
 .account { right: 0; top: calc(100% + 6px); width: 260px; }
