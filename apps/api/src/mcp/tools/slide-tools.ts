@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ADVANCE_MODES, DEFAULT_SLIDE_ADVANCE, DEFAULT_SLIDE_BACKGROUND, DEFAULT_SLIDE_DURATION_S, SLIDE_TITLE_MAX_LENGTH, THEME_COLOR_KEYS, componentCatalog, slideLayoutEngine } from '@lumia/packages/catalog';
+import { NEXT_UNLOCKS, START_MODES, DEFAULT_SLIDE_UNLOCK, DEFAULT_SLIDE_BACKGROUND, DEFAULT_SLIDE_DURATION_S, SLIDE_TITLE_MAX_LENGTH, THEME_COLOR_KEYS, componentCatalog, slideLayoutEngine } from '@lumia/packages/catalog';
 import { ACTIONS } from '../../auth/index.ts';
-import { ENTRANCES, TRANSITIONS } from '../../domain/enums.ts';
+import { ENTRANCES, EXITS, TRANSITIONS } from '../../domain/enums.ts';
 import { SLIDE_FIELDS, decodeSlide, slideSummary } from '../class-data.ts';
 import { list, num, record, text } from '../decode.ts';
 import { draftNotice, findSlide, openDraft } from '../draft.ts';
@@ -10,12 +10,22 @@ import { defineTool } from '../tool-definition.ts';
 import { ToolError } from '../tool-error.ts';
 import { geometryInput, nodeIdInput, propsInput, secondsInput, slideIdInput } from './inputs.ts';
 
+
+/** What each unlock rule means, for the tool inputs. The slide never moves on by itself: the student presses Siguiente. */
+const UNLOCK_HELP =
+  'Cuándo se habilita el botón Siguiente: always (desde el inicio), after_time (al cumplirse durationS, contado desde el inicio de la diapositiva), after_activities (al completar sus preguntas y juegos) o custom_button (el Siguiente lateral no se usa: avanza un botón de la diapositiva, unlockElementId, con acción next_slide o go_to_slide).';
+
+/** How a slide with the rule after_time starts. */
+const START_MODE_HELP =
+  'Solo con unlock after_time: auto (la diapositiva arranca al abrirse) o button (espera a que el estudiante presione su botón de inicio, startElementId, con acción start_slide).';
 const draftElementInput = z.object({
   component: z.string().min(1).describe('Llave del componente (list_components).'),
   name: z.string().trim().min(1).optional().describe('Nombre en la línea de tiempo; por defecto, el del componente.'),
   ...geometryInput,
   appearsAtS: secondsInput.optional().describe('Segundo en que aparece.'),
   entrance: z.enum(ENTRANCES).optional().describe('Animación de entrada.'),
+  exit: z.enum(EXITS).optional().describe('Animación de salida; con salida, indica disappearsAtS.'),
+  disappearsAtS: secondsInput.optional().describe('Segundo en que el componente sale, mayor que appearsAtS.'),
   props: propsInput.optional().describe('Props del componente; lo que falte toma sus valores por defecto.'),
 });
 
@@ -24,7 +34,8 @@ const draftSlideInput = z.object({
   background: z.enum(THEME_COLOR_KEYS).optional().describe(`Color de fondo del tema; por defecto, ${DEFAULT_SLIDE_BACKGROUND}.`),
   durationS: z.number().positive().optional().describe(`Duración en segundos; por defecto, ${String(DEFAULT_SLIDE_DURATION_S)}.`),
   transition: z.enum(TRANSITIONS).optional().describe('Transición al entrar a la diapositiva; por defecto, none.'),
-  advance: z.enum(ADVANCE_MODES).optional().describe(`auto: al terminar su tiempo; click: con un clic; on_complete: al completar sus preguntas. Por defecto, ${DEFAULT_SLIDE_ADVANCE}; usa on_complete en las diapositivas con preguntas.`),
+  unlock: z.enum(NEXT_UNLOCKS).optional().describe(`${UNLOCK_HELP} Por defecto, ${DEFAULT_SLIDE_UNLOCK}; usa after_activities en las diapositivas con preguntas o juegos. Para custom_button, crea la diapositiva y elige el botón después con update_slide.`),
+  startMode: z.enum(START_MODES).optional().describe(`${START_MODE_HELP} El botón de inicio se elige después con update_slide.`),
   elements: z
     .array(draftElementInput)
     .optional()
@@ -55,6 +66,8 @@ function buildDraftSlide(spec: DraftSlideSpec, slideIndex: number): Record<strin
       z: element.z ?? place?.z ?? elementIndex + 1,
       appearsAtS: element.appearsAtS ?? place?.appearsAtS ?? 0,
       ...(element.entrance === undefined ? {} : { entrance: element.entrance }),
+      ...(element.exit === undefined ? {} : { exit: element.exit }),
+      ...(element.disappearsAtS === undefined ? {} : { disappearsAtS: element.disappearsAtS }),
       props: JSON.stringify(props.props),
     };
   });
@@ -63,7 +76,8 @@ function buildDraftSlide(spec: DraftSlideSpec, slideIndex: number): Record<strin
     ...(spec.background === undefined ? {} : { background: spec.background }),
     ...(spec.durationS === undefined ? {} : { durationS: spec.durationS }),
     ...(spec.transition === undefined ? {} : { transition: spec.transition }),
-    ...(spec.advance === undefined ? {} : { advance: spec.advance }),
+    ...(spec.unlock === undefined ? {} : { unlock: spec.unlock }),
+    ...(spec.startMode === undefined ? {} : { startMode: spec.startMode }),
     elements,
   };
 }
@@ -106,7 +120,8 @@ const addSlides = defineTool({
 
 const updateSlide = defineTool({
   name: 'update_slide',
-  description: 'Cambia datos de una diapositiva: título, fondo, duración, transición o modo de avance. Solo cambia lo que indiques.',
+  description:
+    'Cambia datos de una diapositiva: título, fondo, duración, transición, cuándo se habilita Siguiente, cómo inicia y sus botones de inicio y personalizado. Solo cambia lo que indiques.',
   action: ACTIONS.documentsEdit,
   input: z.object({
     nodeId: nodeIdInput,
@@ -115,14 +130,22 @@ const updateSlide = defineTool({
     background: z.enum(THEME_COLOR_KEYS).optional(),
     durationS: z.number().positive().optional().describe('Duración en segundos.'),
     transition: z.enum(TRANSITIONS).optional().describe('Transición al entrar a la diapositiva.'),
-    advance: z.enum(ADVANCE_MODES).optional().describe('auto: al terminar su tiempo; click: con un clic; on_complete: al completar sus preguntas.'),
+    unlock: z.enum(NEXT_UNLOCKS).optional().describe(UNLOCK_HELP),
+    startMode: z.enum(START_MODES).optional().describe(START_MODE_HELP),
+    startElementId: z.string().optional().describe('Id del botón de inicio: un botón de esta diapositiva con acción start_slide. Texto vacío para quitarlo.'),
+    unlockElementId: z.string().optional().describe('Id del botón personalizado: un botón de esta diapositiva con acción next_slide o go_to_slide. Texto vacío para quitarlo.'),
   }),
   run: async ({ nodeId, slideId, ...changes }, { studio }) => {
     if (Object.keys(changes).length === 0) throw ToolError.invalidInput('Indica al menos un cambio.');
     const session = await openDraft(studio, nodeId);
     const slide = findSlide(session.version, session.remap.id(slideId));
+    // A write that opened a draft gave the elements new ids, so the button references move to them.
+    const buttons = {
+      ...(changes.startElementId === undefined || changes.startElementId === '' ? {} : { startElementId: session.remap.id(changes.startElementId) }),
+      ...(changes.unlockElementId === undefined || changes.unlockElementId === '' ? {} : { unlockElementId: session.remap.id(changes.unlockElementId) }),
+    };
     const saved = decodeSlide(
-      (await studio.request(`mutation($i: SlideInput!) { saveSlide(input: $i) { ${SLIDE_FIELDS} } }`, { i: { id: slide.id, versionId: session.version.id, ...changes } })).saveSlide,
+      (await studio.request(`mutation($i: SlideInput!) { saveSlide(input: $i) { ${SLIDE_FIELDS} } }`, { i: { id: slide.id, versionId: session.version.id, ...changes, ...buttons } })).saveSlide,
     );
     return { slide: slideSummary(saved), ...draftNotice(session) };
   },

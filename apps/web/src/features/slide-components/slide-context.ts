@@ -2,11 +2,16 @@ import { inject, provide } from 'vue';
 import type { InjectionKey } from 'vue';
 import type { MediaRef, SlideElement } from '../../api/types.ts';
 
-/** Navigation that the student preview offers to components such as `button_link`. */
+/**
+ * Navigation that the student preview offers to components such as `button_link`. `from` is the element that asks: the
+ * custom button of the slide moves on even while the lateral Next is off, and only the start button starts the slide.
+ */
 export interface SlideNavigator {
-  next(): void;
+  next(from?: string): void;
   /** Goes to a slide by its 1-based position. */
-  goTo(position: number): void;
+  goTo(position: number, from?: string): void;
+  /** Starts a slide that waits for its start button; true when `from` started it. */
+  start(from: string): boolean;
 }
 
 /** Collects which questions of the slide are completed; the preview uses it for the "Al completar" advance. */

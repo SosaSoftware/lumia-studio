@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { panels } from '../../composables/panels.ts';
+import { trackPropertiesFocus } from '../../composables/properties-focus.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
 import { componentName } from '../editor/catalog-labels.ts';
@@ -51,7 +52,7 @@ function clear(): void {
 </script>
 
 <template>
-  <aside class="panel" aria-labelledby="h-props" data-testid="panel-properties">
+  <aside class="panel" aria-labelledby="h-props" data-testid="panel-properties" @focusin="trackPropertiesFocus($event, element?.id ?? null)">
     <div class="s-panel-head">
       <h2 id="h-props" class="lbl">{{ t('properties.panel.title') }}</h2>
       <button type="button" class="ib" :aria-label="t('properties.panel.hide')" :title="t('common.hide')" @click="panels.right = null"><StudioIcon name="minus" :size="15" /></button>

@@ -9,7 +9,7 @@ const IMAGE = '3f2b8f0e-6a1d-4c57-9e1a-2d6a4b0c9f11';
 function definition(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     format: 'lumia',
-    formatVersion: 1,
+    formatVersion: 2,
     class: { displayName: 'Demo Video' },
     slides: [
       {
@@ -20,7 +20,7 @@ function definition(overrides: Record<string, unknown> = {}): Record<string, unk
         background: 'surface',
         durationS: 6,
         transition: 'fade',
-        advance: 'auto',
+        unlock: 'after_timeline',
         elements: [{ id: 'e2', component: 'image', name: 'Imagen', x: 1, y: 2, w: 30, h: 20, z: 1, appearsAtS: 0, entrance: 'none', props: { mediaId: IMAGE, alt: 'Robot' } }],
         narrationClips: [
           { id: 'n1', startsAtS: 0, script: 'Hola', voice: 'Mia', speed: 1, durationS: 2.5, audio: 'narration/n1.mp3', speechMarks: null },
@@ -29,7 +29,7 @@ function definition(overrides: Record<string, unknown> = {}): Record<string, unk
         pauses: [],
         audioClips: [],
       },
-      { id: 's1', position: 1, title: 'Portada', background: 'primary', durationS: 4, transition: 'none', advance: 'click', elements: [], narrationClips: [], pauses: [], audioClips: [] },
+      { id: 's1', position: 1, title: 'Portada', background: 'primary', durationS: 4, transition: 'none', unlock: 'always', elements: [], narrationClips: [], pauses: [], audioClips: [] },
     ],
     media: { [IMAGE]: { path: `media/${IMAGE}/robot.png`, name: 'robot.png', mimeType: 'image/png', sizeBytes: 3 } },
     ...overrides,
@@ -80,7 +80,7 @@ describe('openLumia', () => {
   it('rejects files that are not a .lumia of this version', () => {
     expect(() => openLumia(new Uint8Array([1, 2, 3]), fakeUrls())).toThrow(LumiaFileError);
     expect(() => openLumia(zipSync({ 'otro.json': strToU8('{}') }), fakeUrls())).toThrow(/definition\.json/);
-    expect(() => openLumia(lumia(definition({ formatVersion: 2 })), fakeUrls())).toThrow(/versión 1/);
+    expect(() => openLumia(lumia(definition({ formatVersion: 1 })), fakeUrls())).toThrow(/versión 2/);
   });
 });
 

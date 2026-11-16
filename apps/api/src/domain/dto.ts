@@ -88,6 +88,10 @@ export interface ElementDto {
   z: number;
   appearsAtS: number;
   entrance: string;
+  /** Exit animation; with `none` the element stays until the slide ends. */
+  exit: string;
+  /** Second the element leaves the slide; null without exit. */
+  disappearsAtS: number | null;
   /** AWSJSON: a JSON value; AppSync and the local server serialize it for the client. */
   props: Record<string, unknown>;
   mediaId: string | null;
@@ -161,7 +165,12 @@ export interface SlideDto {
   background: string;
   durationS: number;
   transition: string;
-  advance: string;
+  unlock: string;
+  startMode: string;
+  /** Button that starts the slide when `startMode` is `button`. */
+  startElementId: string | null;
+  /** Button that replaces the lateral Next when `unlock` is `custom_button`. */
+  unlockElementId: string | null;
   elements: ElementDto[];
   narrationClips: NarrationClipDto[];
   pauses: PauseDto[];

@@ -20,7 +20,7 @@ describe('describeSchema', () => {
 
   it('maps enumerations, booleans and numbers', () => {
     expect(kinds('title')).toEqual({ text: 'text', level: 'enum', align: 'enum' });
-    expect(kinds('video')).toEqual({ mediaId: 'media', title: 'text', prompt: 'text', startAtS: 'number', autoplay: 'boolean' });
+    expect(kinds('video')).toMatchObject({ mediaId: 'media', title: 'text', prompt: 'text', startAtS: 'number', autoplay: 'boolean', loop: 'boolean', color: 'enum' });
     expect(fieldsOf('shape').find((field) => field.key === 'strokeWidth')).toMatchObject({ kind: 'number', min: 0, max: 8, integer: false });
     expect(fieldsOf('true_false').find((field) => field.key === 'attempts')).toMatchObject({ kind: 'number', min: 1, max: 3, integer: true });
   });

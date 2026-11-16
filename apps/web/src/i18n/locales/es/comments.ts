@@ -20,7 +20,11 @@ export const preview = {
   badge: 'Vista previa · así la verán los estudiantes',
   closeLabel: 'Cerrar la vista previa (Esc)',
   closeShort: 'Cerrar (Esc)',
-  blocked: 'Responde las preguntas para continuar',
-  blockedHint: 'Responde las preguntas para continuar.',
+  waitActivities: 'Completa las actividades para continuar',
+  waitTime: 'Espera a que termine el tiempo para continuar',
+  waitButton: 'Usa el botón «{label}» para continuar',
+  waitStart: 'Presiona «{label}» para comenzar',
+  pauseNext: 'Presiona Siguiente para continuar',
+  finish: 'Terminar la clase',
   end: 'Fin de la clase',
 };

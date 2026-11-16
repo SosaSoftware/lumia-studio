@@ -1,7 +1,7 @@
 import { reactive, watch } from 'vue';
 
 /** Component groups of the palette, in the order of the activity bar. */
-export const PALETTE_GROUPS = ['slides', 'text', 'media', 'shapes', 'interactive', 'questions'] as const;
+export const PALETTE_GROUPS = ['slides', 'text', 'media', 'decorative', 'shapes', 'data', 'interactive', 'questions', 'games', 'characters', 'lumi'] as const;
 export type PaletteGroup = (typeof PALETTE_GROUPS)[number];
 
 export type LeftPanel = 'explorer' | PaletteGroup;
@@ -12,7 +12,8 @@ export interface PanelState {
   /** The explorer (content tree) or one component group, one at a time. */
   left: LeftPanel | null;
   right: RightPanel | null;
-  bottom: BottomPanel | null;
+  /** Slides or timeline: one of them is always open. */
+  bottom: BottomPanel;
   /** Shows the outline and the name of each component on the canvas. */
   tags: boolean;
   /** Shows the dashed feedback field of the questions and hotspots on the canvas; hidden, it keeps its space. */
@@ -48,7 +49,7 @@ export function readPanels(storage: Storage = localStorage): PanelState {
     return {
       left: leftOf(value.left, lastGroup),
       right: value.right === 'lumi' || value.right === 'properties' || value.right === 'comments' ? value.right : value.right === null ? null : DEFAULTS.right,
-      bottom: value.bottom === 'slides' || value.bottom === 'timeline' ? value.bottom : value.bottom === null ? null : DEFAULTS.bottom,
+      bottom: value.bottom === 'slides' || value.bottom === 'timeline' ? value.bottom : DEFAULTS.bottom,
       tags: typeof value.tags === 'boolean' ? value.tags : DEFAULTS.tags,
       feedback: typeof value.feedback === 'boolean' ? value.feedback : DEFAULTS.feedback,
       lastGroup,
@@ -85,9 +86,9 @@ export function toggleRight(name: RightPanel): void {
   panels.right = panels.right === name ? null : name;
 }
 
-/** Opens a bottom panel, or hides it when it is already open. */
-export function toggleBottom(name: BottomPanel): void {
-  panels.bottom = panels.bottom === name ? null : name;
+/** Opens a bottom panel. One of them is always open, so the open one stays open. */
+export function showBottom(name: BottomPanel): void {
+  panels.bottom = name;
 }
 
 /** Panel names used by Lumi's `open_panel` tool. */

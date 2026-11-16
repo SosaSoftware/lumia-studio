@@ -21,11 +21,11 @@ const NODE: TreeNode = {
 };
 
 function element(id: string, slideId: string): SlideElement {
-  return { id, slideId, component: 'title', name: 'Título', x: 6, y: 4, w: 88, h: 9, z: 1, appearsAtS: 0, entrance: 'none', props: { text: 'Hola', level: 'h2', align: 'left' }, mediaId: null, media: null };
+  return { id, slideId, component: 'title', name: 'Título', x: 6, y: 4, w: 88, h: 9, z: 1, appearsAtS: 0, entrance: 'none', exit: 'none', disappearsAtS: null, props: { text: 'Hola', level: 'h2', align: 'left' }, mediaId: null, media: null };
 }
 
 function slide(id: string, versionId: string, elementId: string): Slide {
-  return { id, versionId, position: 1, title: 'Portada', background: 'primary', durationS: 8, transition: 'none', advance: 'click', elements: [element(elementId, id)], narrationClips: [], pauses: [], audioClips: [], comments: [] };
+  return { id, versionId, position: 1, title: 'Portada', background: 'primary', durationS: 8, transition: 'none', unlock: 'always', startMode: 'auto', startElementId: null, unlockElementId: null, elements: [element(elementId, id)], narrationClips: [], pauses: [], audioClips: [], comments: [] };
 }
 
 function documentOf(status: 'draft' | 'published', version: string, slideId: string, elementId: string, number: number): ClassDocument {

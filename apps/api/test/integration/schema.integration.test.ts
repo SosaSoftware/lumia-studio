@@ -29,8 +29,8 @@ describe('studio schema', () => {
       `select table_name from information_schema.tables where table_schema = 'studio' and table_type = 'BASE TABLE'`,
     );
     expect(rows.map((row) => row.table_name).sort()).toEqual([
-      'access_grant', 'app_user', 'audio_clip', 'category', 'class_document', 'document_version', 'media_asset', 'narration_clip',
-      'pause', 'role', 'role_permission', 'schema_migration', 'slide', 'slide_comment', 'slide_element', 'subcategory', 'tree_node',
+      'access_grant', 'app_user', 'audio_clip', 'category', 'class_document', 'component_property', 'document_version', 'media_asset',
+      'narration_clip', 'pause', 'property_section', 'role', 'role_permission', 'schema_migration', 'slide', 'slide_comment', 'slide_element', 'subcategory', 'tree_node',
     ]);
   });
 
@@ -46,11 +46,14 @@ describe('studio schema', () => {
       document_status: 'draft,published',
       version_status: 'draft,published,archived',
       transition: 'none,fade,slide,zoom',
-      advance_mode: 'auto,click,on_complete',
+      next_unlock: 'always,after_time,after_activities,custom_button',
+      start_mode: 'auto,button',
+      exit_effect: 'none,disappear,fade,slide',
       entrance: 'none,appear,fade,slide,draw',
       narration_status: 'pending,generating,ready,failed',
       audio_kind: 'music,effect',
-      pause_end: 'continue,wait_click',
+      pause_end: 'continue,wait_next',
+      property_nature: 'content,logic,behavior,appearance,motion,placement,other',
     });
   });
 

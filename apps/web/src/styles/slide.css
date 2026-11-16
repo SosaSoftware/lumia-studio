@@ -67,6 +67,49 @@
   --sl-on-muted-2: rgba(255, 255, 255, 0.86);
   --sl-kicker-muted: #FFFFFF;
 
+  --sl-purple: #7C4DFF;
+  --sl-purple-soft: #EFE9FF;
+  --sl-purple-ink: #5B2FD6;
+  --sl-on-purple: #FFFFFF;
+  --sl-on-purple-2: rgba(255, 255, 255, 0.86);
+  --sl-kicker-purple: #E5DBFF;
+
+  --sl-pink: #F0569B;
+  --sl-pink-soft: #FFE4F0;
+  --sl-pink-ink: #C2256F;
+  --sl-on-pink: #FFFFFF;
+  --sl-on-pink-2: rgba(255, 255, 255, 0.88);
+  --sl-kicker-pink: #FFE4F0;
+
+  --sl-orange: #FF8A3D;
+  --sl-orange-soft: #FFEBDD;
+  --sl-orange-ink: #B4530F;
+  --sl-on-orange: #161616;
+  --sl-on-orange-2: #45230A;
+  --sl-kicker-orange: #45230A;
+
+  /* Gradient of each theme key, for components drawn with the `gradient` variant. */
+  --sl-surface-grad: linear-gradient(135deg, #FFFFFF 0%, #F1EFE9 100%);
+  --sl-surface-alt-grad: linear-gradient(135deg, #FFFFFF 0%, #F6F5F1 100%);
+  --sl-primary-grad: linear-gradient(135deg, #2F6BFF 0%, #3FC5F0 100%);
+  --sl-accent-grad: linear-gradient(135deg, #3FC5F0 0%, #5EE0C0 100%);
+  --sl-success-grad: linear-gradient(135deg, #12B886 0%, #8BD84B 100%);
+  --sl-warning-grad: linear-gradient(135deg, #FFD43B 0%, #FF9F1C 100%);
+  --sl-danger-grad: linear-gradient(135deg, #E03131 0%, #F0569B 100%);
+  --sl-text-grad: linear-gradient(135deg, #161616 0%, #3A4257 100%);
+  --sl-muted-grad: linear-gradient(135deg, #8F8D88 0%, #B9B6AF 100%);
+  --sl-purple-grad: linear-gradient(135deg, #7C4DFF 0%, #F0569B 100%);
+  --sl-pink-grad: linear-gradient(135deg, #F0569B 0%, #FF8A3D 100%);
+  --sl-orange-grad: linear-gradient(135deg, #FF8A3D 0%, #FFD43B 100%);
+
+  /* Elevation of the cards that components draw. */
+  --sl-elev-1: 0 0.2cqw 0.6cqw rgba(22, 22, 22, 0.07);
+  --sl-elev-2: 0 0.5cqw 1.6cqw rgba(22, 22, 22, 0.12);
+  --sl-elev-3: 0 1cqw 3cqw rgba(22, 22, 22, 0.18);
+  --sl-font-display: Lexend, system-ui, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  --sl-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   /* Inks and surfaces of the cards that components draw on any background. */
   --sl-ink: #161616;
   --sl-ink-2: #4F4D49;
@@ -139,4 +182,89 @@
   font-size: 1.15cqw;
   color: var(--sl-foot);
   pointer-events: none;
+}
+
+/* Motion shared by the catalog components; each one decides when it plays. */
+@keyframes sl-pop {
+  from { opacity: 0; transform: translateY(0.9em) rotate(-4deg) scale(0.9); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sl-rise {
+  from { opacity: 0; transform: translateY(1.2cqw); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sl-zoom {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sl-float {
+  0%, 100% { transform: translateY(0) rotate(var(--sl-tilt, 0deg)); }
+  50% { transform: translateY(-6%) rotate(calc(var(--sl-tilt, 0deg) + 4deg)); }
+}
+
+@keyframes sl-wiggle {
+  0%, 100% { transform: rotate(calc(var(--sl-tilt, 0deg) - 6deg)); }
+  50% { transform: rotate(calc(var(--sl-tilt, 0deg) + 6deg)); }
+}
+
+@keyframes sl-pulse {
+  0%, 100% { transform: scale(1) rotate(var(--sl-tilt, 0deg)); }
+  50% { transform: scale(1.08) rotate(var(--sl-tilt, 0deg)); }
+}
+
+@keyframes sl-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sl-bounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-12%); }
+  60% { transform: translateY(-5%); }
+}
+
+@keyframes sl-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-0.5cqw); }
+  40%, 80% { transform: translateX(0.5cqw); }
+}
+
+@keyframes sl-correct {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes sl-blink {
+  0%, 45% { opacity: 1; }
+  50%, 95% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes sl-ring {
+  from { transform: scale(0.6); opacity: 0.7; }
+  to { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes sl-shine {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* One full period of a `5 4` dash pattern, so the loop has no jump. */
+@keyframes sl-dash {
+  to { stroke-dashoffset: -18; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-surface *,
+  .slide-surface *::before,
+  .slide-surface *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
 }

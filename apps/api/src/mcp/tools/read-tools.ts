@@ -143,14 +143,14 @@ const getSlide = defineTool({
 const listComponents = defineTool({
   name: 'list_components',
   description:
-    'Catálogo de Studio. Sin keys: todos los componentes, con su uso. Con keys: el esquema de props, los valores por defecto y el tamaño de esos componentes, para armar props válidas.',
+    'Catálogo de Studio. Sin keys: todos los componentes, con su uso. Con keys: el esquema de props, los valores por defecto, el tamaño y panel, que agrupa las props por sección del panel Propiedades en el mismo orden que ve la persona: content, answer, behavior, appearance, motion, placement. Llena primero content y answer; deja appearance y motion por defecto salvo que la persona lo pida. Las props con advanced son opcionales; visibleWhen dice de qué otra prop depende una.',
   action: ACTIONS.documentsView,
   input: z.object({ keys: z.array(z.string().min(1)).max(28).optional().describe('Llaves de los componentes cuyo esquema necesitas, por ejemplo ["title", "multiple_choice"].') }),
   run: async ({ keys }, { studio }) => {
     const catalog = record(
       (
         await studio.request(
-          'query { componentCatalog { components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion } } }',
+          'query { componentCatalog { sections { key labels } components { key name group groupName usage propsSchema defaults defaultSize { w h } usesMedia isQuestion layout { prop section advanced visibleWhen } } } }',
         )
       ).componentCatalog,
     );
@@ -168,6 +168,25 @@ const listComponents = defineTool({
         note: 'Pide con keys los componentes que vas a usar para ver su esquema de props.',
       };
     }
+    const sectionLabels = new Map(
+      list(catalog.sections).map((item) => {
+        const section = record(item);
+        return [text(section.key), text(record(json(section.labels)).es, text(section.key))];
+      }),
+    );
+    const panelOf = (layout: unknown): { section: string; label: string; props: Record<string, unknown>[] }[] => {
+      const groups = new Map<string, Record<string, unknown>[]>();
+      for (const item of list(layout)) {
+        const placement = record(item);
+        const section = text(placement.section);
+        const visibleWhen = placement.visibleWhen === null || placement.visibleWhen === undefined ? null : json(placement.visibleWhen);
+        groups.set(section, [
+          ...(groups.get(section) ?? []),
+          { prop: text(placement.prop), ...(placement.advanced === true ? { advanced: true } : {}), ...(visibleWhen === null ? {} : { visibleWhen }) },
+        ]);
+      }
+      return [...groups].map(([section, props]) => ({ section, label: sectionLabels.get(section) ?? section, props }));
+    };
     const wanted = components.filter((component) => keys.includes(text(component.key)));
     const unknown = keys.filter((key) => !wanted.some((component) => text(component.key) === key));
     return {
@@ -181,6 +200,7 @@ const listComponents = defineTool({
           defaults: json(component.defaults),
           defaultSize: { w: num(size.w), h: num(size.h) },
           usesMedia: component.usesMedia === true,
+          panel: panelOf(component.layout),
         };
       }),
       ...(unknown.length === 0 ? {} : { unknownKeys: unknown }),

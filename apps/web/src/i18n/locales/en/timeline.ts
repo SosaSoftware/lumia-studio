@@ -2,10 +2,12 @@ import type { timeline as esTimeline } from '../es/timeline.ts';
 
 export const timeline: typeof esTimeline = {
   entrance: { none: 'None', appear: 'Appear', fade: 'Fade', slide: 'Slide', draw: 'Draw' },
+  exit: { none: 'None', disappear: 'Disappear', fade: 'Fade', slide: 'Slide' },
   transition: { none: 'None', fade: 'Fade', slide: 'Slide', zoom: 'Zoom' },
-  advance: { auto: 'Automatic', click: 'On click', on_complete: 'On completion' },
+  unlock: { always: 'Always', after_time: 'When the time is up', after_activities: 'After the activities', custom_button: 'Custom button' },
+  startMode: { auto: 'Automatic', button: 'Start button' },
   audioKind: { music: 'Music', effect: 'Effect' },
-  pauseEnd: { continue: 'Continue', wait_click: 'Wait for click' },
+  pauseEnd: { continue: 'Continue', wait_next: 'Wait for Next' },
   narrationStatus: { pending: 'No voice', generating: 'Generating…', ready: 'Voice ready', failed: 'Not generated' },
   gender: { female: 'Female', male: 'Male' },
   voicesUnavailable: 'The Polly voices could not be retrieved.',
@@ -36,6 +38,7 @@ export const timeline: typeof esTimeline = {
   },
   transitionTitle: 'Entry transition: {label}',
   componentTitle: '{name} · appears at {time} · {entrance}{countdown}',
+  lockedStart: '{name} · start button: always appears at second 0',
   countdown: ' · counts {time}',
   countdownStudent: ' when the student starts it',
   narrationTitle: 'Narration {from}–{to}: {text}',

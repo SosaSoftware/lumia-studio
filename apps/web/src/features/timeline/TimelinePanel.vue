@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import { rec, str } from '../../api/decode.ts';
-import type { MediaAsset, SlideElement } from '../../api/types.ts';
+import type { MediaAsset } from '../../api/types.ts';
 import { ACTIONS } from '../../composables/app-context.ts';
 import { canChange } from '../../composables/edit-lock.ts';
 import { panels } from '../../composables/panels.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t, tn } from '../../i18n/index.ts';
 import { componentName } from '../editor/catalog-labels.ts';
+import { activeStartButton } from '../slides/slide-buttons.ts';
 import MediaLibraryDialog from '../media/MediaLibraryDialog.vue';
 import { groupColor } from '../palette/palette.ts';
 import StudioIcon from '../../ui/StudioIcon.vue';
-import { audioKindLabel, elementSpan, entranceLabel, formatTime, narrationDuration, seekTarget, slideDuration, ticks, timeAtOffset, timerSeconds, transitionLabel } from './timeline-model.ts';
+import { audioKindLabel, elementSpan, entranceLabel, exitLabel, formatTime, narrationDuration, seekTarget, slideDuration, ticks, timeAtOffset, timerSeconds, transitionLabel } from './timeline-model.ts';
 
 type ClipKind = 'transition' | 'element' | 'narration' | 'audio' | 'pause';
 
@@ -23,6 +23,8 @@ interface Clip {
   label: string;
   title: string;
   resizable: boolean;
+  /** The clip cannot move: the start button of the slide always appears at second 0. */
+  locked?: boolean;
 }
 
 interface Row {
@@ -44,21 +46,6 @@ const marks = computed(() => ticks(duration.value));
 const position = computed(() => session.state.slides.findIndex((candidate) => candidate.id === slide.value?.id) + 1);
 const libraryOpen = ref(false);
 
-/** First text of a list prop: a string item or an item with a text-like field. */
-function firstItemText(value: unknown): string {
-  if (!Array.isArray(value)) return '';
-  const first: unknown = value[0];
-  if (typeof first === 'string') return first;
-  const item = rec(first);
-  return str(item.text) || str(item.label) || str(item.title) || str(item.caption);
-}
-
-function snippet(element: SlideElement): string {
-  const props = element.props;
-  const text = str(props.text) || str(props.question) || str(props.title) || str(props.statement) || str(props.label) || str(props.front) || firstItemText(props.items) || firstItemText(props.columns) || element.name;
-  return text.length > 40 ? `${text.slice(0, 39)}…` : text;
-}
-
 function selected(clip: Clip): boolean {
   const selection = session.state.selectedClip;
   if (clip.kind === 'element') return session.state.selectedElementId === clip.id;
@@ -73,6 +60,9 @@ const topRows = computed<Row[]>(() => {
   return [{ key: 'transition', name: t('timeline.rows.transition'), sub: label, dot: 'var(--tl-trans)', clips: [{ kind: 'transition', id: 'transition', start: 0, end: Math.min(1, duration.value), label, title: t('timeline.transitionTitle', { label }), resizable: false }] }];
 });
 
+/** The start button the slide uses now; its clip stays at second 0. */
+const startButtonId = computed(() => (slide.value === null ? null : (activeStartButton(slide.value)?.id ?? null)));
+
 const componentRows = computed<Row[]>(() => {
   const current = slide.value;
   if (current === null) return [];
@@ -81,7 +71,10 @@ const componentRows = computed<Row[]>(() => {
     .sort((a, b) => a.element.appearsAtS - b.element.appearsAtS || a.index - b.index)
     .map(({ element }) => {
       const info = workspace.catalog.component(element.component);
-      const name = info === undefined ? element.component : componentName(info);
+      const kind = info === undefined ? element.component : componentName(info);
+      // Each row shows the name of the element, so two components of the same type can be told apart.
+      const name = element.name.trim() === '' ? kind : element.name;
+      const locked = element.id === startButtonId.value;
       const entrance = entranceLabel(element.entrance);
       const span = elementSpan(element, duration.value);
       const seconds = timerSeconds(element);
@@ -89,16 +82,18 @@ const componentRows = computed<Row[]>(() => {
       return {
         key: `element-${element.id}`,
         name,
-        sub: snippet(element),
+        sub: kind,
         dot: groupColor(info?.group ?? ''),
         clips: [{
           kind: 'element',
           id: element.id,
           start: span.start,
           end: span.end,
-          label: seconds === null ? entrance : `${entrance} · ${formatTime(seconds)}`,
-          title: t('timeline.componentTitle', { name, time: formatTime(element.appearsAtS), entrance, countdown }),
-          resizable: false,
+          label: element.exit === 'none' ? (seconds === null ? entrance : `${entrance} · ${formatTime(seconds)}`) : `${entrance} → ${exitLabel(element.exit)}`,
+          title: locked ? t('timeline.lockedStart', { name }) : t('timeline.componentTitle', { name, time: formatTime(element.appearsAtS), entrance, countdown }),
+          // With an exit, the end of the bar is the second it leaves, so it can be stretched.
+          resizable: element.exit !== 'none' && !locked,
+          locked,
         }],
       };
     });
@@ -197,14 +192,17 @@ const round1 = (value: number): number => Math.round(value * 10) / 10;
 let drag: { clip: Clip; mode: 'move' | 'resize'; x: number; width: number; moved: boolean } | null = null;
 
 function apply(clip: Clip, start: number, length: number): void {
-  if (clip.kind === 'element') session.updateElement(clip.id, { appearsAtS: start });
+  if (clip.kind === 'element') {
+    const element = slide.value?.elements.find((candidate) => candidate.id === clip.id);
+    session.updateElement(clip.id, element !== undefined && element.exit !== 'none' ? { appearsAtS: start, disappearsAtS: round1(start + Math.max(0.1, length)) } : { appearsAtS: start });
+  }
   else if (clip.kind === 'narration') session.updateNarration(clip.id, { startsAtS: start });
   else if (clip.kind === 'audio') session.updateAudio(clip.id, { startsAtS: start, durationS: length });
   else if (clip.kind === 'pause') session.updatePause(clip.id, { startsAtS: start, durationS: length });
 }
 
 function onPointerDown(event: PointerEvent, clip: Clip): void {
-  if (!canEdit.value || clip.kind === 'transition' || event.button !== 0) return;
+  if (!canEdit.value || clip.kind === 'transition' || clip.locked === true || event.button !== 0) return;
   const target = event.currentTarget;
   const track = target instanceof HTMLElement ? target.parentElement : null;
   if (!(target instanceof HTMLElement) || track === null) return;
@@ -240,7 +238,7 @@ function onClipKey(event: KeyboardEvent, clip: Clip): void {
     select(clip);
     return;
   }
-  if (!canEdit.value || clip.kind === 'transition') return;
+  if (!canEdit.value || clip.kind === 'transition' || clip.locked === true) return;
   const step = event.shiftKey ? 0.1 : 0.5;
   const length = clip.end - clip.start;
   if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
@@ -478,16 +476,17 @@ onBeforeUnmount(stop);
               :key="clip.id"
               type="button"
               class="tlc clip element"
+              :class="{ locked: clip.locked, resizable: clip.resizable }"
               :title="clip.title"
               :aria-pressed="selected(clip)"
-              :aria-label="t('timeline.clipHint', { title: clip.title })"
+              :aria-label="clip.resizable ? t('timeline.clipHintResizable', { title: clip.title }) : t('timeline.clipHint', { title: clip.title })"
               :style="{ ...clipStyle(clip), boxShadow: selected(clip) ? '0 0 0 2px var(--s-text)' : 'none' }"
               :data-testid="`timeline-clip-element-${clip.id}`"
               @pointerdown="onPointerDown($event, clip)"
               @pointermove="onPointerMove"
               @pointerup="onPointerUp($event, clip)"
               @keydown="onClipKey($event, clip)"
-            ><span>{{ clip.label }}</span></button>
+            ><StudioIcon v-if="clip.locked" name="lock" :size="11" :stroke="2" /><span>{{ clip.label }}</span></button>
           </div>
         </div>
 

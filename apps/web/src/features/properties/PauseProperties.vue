@@ -16,7 +16,7 @@ const workspace = useWorkspace();
 const session = workspace.session;
 const canEdit = computed(() => canChange(ACTIONS.edit));
 const timers = computed(() => props.slide.elements.filter((element) => element.component === 'timer'));
-const PAUSE_ENDS: readonly PauseEnd[] = ['continue', 'wait_click'];
+const PAUSE_ENDS: readonly PauseEnd[] = ['continue', 'wait_next'];
 const ends = computed(() => PAUSE_ENDS.map((value) => ({ value, label: pauseEndLabel(value) })));
 const showTimer = computed(() => props.pause.timerElementId !== null);
 const timerOptions = computed(() => [

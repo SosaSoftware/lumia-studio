@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { ICON_NAMES, THEME_COLOR_KEYS } from '@lumia/packages/catalog';
 import { list, rec, str } from '../../api/decode.ts';
-import type { MediaAsset, MediaRef, SlideElement } from '../../api/types.ts';
+import type { MediaAsset, MediaRef, Slide, SlideElement } from '../../api/types.ts';
 import { useWorkspace } from '../../composables/workspace.ts';
 import { t } from '../../i18n/index.ts';
 import { contentIcon, iconLabel } from '../slide-components/content-icons.ts';
 import ChipGroup from './ChipGroup.vue';
 import ColorSwatches from './ColorSwatches.vue';
+import EmojiField from './EmojiField.vue';
+import MermaidEditor from './MermaidEditor.vue';
+import ShapePicker from './ShapePicker.vue';
 import { inputValue } from './controls.ts';
 import MediaPicker from './MediaPicker.vue';
 import NumberField from './NumberField.vue';
 import { booleanLabels, valueLabel } from './prop-labels.ts';
-import { blankItem, errorKey } from './schema-form-model.ts';
+import { blankItem, errorKey, moveItem, newListText } from './schema-form-model.ts';
 import type { FieldDescriptor, FieldPath } from './schema-form-model.ts';
 
 const props = defineProps<{
@@ -26,9 +29,12 @@ const props = defineProps<{
   disabled: boolean;
   canUpload: boolean;
   media: MediaRef | null;
-  mediaAccept?: string;
   elements: readonly SlideElement[];
   elementId: string;
+  /** Slides of the class, for a field that points to one of them. */
+  slides?: readonly Slide[];
+  /** For a list of items: the top-level field that marks one of them as correct, drawn as a choice on each item. */
+  mark?: { key: string; label: string; valueKey: string; value: string } | null;
 }>();
 
 const emit = defineEmits<{
@@ -48,26 +54,26 @@ const counter = computed(() =>
 
 /** Fields whose value is the id of something else: they get a select of those things. */
 const references = computed<{ value: string; label: string }[] | null>(() => {
-  const name = props.field.key;
-  if (props.component === 'multiple_choice' && name === 'correctOptionId') {
-    return list(props.root.options).map((item, index) => {
-      const option = rec(item);
-      return { value: str(option.id), label: `${String.fromCharCode(65 + index)} · ${str(option.text)}` };
-    });
-  }
-  if (props.component === 'drag_drop' && name === 'correctItemId') {
-    return list(props.root.items).map((item) => ({ value: str(rec(item).id), label: str(rec(item).text) }));
-  }
-  if (props.component === 'diagram' && (name === 'from' || name === 'to')) {
-    return list(props.root.nodes).map((item) => ({ value: str(rec(item).id), label: str(rec(item).text) }));
-  }
-  if (props.component === 'connector' && (name === 'fromElementId' || name === 'toElementId')) {
+  const target = props.field.ref;
+  if (target === null) return null;
+  if (target.kind === 'slides') {
+    if (target.when !== null && props.root[target.when.prop] !== target.when.value) return null;
     return [
-      { value: '', label: t('properties.schema.unconnected') },
-      ...props.elements.filter((element) => element.id !== props.elementId && element.component !== 'connector').map((element) => ({ value: element.id, label: element.name })),
+      { value: '', label: t('properties.schema.chooseSlide') },
+      ...(props.slides ?? []).map((slide) => ({ value: String(slide.position), label: `${String(slide.position)} · ${slide.title === '' ? t('properties.schema.untitledSlide') : slide.title}` })),
     ];
   }
-  return null;
+  if (target.kind === 'slideElements') {
+    return [
+      { value: '', label: t('properties.schema.unconnected') },
+      ...props.elements.filter((element) => element.id !== props.elementId && element.component !== 'connector' && element.component !== 'arrow').map((element) => ({ value: element.id, label: element.name })),
+    ];
+  }
+  return list(props.root[target.list]).map((item, index) => {
+    const option = rec(item);
+    const label = str(option[target.label]);
+    return { value: str(option[target.value]), label: target.letters ? `${String.fromCharCode(65 + index)} · ${label}` : label };
+  });
 });
 
 /**
@@ -86,7 +92,8 @@ function pickMedia(asset: MediaAsset | null): void {
 }
 
 const isColor = computed(() => props.field.kind === 'enum' && props.field.options.length === THEME_COLOR_KEYS.length && THEME_COLOR_KEYS.every((name) => props.field.kind === 'enum' && props.field.options.includes(name)));
-const isIcon = computed(() => props.component === 'icon' && props.field.key === 'name');
+const isShape = computed(() => props.field.control === 'shape');
+const isIcon = computed(() => props.field.control === 'icon');
 const enumOptions = computed(() => (props.field.kind === 'enum' ? props.field.options.map((option) => ({ value: option, label: valueLabel(props.component, props.field.key, option) })) : []));
 const booleanOptions = computed(() => {
   const [yes, no] = booleanLabels(props.component, props.field.key);
@@ -105,7 +112,8 @@ function setItem(index: number, value: string): void {
 }
 
 function addString(): void {
-  emit('change', props.path, [...items.value, 'Nuevo elemento']);
+  const field = props.field;
+  emit('change', props.path, [...items.value, field.kind === 'string-list' && field.itemEmojiSet !== null ? '⭐' : newListText(props.component, field.key, field.kind === 'string-list' ? field.itemMaxLength : null)]);
 }
 
 function addObject(): void {
@@ -114,6 +122,30 @@ function addObject(): void {
 
 function remove(index: number): void {
   emit('change', props.path, items.value.filter((_, position) => position !== index));
+  collapsed.value = new Set();
+}
+
+function move(index: number, offset: number): void {
+  emit('change', props.path, moveItem(items.value, index, index + offset));
+  collapsed.value = new Set();
+}
+
+/** Items of a list of objects whose fields are hidden; the person folds them to keep long lists short. */
+const collapsed = ref<ReadonlySet<number>>(new Set());
+
+function toggle(index: number): void {
+  const next = new Set(collapsed.value);
+  if (next.has(index)) next.delete(index);
+  else next.add(index);
+  collapsed.value = next;
+}
+
+function markValue(item: unknown): string {
+  return props.mark === null || props.mark === undefined ? '' : str(rec(item)[props.mark.valueKey]);
+}
+
+function setMark(item: unknown): void {
+  if (props.mark !== null && props.mark !== undefined) emit('change', [props.mark.key], markValue(item));
 }
 
 const canAdd = computed(() => {
@@ -133,7 +165,7 @@ function itemTitle(item: unknown, index: number): string {
 </script>
 
 <template>
-  <div class="field" :data-testid="`schema-field-${key}`">
+  <div v-if="!field.auto" class="field" :data-testid="`schema-field-${key}`">
     <template v-if="references">
       <label :for="inputId" class="label">{{ field.label }}</label>
       <select :id="inputId" class="pv select" :value="str(value)" :disabled="disabled" :aria-invalid="!!error" :data-testid="inputId" @change="setText">
@@ -174,6 +206,16 @@ function itemTitle(item: unknown, index: number): string {
       />
     </template>
 
+    <template v-else-if="field.kind === 'code'">
+      <span class="label">{{ field.label }}</span>
+      <MermaidEditor :model-value="textValue" :editor="field.editor" :root="root" :label="field.label" :disabled="disabled" :invalid="!!error" :testid="inputId" @update:model-value="emit('change', path, $event)" />
+    </template>
+
+    <template v-else-if="field.kind === 'emoji'">
+      <span class="label">{{ field.label }}</span>
+      <EmojiField :model-value="textValue" :label="field.label" :set="field.set" :disabled="disabled" :testid="inputId" @update:model-value="emit('change', path, $event)" />
+    </template>
+
     <template v-else-if="field.kind === 'number'">
       <span class="label">{{ field.label }}</span>
       <NumberField
@@ -196,7 +238,8 @@ function itemTitle(item: unknown, index: number): string {
 
     <template v-else-if="field.kind === 'enum'">
       <span class="label">{{ field.label }}</span>
-      <ColorSwatches v-if="isColor" :model-value="str(value)" :label="field.label" :soft="component === 'shape' && field.key === 'fill'" :disabled="disabled" :testid="inputId" @update:model-value="emit('change', path, $event)" />
+      <ColorSwatches v-if="isColor" :model-value="str(value)" :label="field.label" :soft="component === 'shape' && field.key === 'fill' && (root.variant === undefined || root.variant === 'soft')" :disabled="disabled" :testid="inputId" @update:model-value="emit('change', path, $event)" />
+      <ShapePicker v-else-if="isShape && field.kind === 'enum'" :model-value="str(value)" :label="field.label" :options="field.options" :disabled="disabled" :testid="inputId" @update:model-value="emit('change', path, $event)" />
       <div v-else-if="isIcon" class="icons" role="radiogroup" :aria-label="field.label" :data-testid="inputId">
         <button
           v-for="name in ICON_NAMES"
@@ -226,10 +269,19 @@ function itemTitle(item: unknown, index: number): string {
       <span :id="`${inputId}-label`" class="label">{{ field.label }}</span>
       <div class="list" role="group" :aria-labelledby="`${inputId}-label`">
         <div v-for="(item, index) in items" :key="index" class="item">
-          <input class="pv control" type="text" :aria-label="`${field.label} ${index + 1}`" :value="str(item)" :maxlength="field.itemMaxLength ?? undefined" :disabled="disabled" :aria-invalid="!!errors[`${key}.${index}`]" :data-testid="`${inputId}-${index}`" @input="setItem(index, inputValue($event))" />
+          <EmojiField v-if="field.itemEmojiSet !== null" :model-value="str(item)" :label="`${field.label} ${index + 1}`" :set="field.itemEmojiSet" :disabled="disabled" :testid="`${inputId}-${index}`" @update:model-value="setItem(index, $event)" />
+          <input v-else class="pv control" type="text" :aria-label="`${field.label} ${index + 1}`" :value="str(item)" :maxlength="field.itemMaxLength ?? undefined" :disabled="disabled" :aria-invalid="!!errors[`${key}.${index}`]" :data-testid="`${inputId}-${index}`" @input="setItem(index, inputValue($event))" />
+          <span class="item-actions">
+            <button type="button" class="ib" :aria-label="t('properties.schema.moveUp', { label: field.label, index: index + 1 })" :disabled="disabled || index === 0" :data-testid="`${inputId}-up-${index}`" @click="move(index, -1)">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6" /></svg>
+            </button>
+            <button type="button" class="ib" :aria-label="t('properties.schema.moveDown', { label: field.label, index: index + 1 })" :disabled="disabled || index === items.length - 1" :data-testid="`${inputId}-down-${index}`" @click="move(index, 1)">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+            </button>
           <button type="button" class="ib" :aria-label="t('properties.schema.removeItem', { label: field.label, index: index + 1 })" :title="t('common.remove')" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
+          </span>
           <span v-if="errors[`${key}.${index}`]" class="error" role="alert" :data-testid="`field-error-${key}.${index}`">{{ errors[`${key}.${index}`] }}</span>
         </div>
         <button type="button" class="prv add" :disabled="disabled || !canAdd" :data-testid="`${inputId}-add`" @click="addString">{{ t('common.add') }}</button>
@@ -239,25 +291,47 @@ function itemTitle(item: unknown, index: number): string {
     <template v-else-if="field.kind === 'object-list'">
       <span :id="`${inputId}-label`" class="label">{{ field.label }}</span>
       <div class="list" role="group" :aria-labelledby="`${inputId}-label`">
-        <fieldset v-for="(item, index) in items" :key="index" class="card">
+        <fieldset v-for="(item, index) in items" :key="index" class="card" :class="{ 'card-marked': mark && markValue(item) === mark.value }">
           <legend class="legend">{{ itemTitle(item, index) }}</legend>
-          <SchemaField
-            v-for="child in field.fields"
-            :key="child.key"
-            :field="child"
-            :path="[...path, index, child.key]"
-            :value="rec(item)[child.key]"
-            :root="root"
-            :component="component"
-            :errors="errors"
-            :disabled="disabled"
-            :can-upload="canUpload"
-            :media="null"
-            :elements="elements"
-            :element-id="elementId"
-            @change="(childPath, next) => emit('change', childPath, next)"
-          />
-          <button type="button" class="remove" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">{{ t('common.remove') }}</button>
+          <div class="card-head">
+            <button type="button" class="card-toggle" :aria-expanded="!collapsed.has(index)" :aria-label="t('properties.schema.toggleItem', { label: field.label, index: index + 1 })" :data-testid="`${inputId}-toggle-${index}`" @click="toggle(index)">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" :class="{ folded: collapsed.has(index) }"><path d="m6 9 6 6 6-6" /></svg>
+              <span class="card-title">{{ itemTitle(item, index) }}</span>
+            </button>
+            <label v-if="mark" class="card-mark">
+              <input type="radio" :name="`${inputId}-mark`" :checked="markValue(item) === mark.value" :disabled="disabled" :aria-label="t('properties.schema.markCorrectLabel', { label: mark.label, item: itemTitle(item, index) })" :data-testid="`${inputId}-mark-${index}`" @change="setMark(item)" />
+              {{ t('properties.schema.markCorrect') }}
+            </label>
+            <span class="item-actions">
+              <button type="button" class="ib" :aria-label="t('properties.schema.moveUp', { label: field.label, index: index + 1 })" :disabled="disabled || index === 0" :data-testid="`${inputId}-up-${index}`" @click="move(index, -1)">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6" /></svg>
+              </button>
+              <button type="button" class="ib" :aria-label="t('properties.schema.moveDown', { label: field.label, index: index + 1 })" :disabled="disabled || index === items.length - 1" :data-testid="`${inputId}-down-${index}`" @click="move(index, 1)">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+            </span>
+          </div>
+          <template v-if="!collapsed.has(index)">
+            <SchemaField
+              v-for="child in field.fields"
+              :key="child.key"
+              :field="child"
+              :path="[...path, index, child.key]"
+              :value="rec(item)[child.key]"
+              :root="root"
+              :component="component"
+              :errors="errors"
+              :disabled="disabled"
+              :can-upload="canUpload"
+              :media="null"
+              :elements="elements"
+              :element-id="elementId"
+              :slides="slides"
+              :mark="null"
+              @change="(childPath, next) => emit('change', childPath, next)"
+            />
+            <button type="button" class="remove" :disabled="disabled || !canRemove" :data-testid="`${inputId}-remove-${index}`" @click="remove(index)">{{ t('common.remove') }}</button>
+          </template>
         </fieldset>
         <button type="button" class="prv add" :disabled="disabled || !canAdd" :data-testid="`${inputId}-add`" @click="addObject">{{ t('common.add') }}</button>
       </div>
@@ -265,9 +339,10 @@ function itemTitle(item: unknown, index: number): string {
 
     <template v-else-if="field.kind === 'media'">
       <span class="label">{{ field.label }}</span>
-      <MediaPicker :id="key" :media="pickerMedia" :media-id="typeof value === 'string' ? value : null" :can-upload="canUpload" :accept="mediaAccept ?? 'image/*'" :disabled="disabled" @pick="pickMedia" />
+      <MediaPicker :id="key" :media="pickerMedia" :media-id="typeof value === 'string' ? value : null" :can-upload="canUpload" :accept="field.kind === 'media' ? field.accept : 'image/*'" :disabled="disabled" @pick="pickMedia" />
     </template>
 
+    <span v-if="field.help" class="help" :data-testid="`${inputId}-help`">{{ field.help }}</span>
     <span v-if="error" :id="`${inputId}-error`" class="error" role="alert" :data-testid="`field-error-${key}`">{{ error }}</span>
   </div>
 </template>
@@ -285,9 +360,19 @@ function itemTitle(item: unknown, index: number): string {
 .pa:focus { outline: none; border-color: var(--s-active); }
 .list { display: flex; flex-direction: column; gap: 6px; }
 .item { display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: center; }
+.item-actions { display: flex; align-items: center; gap: 2px; }
+.item-actions .ib:disabled { opacity: 0.35; cursor: not-allowed; }
+.card-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.card-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 0; background: transparent; border: 0; color: var(--s-text); font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+.card-toggle svg { flex: none; transition: transform 0.15s ease; }
+.card-toggle svg.folded { transform: rotate(-90deg); }
+.card-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-mark { flex: none; display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--s-text-2); cursor: pointer; }
+.card-marked { border-color: var(--s-active); }
+.help { font-size: 11px; line-height: 1.4; color: var(--s-text-2); }
 .item .error { grid-column: 1 / -1; }
 .card { margin: 0; padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--s-border); border-radius: 8px; background: var(--s-editor); min-width: 0; }
-.legend { padding: 0 4px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--s-text-2); }
+.legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .remove { align-self: flex-start; padding: 0; background: transparent; border: 0; color: var(--s-danger); font: inherit; font-size: 12px; cursor: pointer; }
 .remove:disabled { opacity: 0.4; cursor: not-allowed; }
 .add { align-self: flex-start; }

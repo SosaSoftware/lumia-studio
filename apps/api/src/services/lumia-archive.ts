@@ -5,7 +5,7 @@ import type { DocumentVersionDto } from '../domain/dto.ts';
 import type { ExportSource, GroupedLevel, StoredMedia, StoredNarration } from '../repositories/export-repository.ts';
 
 /** Version of the `definition.json` format that a Lumia player reads. */
-export const LUMIA_FORMAT_VERSION = 1;
+export const LUMIA_FORMAT_VERSION = 2;
 export const DEFINITION_FILE = 'definition.json';
 
 /** Lowercase letters, digits and hyphens, without accents: `Educación Básica` becomes `educacion-basica`. */
@@ -98,7 +98,10 @@ export function buildDefinition(
       background: slide.background,
       durationS: slide.durationS,
       transition: slide.transition,
-      advance: slide.advance,
+      unlock: slide.unlock,
+      startMode: slide.startMode,
+      startElementId: slide.startElementId,
+      unlockElementId: slide.unlockElementId,
       elements: slide.elements.map((element) => ({
         id: element.id,
         component: element.component,
@@ -110,6 +113,8 @@ export function buildDefinition(
         z: element.z,
         appearsAtS: element.appearsAtS,
         entrance: element.entrance,
+        exit: element.exit,
+        disappearsAtS: element.disappearsAtS,
         props: parseProps(element.props),
       })),
       narrationClips: slide.narrationClips.map((clip) => {

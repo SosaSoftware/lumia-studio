@@ -14,6 +14,8 @@ export interface ElementRecord {
   z: number;
   appearsAtS: number;
   entrance: string;
+  exit: string;
+  disappearsAtS: number | null;
   mediaId: string | null;
 }
 
@@ -27,6 +29,10 @@ export interface ElementValues {
   z: number;
   appearsAtS: number;
   entrance: string;
+  /** Exit animation; with `none` the element stays until the slide ends. */
+  exit: string;
+  /** Second the element leaves the slide; null without exit. */
+  disappearsAtS: number | null;
   props: Record<string, unknown>;
   mediaId: string | null;
 }
@@ -43,6 +49,8 @@ interface ElementRow {
   z: number;
   appears_at_s: number;
   entrance: string;
+  exit: string;
+  disappears_at_s: number | null;
   media_id: string | null;
 }
 
@@ -53,7 +61,7 @@ export class ElementRepository {
   public async find(elementId: string): Promise<ElementRecord | null> {
     const rows = await this.db.query<ElementRow>(
       `select id::text as id, slide_id::text as slide_id, component, name, x, y, w, h, z, appears_at_s,
-              entrance::text as entrance, media_id::text as media_id
+              entrance::text as entrance, exit::text as exit, disappears_at_s, media_id::text as media_id
          from studio.slide_element where id = :id::uuid`,
       { id: elementId },
     );
@@ -63,7 +71,7 @@ export class ElementRepository {
       : {
           id: row.id, slideId: row.slide_id, component: row.component, name: row.name,
           x: row.x, y: row.y, w: row.w, h: row.h, z: row.z, appearsAtS: row.appears_at_s,
-          entrance: row.entrance, mediaId: row.media_id,
+          entrance: row.entrance, exit: row.exit, disappearsAtS: row.disappears_at_s, mediaId: row.media_id,
         };
   }
 
@@ -86,9 +94,11 @@ export class ElementRepository {
   public async insert(slideId: string, values: ElementValues): Promise<string> {
     const id = randomUUID();
     await this.db.execute(
-      `insert into studio.slide_element (id, slide_id, component, name, x, y, w, h, z, appears_at_s, entrance, props, media_id)
+      `insert into studio.slide_element (id, slide_id, component, name, x, y, w, h, z, appears_at_s, entrance, exit,
+                                         disappears_at_s, props, media_id)
        values (:id::uuid, :slideId::uuid, :component, :name, :x::numeric, :y::numeric, :w::numeric, :h::numeric, :z,
-               :appearsAtS::numeric, :entrance::studio.entrance, :props, :mediaId::uuid)`,
+               :appearsAtS::numeric, :entrance::studio.entrance, :exit::studio.exit_effect, :disappearsAtS::numeric,
+               :props, :mediaId::uuid)`,
       { id, slideId, ...ElementRepository.params(values) },
     );
     return id;
@@ -98,10 +108,16 @@ export class ElementRepository {
     await this.db.execute(
       `update studio.slide_element set component = :component, name = :name, x = :x::numeric, y = :y::numeric,
               w = :w::numeric, h = :h::numeric, z = :z, appears_at_s = :appearsAtS::numeric,
-              entrance = :entrance::studio.entrance, props = :props, media_id = :mediaId::uuid
+              entrance = :entrance::studio.entrance, exit = :exit::studio.exit_effect,
+              disappears_at_s = :disappearsAtS::numeric, props = :props, media_id = :mediaId::uuid
         where id = :id::uuid`,
       { id: elementId, ...ElementRepository.params(values) },
     );
+  }
+
+  /** Makes the element appear at the start of its slide. */
+  public async moveToStart(elementId: string): Promise<void> {
+    await this.db.execute('update studio.slide_element set appears_at_s = 0 where id = :id::uuid', { id: elementId });
   }
 
   public async delete(elementId: string): Promise<void> {
@@ -119,6 +135,8 @@ export class ElementRepository {
       z: values.z,
       appearsAtS: values.appearsAtS,
       entrance: values.entrance,
+      exit: values.exit,
+      disappearsAtS: values.disappearsAtS,
       props: SqlParam.json(values.props),
       mediaId: values.mediaId,
     };

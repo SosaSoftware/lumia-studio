@@ -22,7 +22,11 @@ export const preview: typeof esPreview = {
   badge: 'Preview · this is how students will see it',
   closeLabel: 'Close the preview (Esc)',
   closeShort: 'Close (Esc)',
-  blocked: 'Answer the questions to continue',
-  blockedHint: 'Answer the questions to continue.',
+  waitActivities: 'Complete the activities to continue',
+  waitTime: 'Wait until the time is up to continue',
+  waitButton: 'Use the «{label}» button to continue',
+  waitStart: 'Press «{label}» to begin',
+  pauseNext: 'Press Next to continue',
+  finish: 'Finish the class',
   end: 'End of the class',
 };

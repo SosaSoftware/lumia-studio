@@ -5,6 +5,12 @@ export const editor = {
   tagsToggle: 'Mostrar u ocultar el nombre de cada componente',
   feedbackToggle: 'Mostrar u ocultar el campo de retroalimentación de preguntas y puntos',
   components: 'Componentes',
+  deleteLinked: {
+    title: 'Borrar un botón enlazado',
+    start: '«{name}» es el botón de inicio de la diapositiva {number}: si lo borras, la diapositiva arrancará en automático.',
+    custom: '«{name}» es el botón personalizado de la diapositiva {number}: si lo borras, el botón Siguiente lateral se activará desde el inicio.',
+    confirm: 'Borrar',
+  },
   resize: 'Cambiar el tamaño ({handle})',
   handles: {
     nw: 'noroeste',
@@ -61,4 +67,7 @@ export const colors = {
   danger: 'Rojo',
   text: 'Oscuro',
   muted: 'Gris',
+  purple: 'Morado',
+  pink: 'Rosa',
+  orange: 'Naranja',
 };

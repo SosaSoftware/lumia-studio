@@ -75,7 +75,7 @@ const savePause = defineTool({
     startsAtS: secondsInput.optional().describe('Segundo en que empieza. Obligatorio al crear.'),
     durationS: secondsInput.optional().describe('Cuántos segundos dura. Obligatorio al crear.'),
     message: z.string().optional().describe('Mensaje que ve el estudiante durante la pausa.'),
-    onEnd: z.enum(PAUSE_ENDS).optional().describe('continue: sigue sola; wait_click: espera un clic. Al crear, continue.'),
+    onEnd: z.enum(PAUSE_ENDS).optional().describe('continue: sigue sola; wait_next: espera a que el estudiante presione Siguiente. Al crear, continue.'),
     timerElementId: z.string().min(1).nullable().optional().describe('Temporizador de la diapositiva que muestra la cuenta; null para ninguno.'),
   }),
   run: async (args, { studio }) => {

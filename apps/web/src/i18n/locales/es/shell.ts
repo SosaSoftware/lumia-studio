@@ -1,23 +1,22 @@
 export const shell = {
   sidebar: {
-    label: 'Paneles y preferencias',
+    label: 'Paneles',
     properties: 'Propiedades',
     propertiesDisabled: 'Propiedades · Elige un elemento del árbol o abre una clase',
     comments: 'Comentarios',
     bottomPanel: 'Panel inferior',
     slides: 'Diapositivas',
     timeline: 'Línea de tiempo',
-    themeToNight: 'Cambiar a modo noche',
-    themeToDay: 'Cambiar a modo día',
-    language: 'Idioma',
-    languageCurrent: 'Idioma: {name}',
   },
   activity: {
     label: 'Herramientas',
     explorer: 'Explorador',
     groups: 'Grupos de componentes',
     settings: 'Configuración',
-    settingsSoon: 'Configuración · Próximamente',
+    theme: 'Tema',
+    themeDay: 'Día',
+    themeNight: 'Noche',
+    language: 'Idioma',
   },
   topBar: {
     category: 'Categoría',

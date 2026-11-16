@@ -3,7 +3,7 @@ import type { NarrationClip, Pause } from '../../api/types.ts';
 import { findFreeSpot } from '../editor/geometry.ts';
 import { parseBlocks } from '../lumi/rich-text.ts';
 import { checkUpload } from '../media/upload.ts';
-import { duePause, isFinished } from '../preview/preview-clock.ts';
+import { duePause } from '../preview/preview-clock.ts';
 import { elementSpan, formatTime, narrationDuration, nextStart, seekTarget, slideDuration, sliderFromSpeed, speedFromSlider, ticks, timeAtOffset } from './timeline-model.ts';
 
 const clip = (startsAtS: number, generatedDurationS: number, speed = 1, script = 'Hola') => ({ startsAtS, generatedDurationS, speed, script });
@@ -49,8 +49,8 @@ describe('preview clock', () => {
     expect(duePause(pauses, 4, new Set())?.id).toBe('p1');
     expect(duePause(pauses, 5, new Set(['p1']))).toBeNull();
     const narration: NarrationClip[] = [{ ...clip(5, 9), id: 'n', slideId: 's', voice: 'Mia', audioUrl: null, status: 'ready', errorMessage: null }];
-    expect(isFinished({ advance: 'auto', durationS: 8, narrationClips: narration }, 10)).toBe(false);
-    expect(isFinished({ advance: 'auto', durationS: 8, narrationClips: narration }, 15)).toBe(true);
+    expect(slideDuration({ durationS: 8, narrationClips: narration })).toBeGreaterThan(10);
+    expect(slideDuration({ durationS: 8, narrationClips: narration })).toBeLessThanOrEqual(15);
   });
 });
 
@@ -105,7 +105,7 @@ describe('timer elements', () => {
     const slide = (element: ReturnType<typeof timer>): Parameters<typeof slideDuration>[0] => ({
       durationS: 30,
       narrationClips: [],
-      elements: [{ id: 't', slideId: 's', name: 'Temporizador', x: 0, y: 0, w: 20, h: 20, z: 1, entrance: 'none', mediaId: null, media: null, ...element }],
+      elements: [{ id: 't', slideId: 's', name: 'Temporizador', x: 0, y: 0, w: 20, h: 20, z: 1, entrance: 'none', exit: 'none', disappearsAtS: null, mediaId: null, media: null, ...element }],
     });
     expect(slideDuration(slide(timer(45, true, 5)))).toBe(50);
     expect(slideDuration(slide(timer(45, false, 5)))).toBe(30);

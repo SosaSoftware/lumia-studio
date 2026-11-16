@@ -3,6 +3,7 @@ import type { Shortcut } from '../../composables/shortcuts.ts';
 import type { DocumentSession } from './document-session.ts';
 import { PASTE_OFFSET, clipElement } from './element-clipboard.ts';
 import type { ElementClipboard } from './element-clipboard.ts';
+import { elementDeletion } from './element-deletion.ts';
 
 /** What the shortcuts of the editor work on. */
 export interface EditorShortcutContext {
@@ -71,7 +72,9 @@ export const EDITOR_SHORTCUTS: readonly EditorShortcut[] = [
     run: (context: EditorShortcutContext): void => {
       const ids = context.session.selectedElements.map((element) => element.id);
       copySelection(context);
-      void context.session.deleteElements(ids);
+      elementDeletion.request(context.session.state.slides, ids, () => {
+        void context.session.deleteElements(ids);
+      });
     },
   },
   {

@@ -4,6 +4,7 @@ import { t, translateOr } from '../../i18n/index.ts';
 import type { PaletteGroup, PanelName } from '../../composables/panels.ts';
 import type { WorkspaceStore } from '../workspace/workspace-store.ts';
 import { parseStatusFilter } from '../workspace/workspace-store.ts';
+import { propertiesFocus } from '../../composables/properties-focus.ts';
 
 /** A frontend tool as AG-UI declares it to the agent: the web runs it for the person when Lumi asks. */
 export interface ToolDeclaration {
@@ -207,6 +208,11 @@ export function buildContext(workspace: WorkspaceStore, user: ContextUser | null
         selection.elementId = only.id;
         selection.elementComponent = only.component;
         selection.elementName = only.name;
+        // The field the person last edited in Properties: its prop path and its section, as list_components names them.
+        if (propertiesFocus.elementId === only.id && propertiesFocus.field !== null) {
+          selection.focusedField = propertiesFocus.field;
+          if (propertiesFocus.section !== null) selection.focusedSection = propertiesFocus.section;
+        }
       } else if (selected.length > 1) {
         // Several components are selected: Lumi gets how many and which ones, up to a limit that keeps the value short.
         selection.selectedCount = selected.length;

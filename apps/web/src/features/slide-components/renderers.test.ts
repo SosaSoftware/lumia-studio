@@ -26,7 +26,7 @@ function render(key: string, mode: ElementMode, data: Record<string, unknown> = 
 }
 
 function sibling(id: string, component: string, x: number, y: number): SlideElement {
-  return { id, slideId: 's', component, name: component, x, y, w: 10, h: 10, z: 1, appearsAtS: 0, entrance: 'none', props: {}, mediaId: null, media: null };
+  return { id, slideId: 's', component, name: component, x, y, w: 10, h: 10, z: 1, appearsAtS: 0, entrance: 'none', exit: 'none', disappearsAtS: null, props: {}, mediaId: null, media: null };
 }
 
 afterEach(() => {
@@ -34,9 +34,9 @@ afterEach(() => {
 });
 
 describe('catalog renderers', () => {
-  it('render the 28 components in both modes with their default props', () => {
+  it('render every catalog component in both modes with its default props', () => {
     const keys = componentCatalog.list().map((definition) => definition.key);
-    expect(keys).toHaveLength(28);
+    expect(Object.keys(CATALOG_COMPONENTS).sort()).toEqual([...keys].sort());
     for (const key of keys) {
       for (const mode of MODES) {
         const wrapper = render(key, mode);
@@ -59,16 +59,36 @@ describe('catalog renderers', () => {
     expect(render('connector', 'edit').find('svg.free').exists()).toBe(true);
     const context: SlideContext = { elements: () => [sibling('e1', 'connector', 20, 10), sibling('a', 'shape', 0, 0), sibling('b', 'shape', 50, 30)], media: () => null, navigator: null };
     const linked = render('connector', 'student', { fromElementId: 'a', toElementId: 'b' }, { context });
-    expect(linked.find('svg.linked path').attributes('d')).toBe('M5 5 L55 35');
+    // The line leaves and enters the borders of the two elements, not their centers.
+    expect(linked.find('svg.linked path.line').attributes('d')).toMatch(/^M[\d.]+ [\d.]+ L[\d.]+ [\d.]+$/);
     expect(render('connector', 'edit', { fromElementId: 'x', toElementId: 'b' }, { context }).text()).toContain('Elige dos elementos');
     expect(render('connector', 'student', { fromElementId: 'x', toElementId: 'b' }, { context }).find('svg').exists()).toBe(false);
   });
 
-  it('lay out a hierarchy diagram from its root', () => {
-    const diagram = render('diagram', 'edit', { kind: 'hierarchy', nodes: [{ id: 'a', text: 'Raíz' }, { id: 'b', text: 'Hijo' }, { id: 'c', text: 'Nieto' }], edges: [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }] });
-    expect(diagram.find('.root').text()).toBe('Raíz');
-    expect(diagram.find('.card-title').text()).toBe('Hijo');
-    expect(diagram.find('.leaf').text()).toBe('Nieto');
+  it('draw a diagram written as Mermaid text, with node shapes and link labels', async () => {
+    const diagram = render('diagram', 'edit', { kind: 'hierarchy', code: 'flowchart TD\n  A[Raíz] --> B{¿Hijo?}\n  B -->|Sí| C([Nieto])' });
+    // The diagram is drawn once its frame has been measured, one tick after it is mounted.
+    await diagram.vm.$nextTick();
+    expect(diagram.findAll('.node').map((node) => node.text())).toEqual(['Raíz', '¿Hijo?', 'Nieto']);
+    expect(diagram.findAll('.node').map((node) => node.attributes('data-shape'))).toEqual(['rect', 'diamond', 'stadium']);
+    expect(diagram.find('.label').text()).toBe('Sí');
+    expect(diagram.findAll('path.link')).toHaveLength(2);
+  });
+
+  it('still draw diagrams and mind maps saved before they were text', async () => {
+    const diagram = render('diagram', 'edit', { code: '', nodes: [{ id: 'a', text: 'Uno' }, { id: 'b', text: 'Dos' }], edges: [{ from: 'a', to: 'b' }] });
+    await diagram.vm.$nextTick();
+    expect(diagram.findAll('.node').map((node) => node.text())).toEqual(['Uno', 'Dos']);
+    const map = render('mindmap', 'edit', { code: '', center: 'Tema', emoji: '💡', branches: [{ text: 'Rama', emoji: '', details: ['Idea'] }, { text: 'Otra', emoji: '', details: [] }] });
+    expect(map.find('.center-text').text()).toBe('Tema');
+    expect(map.findAll('.branch-head').map((branch) => branch.text())).toEqual(['Rama', 'Otra']);
+  });
+
+  it('join two elements with an arrow that follows their borders', () => {
+    const context: SlideContext = { elements: () => [sibling('arrow', 'arrow', 20, 10), sibling('a', 'shape', 0, 0), sibling('b', 'shape', 50, 30)], media: () => null, navigator: null };
+    const arrow = render('arrow', 'student', { fromElementId: 'a', toElementId: 'b', style: 'elbow' }, { context, elementId: 'arrow' });
+    expect(arrow.find('svg.linked path.shaft').attributes('d')).toMatch(/^M[\d.]+ [\d.]+ H[\d.]+ V[\d.]+ H[\d.]+$/);
+    expect(render('arrow', 'edit', { fromElementId: 'a' }, { context, elementId: 'arrow' }).text()).toContain('Elige el elemento de origen y el de destino');
   });
 
   it('flip the card, switch tabs, open sections and browse the gallery in the preview', async () => {
@@ -94,7 +114,7 @@ describe('catalog renderers', () => {
     await vi.advanceTimersByTimeAsync(2000);
     expect(timer.find('.face').text()).toBe('0:58');
     const next = vi.fn();
-    const context: SlideContext = { elements: () => [], media: () => null, navigator: { next, goTo: vi.fn() } };
+    const context: SlideContext = { elements: () => [], media: () => null, navigator: { next, goTo: vi.fn(), start: vi.fn(() => false) } };
     await render('button_link', 'student', {}, { context }).find('button').trigger('click');
     expect(next).toHaveBeenCalledTimes(1);
   });

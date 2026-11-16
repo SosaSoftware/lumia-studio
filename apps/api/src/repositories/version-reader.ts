@@ -16,7 +16,10 @@ interface SlideRow {
   background: string;
   duration_s: number;
   transition: string;
-  advance: string;
+  unlock: string;
+  start_mode: string;
+  start_element_id: string | null;
+  unlock_element_id: string | null;
 }
 
 interface ElementRow {
@@ -31,6 +34,8 @@ interface ElementRow {
   z: number;
   appears_at_s: number;
   entrance: string;
+  exit: string;
+  disappears_at_s: number | null;
   props: unknown;
   media_id: string | null;
   media_name: string | null;
@@ -202,7 +207,8 @@ export class VersionReader {
     const params = { id };
     const slideRows = await this.db.query<SlideRow>(
       `select s.id::text as id, s.version_id::text as version_id, s.position, s.title, s.background,
-              s.duration_s, s.transition::text as transition, s.advance::text as advance
+              s.duration_s, s.transition::text as transition, s.unlock::text as unlock,
+              s.start_mode::text as start_mode, s.start_element_id::text as start_element_id, s.unlock_element_id::text as unlock_element_id
          from studio.slide s where ${where} order by s.position`,
       params,
     );
@@ -227,7 +233,10 @@ export class VersionReader {
         background: row.background,
         durationS: row.duration_s,
         transition: row.transition,
-        advance: row.advance,
+        unlock: row.unlock,
+        startMode: row.start_mode,
+        startElementId: row.start_element_id,
+        unlockElementId: row.unlock_element_id,
         elements: await Promise.all((elementsBySlide.get(row.id) ?? []).map((item) => this.elementDto(item))),
         narrationClips: await Promise.all((narrationBySlide.get(row.id) ?? []).map((item) => this.narration(item))),
         pauses: (pausesBySlide.get(row.id) ?? []).map((item) => VersionReader.pause(item)),
@@ -254,6 +263,8 @@ export class VersionReader {
       z: row.z,
       appearsAtS: row.appears_at_s,
       entrance: row.entrance,
+      exit: row.exit,
+      disappearsAtS: row.disappears_at_s,
       props: jsonObject(row.props),
       mediaId: row.media_id,
       media,
@@ -315,7 +326,7 @@ export class VersionReader {
 }
 
 const ELEMENT_SELECT = `select e.id::text as id, e.slide_id::text as slide_id, e.component, e.name, e.x, e.y, e.w, e.h, e.z,
-       e.appears_at_s, e.entrance::text as entrance, e.props, e.media_id::text as media_id,
+       e.appears_at_s, e.entrance::text as entrance, e.exit::text as exit, e.disappears_at_s, e.props, e.media_id::text as media_id,
        m.name as media_name, m.mime_type as media_mime, m.s3_key as media_key
   from studio.slide_element e left join studio.media_asset m on m.id = e.media_id`;
 

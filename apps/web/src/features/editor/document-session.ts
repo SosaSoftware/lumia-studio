@@ -465,7 +465,7 @@ export class DocumentSession implements HistoryOps {
     await this.run(async () => {
       await this.prepare();
       const versionId = this.requireVersion();
-      // The API gives the new slide its default background, duration and advance mode.
+      // The API gives the new slide its default background, duration and unlock rule.
       const title = `${t('slides.defaultTitle')} ${String(this.state.slides.length + 1)}`;
       const created = await this.api.applySlidesDraft(versionId, null, [{ title, elements: [] }]);
       await this.reload();
@@ -578,7 +578,12 @@ export class DocumentSession implements HistoryOps {
     if (this.needsPreparation) {
       void this.run(async () => {
         const remap = await this.prepare();
-        this.applySlidePatch(remap.slide(slideId), patch);
+        // Opening a draft gives the elements new ids, so the button references move to them.
+        const buttons = {
+          ...(typeof patch.startElementId === 'string' ? { startElementId: remap.element(patch.startElementId) } : {}),
+          ...(typeof patch.unlockElementId === 'string' ? { unlockElementId: remap.element(patch.unlockElementId) } : {}),
+        };
+        this.applySlidePatch(remap.slide(slideId), { ...patch, ...buttons });
       });
       return;
     }
@@ -599,7 +604,10 @@ export class DocumentSession implements HistoryOps {
           background: latest.background,
           durationS: latest.durationS,
           transition: latest.transition,
-          advance: latest.advance,
+          unlock: latest.unlock,
+          startMode: latest.startMode,
+          startElementId: latest.startElementId,
+          unlockElementId: latest.unlockElementId,
         });
       } catch (error) {
         this.state.slideErrors[slideId] = errorMessage(error);
@@ -678,6 +686,10 @@ export class DocumentSession implements HistoryOps {
           ...geometry,
           appearsAtS: Math.min(item.appearsAtS, slide.durationS),
           entrance: item.entrance,
+          // The exit is kept only while it still comes after the moment the copy appears.
+          ...(item.exit !== 'none' && item.disappearsAtS !== null && item.disappearsAtS > Math.min(item.appearsAtS, slide.durationS)
+            ? { exit: item.exit, disappearsAtS: item.disappearsAtS }
+            : {}),
           props: item.props,
         });
         this.state.slides.find((candidate) => candidate.id === saved.slideId)?.elements.push(saved);
@@ -773,6 +785,8 @@ export class DocumentSession implements HistoryOps {
           z: latest.z,
           appearsAtS: latest.appearsAtS,
           entrance: latest.entrance,
+          exit: latest.exit,
+          disappearsAtS: latest.disappearsAtS,
           props: latest.props,
         });
         this.state.fieldErrors = without(this.state.fieldErrors, elementId);
@@ -823,6 +837,9 @@ export class DocumentSession implements HistoryOps {
       await this.api.deleteElement(id);
       for (const slide of this.state.slides) {
         slide.elements = slide.elements.filter((element) => element.id !== id);
+        // The database clears the reference of a slide to a deleted button; the open class follows it.
+        if (slide.startElementId === id) slide.startElementId = null;
+        if (slide.unlockElementId === id) slide.unlockElementId = null;
       }
       this.state.fieldErrors = without(this.state.fieldErrors, id);
       this.state.selectedElementIds = this.state.selectedElementIds.filter((selected) => selected !== id);
@@ -1134,6 +1151,8 @@ export class DocumentSession implements HistoryOps {
           z: item.z,
           appearsAtS: item.appearsAtS,
           entrance: item.entrance,
+          exit: item.exit,
+          disappearsAtS: item.disappearsAtS,
           props: item.props,
         });
         slide.elements.push(saved);
@@ -1156,7 +1175,8 @@ export class DocumentSession implements HistoryOps {
           background: data.background,
           durationS: data.durationS,
           transition: data.transition,
-          advance: data.advance,
+          unlock: data.unlock,
+          startMode: data.startMode,
           elements: data.elements.map((element) => ({ ...element })),
         },
       ]);
@@ -1174,6 +1194,9 @@ export class DocumentSession implements HistoryOps {
         const { mediaId, startsAtS, durationS, name, audioKind, volume } = clip;
         audioIds.push((await this.api.saveAudio(created.id, null, { mediaId, startsAtS, durationS, name, kind: audioKind, volume })).id);
       }
+      const startElementId = data.startIndex === null ? null : (elementIds[data.startIndex] ?? null);
+      const unlockElementId = data.unlockIndex === null ? null : (elementIds[data.unlockIndex] ?? null);
+      if (startElementId !== null || unlockElementId !== null) await this.api.saveSlide(created.id, versionId, { startElementId, unlockElementId });
       // The voice of a narration clip is not kept, so it comes back without voice until it is generated again.
       const narrationIds: string[] = [];
       for (const clip of data.narration) {

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { num, str } from '../../api/decode.ts';
 import type { CatalogComponentProps } from './element-mode.ts';
+import { toneVars } from './tone.ts';
 
 const props = defineProps<CatalogComponentProps>();
 const video = ref<HTMLVideoElement | null>(null);
@@ -15,7 +16,7 @@ function onLoaded(): void {
 </script>
 
 <template>
-  <div class="el-video" data-testid="video">
+  <div class="el-video" :style="toneVars(data.color, 'primary')" data-testid="video">
     <video
       v-if="live && media"
       ref="video"
@@ -26,6 +27,7 @@ function onLoaded(): void {
       preload="metadata"
       :autoplay="autoplay"
       :muted="autoplay"
+      :loop="data.loop === true"
       :aria-label="str(data.title)"
       @loadedmetadata="onLoaded"
       @click.stop
@@ -47,23 +49,25 @@ function onLoaded(): void {
       </div>
       <span class="sr-only">Video: {{ str(data.title) }}</span>
     </template>
+    <span v-if="data.showTitle === true && media" class="heading">{{ str(data.title) }}</span>
   </div>
 </template>
 
 <style scoped>
-.el-video { position: relative; width: 100%; height: 100%; border-radius: 1.2cqw; overflow: hidden; background: var(--sl-video); }
+.el-video { position: relative; width: 100%; height: 100%; border-radius: 1.4cqw; overflow: hidden; background: var(--sl-video); box-shadow: var(--sl-elev-2); }
 .player { width: 100%; height: 100%; display: block; object-fit: contain; background: var(--sl-video); }
 .still { object-fit: cover; }
 .poster { position: absolute; inset: 0; background: linear-gradient(160deg, var(--sl-video-2), var(--sl-video)); }
 .center { position: absolute; inset: 0 0 4cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw; padding: 0 3cqw; text-align: center; }
-.play { width: 8cqw; height: 8cqw; flex: none; border-radius: 50%; background: var(--sl-play-bg); color: var(--sl-blue); display: flex; align-items: center; justify-content: center; }
+.play { width: 8cqw; height: 8cqw; flex: none; border-radius: 50%; background: var(--sl-play-bg); color: var(--c, var(--sl-blue)); box-shadow: 0 0 0 1.2cqw rgba(255, 255, 255, 0.18); display: flex; align-items: center; justify-content: center; }
 .play svg { width: 45%; height: 45%; fill: currentColor; }
 .title { font-size: 1.6cqw; font-weight: 600; color: var(--sl-white); }
 .prompt { max-width: 90%; font-size: 1.2cqw; line-height: 1.4; color: var(--sl-white-80); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 1.4cqw; padding: 1.4cqw 1.8cqw; background: linear-gradient(transparent, var(--sl-video-bar)); color: var(--sl-white); }
 .mini { width: 2.2cqw; height: 2.2cqw; flex: none; fill: currentColor; }
 .track { position: relative; flex: 1; height: 0.6cqw; border-radius: 0.3cqw; background: var(--sl-white-35); }
-.progress { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 0.3cqw; background: var(--sl-cyan); }
+.progress { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 0.3cqw; background: var(--c, var(--sl-cyan)); }
 .time { font-size: 1.3cqw; white-space: nowrap; }
+.heading { position: absolute; left: 1.4cqw; top: 1.4cqw; max-width: calc(100% - 2.8cqw); padding: 0.5cqw 1.2cqw; border-radius: 99cqw; background: var(--sl-scrim); color: var(--sl-white); font-size: 1.3cqw; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>

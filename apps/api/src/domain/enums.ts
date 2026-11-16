@@ -1,10 +1,11 @@
 import { AppError } from '../shared/errors/index.ts';
 
 export const TRANSITIONS = ['none', 'fade', 'slide', 'zoom'] as const;
-export { ADVANCE_MODES } from '@lumia/packages/catalog';
+export { NEXT_UNLOCKS, START_MODES } from '@lumia/packages/catalog';
 export const ENTRANCES = ['none', 'appear', 'fade', 'slide', 'draw'] as const;
+export const EXITS = ['none', 'disappear', 'fade', 'slide'] as const;
 export const AUDIO_KINDS = ['music', 'effect'] as const;
-export const PAUSE_ENDS = ['continue', 'wait_click'] as const;
+export const PAUSE_ENDS = ['continue', 'wait_next'] as const;
 
 /** Returns `value` when it is one of `allowed`; otherwise throws a `ValidationError` that names the field. */
 export function oneOf<T extends string>(field: string, value: string, allowed: readonly T[]): T {

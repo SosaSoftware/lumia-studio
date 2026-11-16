@@ -1,16 +1,23 @@
 import type { ThemeColorKey } from '@lumia/packages/catalog';
-import { ADVANCE_MODES, THEME_COLOR_KEYS } from '@lumia/packages/catalog';
+import { NEXT_UNLOCKS, START_MODES, THEME_COLOR_KEYS } from '@lumia/packages/catalog';
+import { EXITS } from './types.ts';
 import type {
-  AdvanceMode,
+  NextUnlock,
+  StartMode,
   AudioClip,
   AudioKind,
   CatalogComponentInfo,
   CatalogInfo,
+  LocalizedText,
+  PropertyPlacementInfo,
+  PropertySectionInfo,
+  VisibleWhen,
   Category,
   ClassDocument,
   DocumentStatus,
   DocumentVersion,
   Entrance,
+  Exit,
   MediaRef,
   NarrationClip,
   NarrationStatus,
@@ -42,6 +49,10 @@ export function num(value: unknown, fallback = 0): number {
 
 export function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value.map((item: unknown) => item) : [];
+}
+
+export function bool(value: unknown, fallback = false): boolean {
+  return typeof value === 'boolean' ? value : fallback;
 }
 
 function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
@@ -78,6 +89,8 @@ export function decodeElement(value: unknown): SlideElement {
     z: num(element.z),
     appearsAtS: num(element.appearsAtS),
     entrance: oneOf<Entrance>(element.entrance, ['none', 'appear', 'fade', 'slide', 'draw'], 'none'),
+    exit: oneOf<Exit>(element.exit, EXITS, 'none'),
+    disappearsAtS: typeof element.disappearsAtS === 'number' ? element.disappearsAtS : null,
     props: parseJson(element.props),
     mediaId: typeof element.mediaId === 'string' ? element.mediaId : null,
     media: decodeMedia(element.media),
@@ -86,7 +99,7 @@ export function decodeElement(value: unknown): SlideElement {
 
 const NARRATION_STATUSES: readonly NarrationStatus[] = ['pending', 'generating', 'ready', 'failed'];
 const AUDIO_KINDS: readonly AudioKind[] = ['music', 'effect'];
-const PAUSE_ENDS: readonly PauseEnd[] = ['continue', 'wait_click'];
+const PAUSE_ENDS: readonly PauseEnd[] = ['continue', 'wait_next'];
 
 export function decodeNarrationClip(value: unknown): NarrationClip {
   const clip = rec(value);
@@ -154,7 +167,10 @@ export function decodeSlide(value: unknown): Slide {
     background: oneOf<ThemeColorKey>(slide.background, THEME_COLOR_KEYS, 'surface'),
     durationS: num(slide.durationS),
     transition: oneOf<Transition>(slide.transition, ['none', 'fade', 'slide', 'zoom'], 'none'),
-    advance: oneOf<AdvanceMode>(slide.advance, ADVANCE_MODES, 'click'),
+    unlock: oneOf<NextUnlock>(slide.unlock, NEXT_UNLOCKS, 'always'),
+    startMode: oneOf<StartMode>(slide.startMode, START_MODES, 'auto'),
+    startElementId: typeof slide.startElementId === 'string' ? slide.startElementId : null,
+    unlockElementId: typeof slide.unlockElementId === 'string' ? slide.unlockElementId : null,
     elements: list(slide.elements).map(decodeElement).sort((a, b) => a.z - b.z),
     narrationClips: list(slide.narrationClips).map(decodeNarrationClip),
     pauses: list(slide.pauses).map(decodePause),
@@ -240,9 +256,60 @@ export function decodeTreeNode(value: unknown): TreeNode {
   };
 }
 
+function decodeLocalized(value: unknown): LocalizedText | null {
+  if (value === null || value === undefined) return null;
+  const record = parseJson(value);
+  return Object.fromEntries(Object.entries(record).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
+}
+
+export function decodeVisibleWhen(value: unknown): VisibleWhen | null {
+  if (value === null || value === undefined) return null;
+  const rule = parseJson(value);
+  const prop = str(rule.prop);
+  if (prop === '') return null;
+  switch (rule.op) {
+    case 'empty':
+    case 'notEmpty':
+      return { prop, op: rule.op };
+    case 'equals':
+      return { prop, op: 'equals', value: rule.value };
+    case 'in':
+      return { prop, op: 'in', values: list(rule.values) };
+    default:
+      return null;
+  }
+}
+
+function decodePlacement(item: unknown): PropertyPlacementInfo {
+  const placement = rec(item);
+  return {
+    prop: str(placement.prop),
+    section: str(placement.section),
+    position: num(placement.position),
+    advanced: placement.advanced === true,
+    visibleWhen: decodeVisibleWhen(placement.visibleWhen),
+    labels: decodeLocalized(placement.labels),
+    help: decodeLocalized(placement.help),
+  };
+}
+
+function decodeSection(item: unknown): PropertySectionInfo {
+  const section = rec(item);
+  return {
+    key: str(section.key),
+    nature: str(section.nature),
+    position: num(section.position),
+    labels: decodeLocalized(section.labels) ?? {},
+    isFallback: section.isFallback === true,
+  };
+}
+
 export function decodeCatalog(value: unknown): CatalogInfo {
   const catalog = rec(value);
   return {
+    sections: list(catalog.sections).map(decodeSection),
+    elementLayout: list(catalog.elementLayout).map(decodePlacement),
+    slideLayout: list(catalog.slideLayout).map(decodePlacement),
     components: list(catalog.components).map((item): CatalogComponentInfo => {
       const component = rec(item);
       const size = rec(component.defaultSize);
@@ -257,6 +324,7 @@ export function decodeCatalog(value: unknown): CatalogInfo {
         defaultSize: { w: num(size.w), h: num(size.h) },
         usesMedia: component.usesMedia === true,
         isQuestion: component.isQuestion === true,
+        layout: list(component.layout).map(decodePlacement),
       };
     }),
   };
